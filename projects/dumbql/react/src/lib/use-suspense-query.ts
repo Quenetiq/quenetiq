@@ -1,10 +1,10 @@
 import { useCallback, useRef } from 'react';
-import type { DocumentNode, TypedDocumentNode, GraphQLResult, ErrorCode } from '@dumbql/client';
+import type { DocumentNode, TypedDocumentNode, GraphQLResult, ErrorCode, InferData, InferVars, FetchPolicy } from '@dumbql/client';
 import { useClient } from './provider';
 
 interface SuspenseQueryOptions<TData, TVariables> {
 	variables?: TVariables;
-	fetchPolicy?: 'cache-first' | 'network-only' | 'no-cache';
+	fetchPolicy?: FetchPolicy;
 	onCompleted?: (data: TData) => void;
 	onError?: (error: string, errorCode?: ErrorCode) => void;
 }
@@ -15,10 +15,12 @@ interface SuspenseQueryResult<TData> {
 	networkStatus: 'ready';
 }
 
-export function useSuspenseQuery<TData, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-	query: DocumentNode | TypedDocumentNode<TData, TVariables>,
-	options?: SuspenseQueryOptions<TData, TVariables>,
-): SuspenseQueryResult<TData> {
+export function useSuspenseQuery<TDocument extends DocumentNode | TypedDocumentNode>(
+	query: TDocument,
+	options?: SuspenseQueryOptions<InferData<TDocument>, InferVars<TDocument>>,
+): SuspenseQueryResult<InferData<TDocument>> {
+	type TData = InferData<TDocument>;
+
 	const client = useClient();
 	const variables = options?.variables;
 	const onCompletedRef = useRef(options?.onCompleted);
@@ -44,7 +46,7 @@ export function useSuspenseQuery<TData, TVariables extends Record<string, unknow
 
 	if (!dataRef.current && !errorRef.current) {
 		if (!promiseRef.current) {
-			promiseRef.current = client.query<TData, TVariables>(query, variables).then((res: GraphQLResult<TData>) => {
+			promiseRef.current = client.query(query, variables).then((res: GraphQLResult<TData>) => {
 				if (res.status === 'success') {
 					dataRef.current = res.data;
 					onCompletedRef.current?.(res.data);
@@ -77,10 +79,12 @@ export interface QueryRef<TData> {
 	refetch: () => Promise<GraphQLResult<TData>>;
 }
 
-export function useBackgroundQuery<TData, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-	query: DocumentNode | TypedDocumentNode<TData, TVariables>,
-	options?: { variables?: TVariables },
-): [QueryRef<TData>] {
+export function useBackgroundQuery<TDocument extends DocumentNode | TypedDocumentNode>(
+	query: TDocument,
+	options?: { variables?: InferVars<TDocument> },
+): [QueryRef<InferData<TDocument>>] {
+	type TData = InferData<TDocument>;
+
 	const client = useClient();
 	const variables = options?.variables;
 
@@ -92,7 +96,7 @@ export function useBackgroundQuery<TData, TVariables extends Record<string, unkn
 		promiseRef.current = undefined;
 		dataRef.current = undefined;
 		errorRef.current = undefined;
-		const res = await client.refetch<TData, TVariables>(query, variables);
+		const res = await client.refetch(query, variables);
 		if (res.status === 'success') {
 			dataRef.current = res.data;
 		} else {
@@ -102,7 +106,7 @@ export function useBackgroundQuery<TData, TVariables extends Record<string, unkn
 	}, [client, query, variables]);
 
 	if (!promiseRef.current && dataRef.current === undefined && !errorRef.current) {
-		promiseRef.current = client.query<TData, TVariables>(query, variables).then((res: GraphQLResult<TData>) => {
+		promiseRef.current = client.query(query, variables).then((res: GraphQLResult<TData>) => {
 			if (res.status === 'success') {
 				dataRef.current = res.data;
 			} else {

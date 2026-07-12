@@ -1,5 +1,5 @@
 import { ref, onMounted, onUnmounted, watch, type Ref } from 'vue';
-import type { DocumentNode, TypedDocumentNode, GraphQLResult, ErrorCode } from '@dumbql/client';
+import type { DocumentNode, TypedDocumentNode, GraphQLResult, ErrorCode, InferData, InferVars } from '@dumbql/client';
 import { useClient } from './plugin';
 
 export interface UseQueryOptions<TData, TVariables> {
@@ -12,7 +12,7 @@ export interface UseQueryOptions<TData, TVariables> {
 
 export type NetworkStatus = 'loading' | 'ready' | 'error' | 'refetching' | 'poll';
 
-export interface UseQueryResult<TData, TVariables extends Record<string, unknown>> {
+export interface UseQueryResult<TData, TVariables> {
 	data: Ref<TData | null>;
 	loading: Ref<boolean>;
 	error: Ref<string | null>;
@@ -23,10 +23,13 @@ export interface UseQueryResult<TData, TVariables extends Record<string, unknown
 	fetchMore: (merge: (prev: TData, next: TData) => TData, vars?: TVariables) => Promise<GraphQLResult<TData>>;
 }
 
-export function useQuery<TData, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-	document: DocumentNode | TypedDocumentNode<TData, TVariables>,
-	options?: UseQueryOptions<TData, TVariables>,
-): UseQueryResult<TData, TVariables> {
+export function useQuery<TDocument extends DocumentNode | TypedDocumentNode>(
+	document: TDocument,
+	options?: UseQueryOptions<InferData<TDocument>, InferVars<TDocument>>,
+): UseQueryResult<InferData<TDocument>, InferVars<TDocument>> {
+	type TData = InferData<TDocument>;
+	type TVariables = InferVars<TDocument>;
+
 	const client = useClient();
 	const variables = options?.variables;
 	const pollInterval = options?.pollInterval;
@@ -53,7 +56,7 @@ export function useQuery<TData, TVariables extends Record<string, unknown> = Rec
 		called.value = true;
 		lastVars = vars;
 
-		const result = await client.query<TData, TVariables>(document, vars ?? variables);
+		const result = await client.query(document, vars ?? variables);
 		if (cancelled) return;
 
 		loading.value = false;
@@ -79,7 +82,7 @@ export function useQuery<TData, TVariables extends Record<string, unknown> = Rec
 		if (pollInterval && pollInterval > 0 && !skip) {
 			pollTimer = setInterval(async () => {
 				networkStatus.value = 'poll';
-				const result = await client.query<TData, TVariables>(document, variables);
+				const result = await client.query(document, variables);
 				loading.value = false;
 				if (result.status === 'success') {
 					data.value = result.data;
@@ -108,7 +111,7 @@ export function useQuery<TData, TVariables extends Record<string, unknown> = Rec
 
 	const refetch = async (vars?: TVariables) => {
 		networkStatus.value = 'refetching';
-		const result = await client.refetch<TData, TVariables>(document, (vars ?? lastVars) as TVariables);
+		const result = await client.refetch(document, vars ?? lastVars);
 		loading.value = false;
 		if (result.status === 'success') {
 			data.value = result.data;
@@ -127,7 +130,7 @@ export function useQuery<TData, TVariables extends Record<string, unknown> = Rec
 
 	const fetchMore = async (merge: (prev: TData, next: TData) => TData, vars?: TVariables) => {
 		networkStatus.value = 'refetching';
-		const result = await client.query<TData, TVariables>(document, vars ?? lastVars);
+		const result = await client.query(document, vars ?? lastVars);
 		if (result.status === 'success' && data.value) {
 			data.value = merge(data.value, result.data);
 		}

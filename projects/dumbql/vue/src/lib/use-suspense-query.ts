@@ -1,5 +1,5 @@
 import { ref, type Ref } from 'vue';
-import type { DocumentNode, TypedDocumentNode, GraphQLResult } from '@dumbql/client';
+import type { DocumentNode, TypedDocumentNode, GraphQLResult, InferData, InferVars } from '@dumbql/client';
 import { useClient } from './plugin';
 
 export interface UseSuspenseQueryResult<TData> {
@@ -9,16 +9,17 @@ export interface UseSuspenseQueryResult<TData> {
 	promise: Promise<TData | undefined>;
 }
 
-export function useSuspenseQuery<TData, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-	document: DocumentNode | TypedDocumentNode<TData, TVariables>,
-	variables?: TVariables,
-): UseSuspenseQueryResult<TData> {
+export function useSuspenseQuery<TDocument extends DocumentNode | TypedDocumentNode>(
+	document: TDocument,
+	variables?: InferVars<TDocument>,
+): UseSuspenseQueryResult<InferData<TDocument>> {
+	type TData = InferData<TDocument>;
 	const client = useClient();
 	const data = ref<TData | null>(null) as Ref<TData | null>;
 	const error = ref<string | null>(null);
 	const loading = ref(true);
 
-	const promise = client.query<TData, TVariables>(document, variables).then((result) => {
+	const promise = client.query(document, variables).then((result) => {
 		loading.value = false;
 		if (result.status === 'error') {
 			error.value = result.error;
@@ -38,17 +39,18 @@ export interface QueryRef<TData> {
 	refetch: () => Promise<GraphQLResult<TData>>;
 }
 
-export function useBackgroundQuery<TData, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-	document: DocumentNode | TypedDocumentNode<TData, TVariables>,
-	variables?: TVariables,
-): QueryRef<TData> {
+export function useBackgroundQuery<TDocument extends DocumentNode | TypedDocumentNode>(
+	document: TDocument,
+	variables?: InferVars<TDocument>,
+): QueryRef<InferData<TDocument>> {
+	type TData = InferData<TDocument>;
 	const client = useClient();
 	const data = ref<TData | null>(null) as Ref<TData | null>;
 	const error = ref<string | null>(null);
 	const loading = ref(true);
 
 	loading.value = true;
-	client.query<TData, TVariables>(document, variables).then((result) => {
+	client.query(document, variables).then((result) => {
 		loading.value = false;
 		if (result.status === 'error') {
 			error.value = result.error;
@@ -57,8 +59,8 @@ export function useBackgroundQuery<TData, TVariables extends Record<string, unkn
 		data.value = result.data;
 	});
 
-	const refetch = async (vars?: TVariables): Promise<GraphQLResult<TData>> => {
-		const result = await client.refetch<TData, TVariables>(document, (vars ?? variables) as TVariables);
+	const refetch = async (vars?: InferVars<TDocument>): Promise<GraphQLResult<TData>> => {
+		const result = await client.refetch(document, vars ?? variables);
 		if (result.status === 'success') {
 			data.value = result.data;
 			error.value = null;

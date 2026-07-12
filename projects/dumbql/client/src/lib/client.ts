@@ -1,28 +1,39 @@
 import { print, type DocumentNode, type TypedDocumentNode } from './gql';
 import {
-	applyMiddleware,
 	devAuthMiddleware,
 	hasFiles,
 	type GraphqlRequestContext,
 	type GraphqlMiddleware,
+	type TypedPipeline,
+	buildTypedPipeline,
 } from './middleware';
 import { cacheMiddleware } from './cache-middleware';
 import type { GraphQLResult, GraphQLResponse } from './result';
+import { resultError } from './result';
 import type { ClientConfig } from './config';
 import type { CacheStore } from '@dumbql/cache';
 import type { FetchPolicy } from './middleware';
 
 export type { ClientConfig };
 
-const dedupCache = new Map<string, Promise<GraphQLResult<unknown>>>();
+/** Infer result type from TypedDocumentNode, fallback to unknown */
+export type InferData<T> = T extends TypedDocumentNode<infer D> ? D : unknown;
+
+/** Infer variables type from TypedDocumentNode, fallback to Record<string, unknown> */
+export type InferVars<T> = T extends TypedDocumentNode<unknown, infer V> ? V : Record<string, unknown>;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const dedupCache = new Map<string, Promise<GraphQLResult<any>>>();
 
 export interface QueryOptions {
 	fetchPolicy?: FetchPolicy;
+	signal?: AbortSignal;
 }
 
 interface BatchEntry {
 	request: GraphqlRequestContext;
-	resolve: (result: GraphQLResult<unknown>) => void;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	resolve: (result: GraphQLResult<any>) => void;
 }
 
 interface FileEntry {
@@ -38,7 +49,7 @@ export class DumbqlClient {
 	private retryDelay: number;
 	private batchWindow: number;
 	private dedupEnabled: boolean;
-	private pipeline: (request: GraphqlRequestContext) => Promise<GraphQLResult<unknown>>;
+	private pipeline: TypedPipeline;
 	private _cacheService: CacheStore | null = null;
 
 	private batchQueue: BatchEntry[] | null = null;
@@ -71,41 +82,49 @@ export class DumbqlClient {
 		return this._cacheService;
 	}
 
-	query<TResponse, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-		document: DocumentNode | TypedDocumentNode<TResponse, TVariables>,
-		variables?: TVariables,
+	query<TDocument extends DocumentNode | TypedDocumentNode>(
+		document: TDocument,
+		variables?: InferVars<TDocument>,
 		endpoint?: string,
 		options?: QueryOptions,
-	): Promise<GraphQLResult<TResponse>> {
+	): Promise<GraphQLResult<InferData<TDocument>>> {
 		const queryStr = print(document);
 		if (this.dedupEnabled) {
 			return this.withDedup(queryStr, variables,
-				() => this.executeQuery<TResponse>(queryStr, variables, endpoint, options?.fetchPolicy));
+				() => this.executeQuery<InferData<TDocument>>(
+					queryStr, variables, endpoint, options?.fetchPolicy, options?.signal,
+				));
 		}
-		return this.executeQuery<TResponse>(queryStr, variables, endpoint, options?.fetchPolicy);
+		return this.executeQuery<InferData<TDocument>>(
+			queryStr, variables, endpoint, options?.fetchPolicy, options?.signal,
+		);
 	}
 
-	queryStream<TResponse, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-		document: DocumentNode | TypedDocumentNode<TResponse, TVariables>,
-		variables?: TVariables,
+	queryStream<TDocument extends DocumentNode | TypedDocumentNode>(
+		document: TDocument,
+		variables?: InferVars<TDocument>,
 		endpoint?: string,
-	): AsyncIterable<GraphQLResult<TResponse>> {
+	): AsyncIterable<GraphQLResult<InferData<TDocument>>> {
 		const queryStr = print(document);
-		return this.executeStreaming(queryStr, variables, endpoint) as AsyncIterable<GraphQLResult<TResponse>>;
+		return this.executeStreaming(
+			queryStr, variables, endpoint,
+		) as AsyncIterable<GraphQLResult<InferData<TDocument>>>;
 	}
 
-	async mutate<TResponse, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-		document: DocumentNode | TypedDocumentNode<TResponse, TVariables>,
-		variables?: TVariables,
+	async mutate<TDocument extends DocumentNode | TypedDocumentNode>(
+		document: TDocument,
+		variables?: InferVars<TDocument>,
 		endpoint?: string,
-	): Promise<GraphQLResult<TResponse>> {
+	): Promise<GraphQLResult<InferData<TDocument>>> {
 		const query = print(document);
-		let result$: Promise<GraphQLResult<TResponse>>;
+		let result$: Promise<GraphQLResult<InferData<TDocument>>>;
 
 		if (variables !== undefined && hasFiles(variables)) {
-			result$ = this.upload<TResponse>(query, variables, endpoint);
+			result$ = this.upload<InferData<TDocument>>(query, variables, endpoint);
 		} else {
-			result$ = this.withRetry(() => this.request<TResponse>(query, variables, 'mutation', endpoint));
+			result$ = this.withRetry(
+				() => this.request<InferData<TDocument>>(query, variables, 'mutation', endpoint),
+			);
 		}
 
 		const result = await result$;
@@ -125,15 +144,15 @@ export class DumbqlClient {
 		return result;
 	}
 
-	refetch<TResponse, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-		document: DocumentNode | TypedDocumentNode<TResponse, TVariables>,
-		variables?: TVariables,
+	refetch<TDocument extends DocumentNode | TypedDocumentNode>(
+		document: TDocument,
+		variables?: InferVars<TDocument>,
 		endpoint?: string,
-	): Promise<GraphQLResult<TResponse>> {
+	): Promise<GraphQLResult<InferData<TDocument>>> {
 		const query = print(document);
 		const key = this.dedupKey(query, variables);
 		dedupCache.delete(key);
-		return this.query<TResponse, TVariables>(document, variables, endpoint);
+		return this.query<TDocument>(document, variables, endpoint);
 	}
 
 	private async executeQuery<T>(
@@ -141,11 +160,12 @@ export class DumbqlClient {
 		variables?: Record<string, unknown>,
 		endpoint?: string,
 		fetchPolicy?: FetchPolicy,
+		signal?: AbortSignal,
 	): Promise<GraphQLResult<T>> {
 		if (this.batchWindow > 0) {
 			return this.batchedRequest<T>(query, variables, endpoint);
 		}
-		return this.withRetry(() => this.request<T>(query, variables, 'query', endpoint, fetchPolicy));
+		return this.withRetry(() => this.request<T>(query, variables, 'query', endpoint, fetchPolicy, signal));
 	}
 
 	private async request<T>(
@@ -154,6 +174,7 @@ export class DumbqlClient {
 		type: 'query' | 'mutation' = 'query',
 		endpoint?: string,
 		fetchPolicy?: FetchPolicy,
+		signal?: AbortSignal,
 	): Promise<GraphQLResult<T>> {
 		const context: GraphqlRequestContext = {
 			query,
@@ -162,8 +183,9 @@ export class DumbqlClient {
 			type,
 			endpoint,
 			fetchPolicy,
+			signal,
 		};
-		return this.pipeline(context) as Promise<GraphQLResult<T>>;
+		return this.pipeline(context);
 	}
 
 	private getHeaderMap(): Record<string, string> {
@@ -180,7 +202,9 @@ export class DumbqlClient {
 		return headers;
 	}
 
-	private buildPipeline(config: ClientConfig): (request: GraphqlRequestContext) => Promise<GraphQLResult<unknown>> {
+	private buildPipeline(
+		config: ClientConfig,
+	): TypedPipeline {
 		const mw: GraphqlMiddleware[] = [...(config.middleware ?? [])];
 
 		if (config.cache?.enabled !== false && this._cacheService) {
@@ -195,7 +219,7 @@ export class DumbqlClient {
 			mw.unshift(devAuthMiddleware(config.devAuth?.token));
 		}
 
-		return applyMiddleware(mw, (req) => this.executeHttp(req));
+		return buildTypedPipeline(mw, (req) => this.executeHttp(req));
 	}
 
 	private async executeHttp(request: GraphqlRequestContext): Promise<GraphQLResult<unknown>> {
@@ -214,6 +238,7 @@ export class DumbqlClient {
 				const response = await fetch(`${url}?${params.toString()}`, {
 					method: 'GET',
 					headers: request.headers,
+					signal: request.signal,
 				});
 				if (!response.ok) {
 					return this.toHttpError({
@@ -222,7 +247,7 @@ export class DumbqlClient {
 						statusText: response.statusText,
 					});
 				}
-				const json = (await response.json()) as GraphQLResponse<unknown>;
+				const json: GraphQLResponse<unknown> = await response.json();
 				return this.toResult(json);
 			}
 
@@ -234,6 +259,7 @@ export class DumbqlClient {
 				method: 'POST',
 				headers: request.headers,
 				body: JSON.stringify(body),
+				signal: request.signal,
 			});
 
 			if (!response.ok) {
@@ -244,9 +270,12 @@ export class DumbqlClient {
 				});
 			}
 
-			const json = (await response.json()) as GraphQLResponse<unknown>;
-			return this.toResult(json);
+			const json2: GraphQLResponse<unknown> = await response.json();
+			return this.toResult(json2);
 		} catch (err) {
+			if (err instanceof DOMException && err.name === 'AbortError') {
+				return resultError<unknown>('Request aborted', 'NETWORK_ERROR');
+			}
 			return this.toHttpError(err instanceof Error ? err : new Error('Unknown error'));
 		}
 	}
@@ -300,7 +329,7 @@ export class DumbqlClient {
 					if (value) chunks.push(value);
 				}
 				const text = new TextDecoder().decode(this.concatBuffers(chunks));
-				const json = JSON.parse(text) as GraphQLResponse<unknown>;
+				const json: GraphQLResponse<unknown> = JSON.parse(text);
 				yield this.toResult(json);
 			}
 		} catch (err) {
@@ -338,11 +367,11 @@ export class DumbqlClient {
 					const jsonStr = trimmed.slice(jsonStart + 2).trim();
 					if (!jsonStr) continue;
 					try {
-						const parsed = JSON.parse(jsonStr) as GraphQLResponse<unknown>;
+						const raw: Record<string, unknown> = JSON.parse(jsonStr);
+						const parsed: GraphQLResponse<unknown> = raw;
 						const result = this.toResult(parsed);
 						yield result;
-						const wrapper = parsed as { hasNext?: boolean };
-						if (wrapper.hasNext === false) return;
+						if ('hasNext' in raw && raw['hasNext'] === false) return;
 					} catch {
 						// skip malformed chunks
 					}
@@ -388,7 +417,7 @@ export class DumbqlClient {
 		const key = this.dedupKey(query, variables);
 
 		if (dedupCache.has(key)) {
-			return dedupCache.get(key) as Promise<GraphQLResult<T>>;
+			return dedupCache.get(key)!;
 		}
 
 		const promise = fn().finally(() => dedupCache.delete(key));
@@ -420,7 +449,7 @@ export class DumbqlClient {
 
 			this.batchQueue.push({
 				request: context,
-				resolve: resolve as (result: GraphQLResult<unknown>) => void,
+				resolve,
 			});
 
 			if (!this.batchTimer) {
@@ -468,7 +497,7 @@ export class DumbqlClient {
 				return;
 			}
 
-			const responses = (await response.json()) as GraphQLResponse<unknown>[];
+			const responses: GraphQLResponse<unknown>[] = await response.json();
 			for (let i = 0; i < queue.length; i++) {
 				const resp = responses[i];
 				if (resp) {
@@ -522,7 +551,7 @@ export class DumbqlClient {
 				});
 			}
 
-			const json = (await response.json()) as GraphQLResponse<T>;
+			const json: GraphQLResponse<T> = await response.json();
 			return this.toResult(json);
 		} catch (err) {
 			return this.toHttpError(err instanceof Error ? err : new Error('Unknown error'));
@@ -550,7 +579,7 @@ export class DumbqlClient {
 					graphQLErrors?: { message: string; extensions?: Record<string, unknown> }[];
 				} = {
 					status: 'success',
-					data: response.data as T,
+					data: response.data,
 				};
 				if (this.showErrorsOnSuccess) result.graphQLErrors = response.errors;
 				return result;
@@ -566,7 +595,7 @@ export class DumbqlClient {
 		if (hasErrors && this.errorPolicy === 'all') {
 			const msgs = response.errors!.map((e) => e.message);
 			if (response.data != null) {
-				return { status: 'success', data: response.data as T, graphQLErrors: response.errors };
+				return { status: 'success', data: response.data, graphQLErrors: response.errors };
 			}
 			return this.withErrorNotification({
 				status: 'error',
@@ -590,7 +619,7 @@ export class DumbqlClient {
 			graphQLErrors?: { message: string; extensions?: Record<string, unknown> }[];
 		} = {
 			status: 'success',
-			data: response.data as T,
+			data: response.data,
 		};
 		if (this.showErrorsOnSuccess && errorsPayload) {
 			result.graphQLErrors = errorsPayload;
@@ -643,7 +672,7 @@ function replaceFiles(value: unknown, files: FileEntry[], segments: string[]): u
 	}
 	if (value !== null && typeof value === 'object') {
 		const result: Record<string, unknown> = {};
-		for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+		for (const [key, val] of Object.entries(value)) {
 			result[key] = replaceFiles(val, files, [...segments, key]);
 		}
 		return result;
@@ -657,11 +686,10 @@ function extractTypeNames(data: unknown, types: Set<string>): void {
 		for (const item of data) extractTypeNames(item, types);
 		return;
 	}
-	const obj = data as Record<string, unknown>;
-	if (typeof obj['__typename'] === 'string') {
-		types.add(obj['__typename'] as string);
+	if ('__typename' in data && typeof data['__typename'] === 'string') {
+		types.add(data['__typename']);
 	}
-	for (const v of Object.values(obj)) {
+	for (const v of Object.values(data)) {
 		if (v && typeof v === 'object') extractTypeNames(v, types);
 	}
 }

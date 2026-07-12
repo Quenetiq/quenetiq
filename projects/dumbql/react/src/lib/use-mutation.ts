@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import type { DocumentNode, TypedDocumentNode, GraphQLResult, ErrorCode } from '@dumbql/client';
+import type { DocumentNode, TypedDocumentNode, GraphQLResult, ErrorCode, InferData, InferVars } from '@dumbql/client';
 import type { CacheStore } from '@dumbql/cache';
 import { useClient, useCache } from './provider';
 
@@ -22,10 +22,13 @@ export interface UseMutationResult<TData, TVariables> {
 	mutate: UseMutationFn<TData, TVariables>;
 }
 
-export function useMutation<TData, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-	document: DocumentNode | TypedDocumentNode<TData, TVariables>,
-	options?: UseMutationOptions<TData, TVariables>,
-): UseMutationResult<TData, TVariables> {
+export function useMutation<TDocument extends DocumentNode | TypedDocumentNode>(
+	document: TDocument,
+	options?: UseMutationOptions<InferData<TDocument>, InferVars<TDocument>>,
+): UseMutationResult<InferData<TDocument>, InferVars<TDocument>> {
+	type TData = InferData<TDocument>;
+	type TVariables = InferVars<TDocument>;
+
 	const client = useClient();
 	const cache = useCache();
 	const [result, setResult] = useState<GraphQLResult<TData> | null>(null);
@@ -51,7 +54,7 @@ export function useMutation<TData, TVariables extends Record<string, unknown> = 
 			}
 
 			const opts = options?.variables as TVariables | undefined;
-			const res = await client.mutate<TData, TVariables>(document, variables ?? opts);
+			const res = await client.mutate(document, variables ?? opts);
 			setResult(res);
 			setLoading(false);
 

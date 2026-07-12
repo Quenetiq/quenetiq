@@ -1,5 +1,5 @@
 import { reactive, type UnwrapNestedRefs } from 'vue';
-import type { DocumentNode, TypedDocumentNode, GraphQLResult, ErrorCode } from '@dumbql/client';
+import type { DocumentNode, TypedDocumentNode, GraphQLResult, ErrorCode, InferData, InferVars } from '@dumbql/client';
 import type { CacheStore } from '@dumbql/cache';
 import { useClient } from './plugin';
 
@@ -31,13 +31,13 @@ export interface UseReactiveMutationResult<TData, TVariables>
 	$reset: () => void;
 }
 
-export function useReactiveMutation<
-	TData,
-	TVariables extends Record<string, unknown> = Record<string, unknown>,
->(
-	document: DocumentNode | TypedDocumentNode<TData, TVariables>,
-	options?: UseReactiveMutationOptions<TData, TVariables>,
-): UseReactiveMutationResult<TData, TVariables> {
+export function useReactiveMutation<TDocument extends DocumentNode | TypedDocumentNode>(
+	document: TDocument,
+	options?: UseReactiveMutationOptions<InferData<TDocument>, InferVars<TDocument>>,
+): UseReactiveMutationResult<InferData<TDocument>, InferVars<TDocument>> {
+	type TData = InferData<TDocument>;
+	type TVariables = InferVars<TDocument>;
+
 	const client = useClient();
 
 	const state = reactive<UseReactiveMutationState<TData>>({
@@ -50,7 +50,7 @@ export function useReactiveMutation<
 		isError: false,
 		isIdle: true,
 		called: false,
-	});
+	}) as UseReactiveMutationState<TData>;
 
 	let optimisticId: string | undefined;
 
@@ -69,7 +69,7 @@ export function useReactiveMutation<
 		}
 
 		const opts = options?.variables as TVariables | undefined;
-		const result = await client.mutate<TData, TVariables>(document, variables ?? opts);
+		const result = await client.mutate(document, variables ?? opts);
 
 		if (result.status === 'success') {
 			state.data = result.data;
@@ -114,5 +114,5 @@ export function useReactiveMutation<
 		state.called = false;
 	};
 
-	return Object.assign(state, { mutate, $reset });
+	return Object.assign(state, { mutate, $reset }) as UseReactiveMutationResult<TData, TVariables>;
 }

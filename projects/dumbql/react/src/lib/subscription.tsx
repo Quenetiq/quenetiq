@@ -1,27 +1,27 @@
 import { type ReactNode } from 'react';
 import { useSubscription, type UseSubscriptionOptions, type UseSubscriptionResult } from './use-subscription';
-import type { DocumentNode, TypedDocumentNode } from '@dumbql/client';
+import type { DocumentNode, TypedDocumentNode, InferData } from '@dumbql/client';
 
-export interface SubscriptionProps<TData, TVariables extends Record<string, unknown>> {
-  document: DocumentNode | TypedDocumentNode<TData, TVariables>;
+export interface SubscriptionProps<TDocument extends DocumentNode | TypedDocumentNode> {
+  document: TDocument;
   variables?: Record<string, unknown>;
   wsEndpoint?: string;
   shouldSubscribe?: boolean;
-  children: (result: UseSubscriptionResult<TData>) => ReactNode;
+  children: (result: UseSubscriptionResult<InferData<TDocument>>) => ReactNode;
 }
 
-export function Subscription<TData, TVariables extends Record<string, unknown> = Record<string, unknown>>({
+export function Subscription<TDocument extends DocumentNode | TypedDocumentNode>({
   document,
   variables,
   wsEndpoint,
   shouldSubscribe,
   children,
-}: SubscriptionProps<TData, TVariables>): ReactNode {
-  const options: UseSubscriptionOptions<TData> = {
+}: SubscriptionProps<TDocument>): ReactNode {
+  const options: UseSubscriptionOptions<InferData<TDocument>> = {
     variables,
     wsEndpoint,
     shouldSubscribe,
   };
-  const result = useSubscription<TData, TVariables>(document, options);
+  const result = useSubscription(document, options);
   return children(result);
 }

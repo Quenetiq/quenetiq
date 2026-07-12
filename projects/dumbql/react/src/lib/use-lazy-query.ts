@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import type { DocumentNode, TypedDocumentNode, GraphQLResult, ErrorCode, FetchPolicy } from '@dumbql/client';
+import type { DocumentNode, TypedDocumentNode, GraphQLResult, ErrorCode, FetchPolicy, InferData, InferVars } from '@dumbql/client';
 import { useClient } from './provider';
 
 export interface UseLazyQueryOptions<TData, TVariables> {
@@ -9,7 +9,7 @@ export interface UseLazyQueryOptions<TData, TVariables> {
 	onError?: (error: string, errorCode?: ErrorCode) => void;
 }
 
-export interface UseLazyQueryResult<TData, TVariables extends Record<string, unknown>> {
+export interface UseLazyQueryResult<TData, TVariables> {
 	data: TData | null;
 	loading: boolean;
 	error: string | null;
@@ -18,13 +18,13 @@ export interface UseLazyQueryResult<TData, TVariables extends Record<string, unk
 	execute: (vars?: TVariables) => Promise<GraphQLResult<TData>>;
 }
 
-export function useLazyQuery<
-	TData,
-	TVariables extends Record<string, unknown> = Record<string, unknown>,
->(
-	document: DocumentNode | TypedDocumentNode<TData, TVariables>,
-	options?: UseLazyQueryOptions<TData, TVariables>,
-): UseLazyQueryResult<TData, TVariables> {
+export function useLazyQuery<TDocument extends DocumentNode | TypedDocumentNode>(
+	document: TDocument,
+	options?: UseLazyQueryOptions<InferData<TDocument>, InferVars<TDocument>>,
+): UseLazyQueryResult<InferData<TDocument>, InferVars<TDocument>> {
+	type TData = InferData<TDocument>;
+	type TVariables = InferVars<TDocument>;
+
 	const client = useClient();
 
 	const onCompletedRef = useRef(options?.onCompleted);
@@ -41,7 +41,7 @@ export function useLazyQuery<
 			setLoading(true);
 			setCalled(true);
 
-			const res = await client.query<TData, TVariables>(
+			const res = await client.query(
 				document,
 				vars ?? options?.variables,
 				undefined,

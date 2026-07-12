@@ -14,27 +14,33 @@ export interface GraphqlRequestContext {
 	method?: 'GET' | 'POST';
 	/** Controls how the cache middleware handles cached data. */
 	fetchPolicy?: FetchPolicy;
+	/** AbortSignal to cancel the request. */
+	signal?: AbortSignal;
 }
 
-export type GraphqlMiddlewareNext = (request: GraphqlRequestContext) => Promise<GraphQLResult<unknown>>;
+export type GraphqlMiddlewareNext<T = unknown> = (request: GraphqlRequestContext) => Promise<GraphQLResult<T>>;
 
-export type GraphqlMiddleware = (
+export type GraphqlMiddleware<T = unknown> = (
 	request: GraphqlRequestContext,
-	next: GraphqlMiddlewareNext,
-) => Promise<GraphQLResult<unknown>>;
+	next: GraphqlMiddlewareNext<T>,
+) => Promise<GraphQLResult<T>>;
 
-export function applyMiddleware(
+export type TypedPipeline = <T>(request: GraphqlRequestContext) => Promise<GraphQLResult<T>>;
+
+export function buildTypedPipeline(
 	middleware: GraphqlMiddleware[],
-	final: (request: GraphqlRequestContext) => Promise<GraphQLResult<unknown>>,
-): (request: GraphqlRequestContext) => Promise<GraphQLResult<unknown>> {
-	if (middleware.length === 0) return final;
+	final: GraphqlMiddlewareNext,
+): TypedPipeline {
+	if (middleware.length === 0) {
+		return final as TypedPipeline;
+	}
 
 	const chain = middleware.reduceRight<GraphqlMiddlewareNext>(
 		(next, mw) => (req) => mw(req, next),
 		final as GraphqlMiddlewareNext,
 	);
 
-	return (request) => chain(request);
+	return ((request: GraphqlRequestContext) => chain(request)) as TypedPipeline;
 }
 
 export function authMiddleware(token: string, headerName = 'Authorization'): GraphqlMiddleware {

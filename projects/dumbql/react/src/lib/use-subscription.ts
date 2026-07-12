@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import type { DocumentNode, TypedDocumentNode, ErrorCode } from '@dumbql/client';
+import type { DocumentNode, TypedDocumentNode, ErrorCode, InferData } from '@dumbql/client';
 import { print } from '@dumbql/client';
 import { useClient } from './provider';
 
@@ -28,10 +28,11 @@ interface GraphqlWsMessage<T = Record<string, unknown>> {
 	payload?: { data?: T; errors?: { message: string }[] };
 }
 
-export function useSubscription<TData, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-	document: DocumentNode | TypedDocumentNode<TData, TVariables>,
-	options?: UseSubscriptionOptions<TData>,
-): UseSubscriptionResult<TData> {
+export function useSubscription<TDocument extends DocumentNode | TypedDocumentNode>(
+	document: TDocument,
+	options?: UseSubscriptionOptions<InferData<TDocument>>,
+): UseSubscriptionResult<InferData<TDocument>> {
+	type TData = InferData<TDocument>;
 	const client = useClient();
 	const variables = options?.variables;
 	const [data, setData] = useState<TData | null>(null);

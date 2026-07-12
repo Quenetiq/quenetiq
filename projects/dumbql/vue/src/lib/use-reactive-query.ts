@@ -1,5 +1,5 @@
 import { reactive, onMounted, onUnmounted, watch, type UnwrapNestedRefs } from 'vue';
-import type { DocumentNode, TypedDocumentNode, GraphQLResult, ErrorCode } from '@dumbql/client';
+import type { DocumentNode, TypedDocumentNode, GraphQLResult, ErrorCode, InferData, InferVars } from '@dumbql/client';
 import { useClient } from './plugin';
 
 export interface UseReactiveQueryOptions<TData, TVariables> {
@@ -29,20 +29,20 @@ export interface UseReactiveQueryState<TData> {
 	called: boolean;
 }
 
-export interface UseReactiveQueryResult<TData, TVariables extends Record<string, unknown>>
+export interface UseReactiveQueryResult<TData, TVariables>
 	extends UnwrapNestedRefs<UseReactiveQueryState<TData>> {
 	refetch: (vars?: TVariables) => Promise<GraphQLResult<TData>>;
 	fetchMore: (merge: (prev: TData, next: TData) => TData, vars?: TVariables) => Promise<GraphQLResult<TData>>;
 	$reset: () => void;
 }
 
-export function useReactiveQuery<
-	TData,
-	TVariables extends Record<string, unknown> = Record<string, unknown>,
->(
-	document: DocumentNode | TypedDocumentNode<TData, TVariables>,
-	options?: UseReactiveQueryOptions<TData, TVariables>,
-): UseReactiveQueryResult<TData, TVariables> {
+export function useReactiveQuery<TDocument extends DocumentNode | TypedDocumentNode>(
+	document: TDocument,
+	options?: UseReactiveQueryOptions<InferData<TDocument>, InferVars<TDocument>>,
+): UseReactiveQueryResult<InferData<TDocument>, InferVars<TDocument>> {
+	type TData = InferData<TDocument>;
+	type TVariables = InferVars<TDocument>;
+
 	const client = useClient();
 	const variables = options?.variables;
 	const pollInterval = options?.pollInterval;
@@ -63,7 +63,7 @@ export function useReactiveQuery<
 		isIdle: skip,
 		isRefetching: false,
 		called: false,
-	});
+	}) as UseReactiveQueryState<TData>;
 
 	const updateState = (result: GraphQLResult<TData>): void => {
 		state.previousData = state.data;
@@ -103,7 +103,7 @@ export function useReactiveQuery<
 		state.called = true;
 		lastVars = vars;
 
-		const result = await client.query<TData, TVariables>(document, vars ?? variables);
+		const result = await client.query(document, vars ?? variables);
 		if (cancelled) return;
 		updateState(result);
 	};
@@ -111,7 +111,7 @@ export function useReactiveQuery<
 	const refetch = async (vars?: TVariables) => {
 		state.status = 'refetching';
 		state.isRefetching = true;
-		const result = await client.refetch<TData, TVariables>(document, (vars ?? lastVars) as TVariables);
+		const result = await client.refetch(document, (vars ?? lastVars) as InferVars<TDocument>);
 		updateState(result);
 		return result;
 	};
@@ -119,7 +119,7 @@ export function useReactiveQuery<
 	const fetchMore = async (merge: (prev: TData, next: TData) => TData, vars?: TVariables) => {
 		state.status = 'refetching';
 		state.isRefetching = true;
-		const result = await client.query<TData, TVariables>(document, vars ?? lastVars);
+		const result = await client.query(document, vars ?? lastVars);
 		if (result.status === 'success' && state.data) {
 			state.data = merge(state.data, result.data);
 		}
@@ -148,7 +148,7 @@ export function useReactiveQuery<
 		}
 		if (pollInterval && pollInterval > 0 && !skip) {
 			pollTimer = setInterval(async () => {
-				const result = await client.query<TData, TVariables>(document, variables);
+				const result = await client.query(document, variables);
 				updateState(result);
 			}, pollInterval);
 		}
@@ -169,5 +169,5 @@ export function useReactiveQuery<
 		}
 	});
 
-	return Object.assign(state, { refetch, fetchMore, $reset });
+	return Object.assign(state, { refetch, fetchMore, $reset }) as UseReactiveQueryResult<TData, TVariables>;
 }

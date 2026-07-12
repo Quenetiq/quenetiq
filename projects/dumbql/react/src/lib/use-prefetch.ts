@@ -1,13 +1,13 @@
 import { useCallback } from 'react';
-import type { DocumentNode, TypedDocumentNode, GraphQLResult } from '@dumbql/client';
+import type { DocumentNode, TypedDocumentNode, GraphQLResult, InferData, InferVars } from '@dumbql/client';
 import { useClient } from './provider';
 
-export function usePrefetch<TData, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-	document: DocumentNode | TypedDocumentNode<TData, TVariables>,
-): (variables?: TVariables) => Promise<GraphQLResult<TData>> {
+export function usePrefetch<TDocument extends DocumentNode | TypedDocumentNode>(
+	document: TDocument,
+): (variables?: InferVars<TDocument>) => Promise<GraphQLResult<InferData<TDocument>>> {
 	const client = useClient();
 	return useCallback(
-		(variables?: TVariables) => client.query<TData, TVariables>(document, variables),
+		(variables?: InferVars<TDocument>) => client.query(document, variables),
 		[client, document],
 	);
 }

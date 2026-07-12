@@ -1,4 +1,4 @@
-export { DumbqlClient, createClient, type ClientConfig as DumbqlClientConfig, type QueryOptions } from './lib/client';
+export { DumbqlClient, createClient, type ClientConfig as DumbqlClientConfig, type QueryOptions, type InferData, type InferVars } from './lib/client';
 export type { GraphQLResult, GraphQLResponse, GraphQLError, NetworkErrorInfo, ErrorCode } from './lib/result';
 export { gql, type DocumentNode, type TypedDocumentNode, print } from './lib/gql';
 export {
@@ -12,7 +12,7 @@ export {
 	getNetworkError,
 } from './lib/helpers';
 export {
-	applyMiddleware,
+	buildTypedPipeline,
 	authMiddleware,
 	loggingMiddleware,
 	type GraphqlRequestContext,

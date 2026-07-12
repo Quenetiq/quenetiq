@@ -1,5 +1,5 @@
 import { reactive, onMounted, onUnmounted, type UnwrapNestedRefs } from 'vue';
-import type { DocumentNode, TypedDocumentNode, ErrorCode } from '@dumbql/client';
+import type { DocumentNode, TypedDocumentNode, ErrorCode, InferData } from '@dumbql/client';
 import { print } from '@dumbql/client';
 import { useClient } from './plugin';
 
@@ -38,13 +38,11 @@ export interface UseReactiveSubscriptionResult<TData>
 	$reset: () => void;
 }
 
-export function useReactiveSubscription<
-	TData,
-	TVariables extends Record<string, unknown> = Record<string, unknown>,
->(
-	document: DocumentNode | TypedDocumentNode<TData, TVariables>,
-	options?: UseReactiveSubscriptionOptions<TData>,
-): UseReactiveSubscriptionResult<TData> {
+export function useReactiveSubscription<TDocument extends DocumentNode | TypedDocumentNode>(
+	document: TDocument,
+	options?: UseReactiveSubscriptionOptions<InferData<TDocument>>,
+): UseReactiveSubscriptionResult<InferData<TDocument>> {
+	type TData = InferData<TDocument>;
 	const client = useClient();
 	const variables = options?.variables;
 
@@ -58,7 +56,7 @@ export function useReactiveSubscription<
 		isError: false,
 		isComplete: false,
 		isIdle: true,
-	});
+	}) as UseReactiveSubscriptionState<TData>;
 
 	const wsEndpoint = options?.wsEndpoint ?? client.endpoint.replace(/^http/, 'ws');
 	const shouldSubscribe = options?.shouldSubscribe ?? true;
@@ -187,5 +185,5 @@ export function useReactiveSubscription<
 		}
 	});
 
-	return Object.assign(state, { $reset });
+	return Object.assign(state, { $reset }) as UseReactiveSubscriptionResult<TData>;
 }

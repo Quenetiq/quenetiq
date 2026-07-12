@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { DocumentNode, TypedDocumentNode, GraphQLResult, ErrorCode, FetchPolicy } from '@dumbql/client';
+import type { DocumentNode, TypedDocumentNode, GraphQLResult, ErrorCode, FetchPolicy, InferData, InferVars } from '@dumbql/client';
 import { useClient } from './provider';
 
 export type { FetchPolicy };
@@ -15,7 +15,7 @@ export interface UseQueryOptions<TData, TVariables> {
 
 export type NetworkStatus = 'loading' | 'ready' | 'error' | 'refetching' | 'poll';
 
-export interface UseQueryResult<TData, TVariables extends Record<string, unknown>> {
+export interface UseQueryResult<TData, TVariables> {
 	data: TData | null;
 	loading: boolean;
 	error: string | null;
@@ -26,10 +26,13 @@ export interface UseQueryResult<TData, TVariables extends Record<string, unknown
 	fetchMore: (merge: (prev: TData, next: TData) => TData, vars?: TVariables) => Promise<GraphQLResult<TData>>;
 }
 
-export function useQuery<TData, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-	document: DocumentNode | TypedDocumentNode<TData, TVariables>,
-	options?: UseQueryOptions<TData, TVariables>,
-): UseQueryResult<TData, TVariables> {
+export function useQuery<TDocument extends DocumentNode | TypedDocumentNode>(
+	document: TDocument,
+	options?: UseQueryOptions<InferData<TDocument>, InferVars<TDocument>>,
+): UseQueryResult<InferData<TDocument>, InferVars<TDocument>> {
+	type TData = InferData<TDocument>;
+	type TVariables = InferVars<TDocument>;
+
 	const client = useClient();
 	const variables = options?.variables;
 	const pollInterval = options?.pollInterval;
@@ -55,7 +58,7 @@ export function useQuery<TData, TVariables extends Record<string, unknown> = Rec
 		setCalled(true);
 
 		client
-			.query<TData, TVariables>(document, variables, undefined, { fetchPolicy })
+			.query(document, variables, undefined, { fetchPolicy })
 			.then((res: GraphQLResult<TData>) => {
 				if (cancelled) return;
 				setResult(res);
@@ -79,7 +82,7 @@ export function useQuery<TData, TVariables extends Record<string, unknown> = Rec
 
 		const id = setInterval(async () => {
 			setNetworkStatus('poll');
-			const res = await client.query<TData, TVariables>(document, variables);
+			const res = await client.query(document, variables);
 			if (res.status === 'success') {
 				setResult(res);
 				setNetworkStatus('ready');
@@ -96,7 +99,7 @@ export function useQuery<TData, TVariables extends Record<string, unknown> = Rec
 	const refetch = useCallback(
 		async (vars?: TVariables) => {
 			setNetworkStatus('refetching');
-			const res = await client.refetch<TData, TVariables>(document, (vars ?? variables) as TVariables);
+			const res = await client.refetch(document, (vars ?? variables) as InferVars<TDocument>);
 			setResult(res);
 			setLoading(false);
 			if (res.status === 'success') {
@@ -114,7 +117,7 @@ export function useQuery<TData, TVariables extends Record<string, unknown> = Rec
 	const fetchMore = useCallback(
 		async (merge: (prev: TData, next: TData) => TData, vars?: TVariables) => {
 			setNetworkStatus('refetching');
-			const res = await client.query<TData, TVariables>(document, vars ?? variables);
+			const res = await client.query(document, vars ?? variables);
 			if (res.status === 'success' && result?.status === 'success' && result.data) {
 				const merged = merge(result.data, res.data);
 				setResult({ ...res, data: merged });

@@ -1,5 +1,5 @@
 import { reactive, onMounted, onUnmounted, type UnwrapNestedRefs } from 'vue';
-import type { DocumentNode, TypedDocumentNode, ErrorCode } from '@dumbql/client';
+import type { DocumentNode, TypedDocumentNode, ErrorCode, InferData, InferVars } from '@dumbql/client';
 import { print } from '@dumbql/client';
 import { useClient } from './plugin';
 
@@ -27,13 +27,11 @@ export interface UseReactiveLiveQueryResult<TData>
 	$reset: () => void;
 }
 
-export function useReactiveLiveQuery<
-	TData,
-	TVariables extends Record<string, unknown> = Record<string, unknown>,
->(
-	document: DocumentNode | TypedDocumentNode<TData, TVariables>,
-	options?: UseReactiveLiveQueryOptions<TData>,
-): UseReactiveLiveQueryResult<TData> {
+export function useReactiveLiveQuery<TDocument extends DocumentNode | TypedDocumentNode>(
+	document: TDocument,
+	options?: UseReactiveLiveQueryOptions<InferData<TDocument>>,
+): UseReactiveLiveQueryResult<InferData<TDocument>> {
+	type TData = InferData<TDocument>;
 	const client = useClient();
 	const variables = options?.variables;
 
@@ -46,7 +44,7 @@ export function useReactiveLiveQuery<
 		isLive: false,
 		isError: false,
 		isIdle: true,
-	});
+	}) as UseReactiveLiveQueryState<TData>;
 
 	const wsEndpoint = options?.wsEndpoint ?? client.endpoint.replace(/^http/, 'ws');
 	const shouldSubscribe = options?.shouldSubscribe ?? true;
@@ -72,7 +70,7 @@ export function useReactiveLiveQuery<
 		state.isLoading = true;
 		state.isIdle = false;
 
-		const result = await client.query<TData, TVariables>(document, variables as TVariables | undefined);
+		const result = await client.query(document, variables as InferVars<TDocument>);
 
 		if (cancelled) return;
 		state.isLoading = false;
@@ -172,5 +170,5 @@ export function useReactiveLiveQuery<
 		}
 	});
 
-	return Object.assign(state, { $reset });
+	return Object.assign(state, { $reset }) as UseReactiveLiveQueryResult<TData>;
 }

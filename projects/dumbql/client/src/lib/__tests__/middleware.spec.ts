@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
-	applyMiddleware,
+	buildTypedPipeline,
 	authMiddleware,
 	devAuthMiddleware,
 	loggingMiddleware,
@@ -23,10 +23,10 @@ function okResult<T = unknown>(data: T): GraphQLResult<T> {
 	return { status: 'success', data };
 }
 
-describe('applyMiddleware', () => {
+describe('buildTypedPipeline', () => {
 	it('returns final function when middleware list is empty', () => {
 		const final = vi.fn().mockResolvedValue(okResult({ ok: true }));
-		const composed = applyMiddleware([], final);
+		const composed = buildTypedPipeline([], final);
 		expect(composed).toBe(final);
 	});
 
@@ -45,7 +45,7 @@ describe('applyMiddleware', () => {
 			return okResult({ ok: true });
 		};
 
-		const composed = applyMiddleware([mw1, mw2], final);
+		const composed = buildTypedPipeline([mw1, mw2], final);
 		await composed(createRequest());
 
 		expect(order).toEqual([1, 2, 3]);
@@ -57,7 +57,7 @@ describe('applyMiddleware', () => {
 		};
 		const final = vi.fn().mockResolvedValue(okResult({ ok: true }));
 
-		const composed = applyMiddleware([mw], final);
+		const composed = buildTypedPipeline([mw], final);
 		await composed(createRequest());
 
 		expect(final).toHaveBeenCalledWith(
@@ -70,7 +70,7 @@ describe('applyMiddleware', () => {
 			return okResult({ cached: true });
 		};
 		const final = vi.fn();
-		const composed = applyMiddleware([mw], final);
+		const composed = buildTypedPipeline([mw], final);
 
 		const result = await composed(createRequest());
 
@@ -82,7 +82,7 @@ describe('applyMiddleware', () => {
 		const mw: GraphqlMiddleware = async (_req, _next) => {
 			throw new Error('middleware error');
 		};
-		const composed = applyMiddleware([mw], async () => okResult({ ok: true }));
+		const composed = buildTypedPipeline([mw], async () => okResult({ ok: true }));
 
 		await expect(composed(createRequest())).rejects.toThrow('middleware error');
 	});

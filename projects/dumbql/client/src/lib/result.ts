@@ -27,3 +27,19 @@ export interface GraphQLResponse<T> {
 	data?: T;
 	errors?: { message: string; extensions?: Record<string, unknown> }[];
 }
+
+export function resultError<T>(
+	error: string,
+	errorCode?: ErrorCode,
+): GraphQLResult<T> {
+	return { status: 'error', error, errorCode };
+}
+
+export function resultSuccess<T>(data: T): GraphQLResult<T> {
+	return { status: 'success', data };
+}
+
+export function hasNextPage(response: unknown): boolean {
+	if (typeof response !== 'object' || response === null || !('hasNext' in response)) return false;
+	return response['hasNext'] === true;
+}

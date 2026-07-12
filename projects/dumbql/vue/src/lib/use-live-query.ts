@@ -1,10 +1,10 @@
 import { ref, onMounted, onUnmounted, type Ref } from 'vue';
-import type { DocumentNode, TypedDocumentNode, ErrorCode } from '@dumbql/client';
+import type { DocumentNode, TypedDocumentNode, ErrorCode, InferData, InferVars } from '@dumbql/client';
 import { print } from '@dumbql/client';
 import { useClient } from './plugin';
 
-export interface UseLiveQueryOptions<TData> {
-	variables?: Record<string, unknown>;
+export interface UseLiveQueryOptions<TData, TVariables = Record<string, unknown>> {
+	variables?: TVariables;
 	wsEndpoint?: string;
 	shouldSubscribe?: boolean;
 	onCompleted?: (data: TData) => void;
@@ -18,10 +18,12 @@ export interface UseLiveQueryResult<TData> {
 	errorCode: Ref<ErrorCode | undefined>;
 }
 
-export function useLiveQuery<TData, TVariables extends Record<string, unknown> = Record<string, unknown>>(
-	document: DocumentNode | TypedDocumentNode<TData, TVariables>,
-	options?: UseLiveQueryOptions<TData>,
-): UseLiveQueryResult<TData> {
+export function useLiveQuery<TDocument extends DocumentNode | TypedDocumentNode>(
+	document: TDocument,
+	options?: UseLiveQueryOptions<InferData<TDocument>, InferVars<TDocument>>,
+): UseLiveQueryResult<InferData<TDocument>> {
+	type TData = InferData<TDocument>;
+
 	const client = useClient();
 	const variables = options?.variables;
 	const data = ref<TData | null>(null) as Ref<TData | null>;
@@ -40,7 +42,7 @@ export function useLiveQuery<TData, TVariables extends Record<string, unknown> =
 	onMounted(async () => {
 		loading.value = true;
 
-		const result = await client.query<TData, TVariables>(document, variables as TVariables | undefined);
+		const result = await client.query(document, variables);
 
 		if (cancelled) return;
 		loading.value = false;
