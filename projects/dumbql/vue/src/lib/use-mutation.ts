@@ -1,14 +1,53 @@
 import { ref, type Ref } from 'vue';
 import type { DocumentNode, TypedDocumentNode, GraphQLResult, ErrorCode, InferData, InferVars } from '@dumbql/client';
-import type { CacheStore } from '@dumbql/cache';
+import type { CacheStore, CacheEntity, OptimisticUpdate } from '@dumbql/cache';
 import { useClient } from './plugin';
+
+function extractEntitiesFromData(data: unknown): { __typename: string; id: string }[] {
+	const entities: { __typename: string; id: string }[] = [];
+	if (!data || typeof data !== 'object') return entities;
+	if (Array.isArray(data)) {
+		for (const item of data) entities.push(...extractEntitiesFromData(item));
+		return entities;
+	}
+	const obj = data as Record<string, unknown>;
+	if (typeof obj['__typename'] === 'string' && (typeof obj['id'] === 'string' || typeof obj['id'] === 'number')) {
+		entities.push({ __typename: obj['__typename'] as string, id: String(obj['id']) });
+	}
+	for (const v of Object.values(obj)) {
+		if (v && typeof v === 'object') entities.push(...extractEntitiesFromData(v));
+	}
+	return entities;
+}
+
+function buildOptimisticUpdate(data: unknown, id: string): OptimisticUpdate {
+	const entities = extractEntitiesFromData(data);
+	return {
+		id,
+		apply: (cache: Map<string, CacheEntity>) => {
+			for (const e of entities) {
+				const key = `${e.__typename}:${e.id}`;
+				const existing = cache.get(key);
+				if (existing) {
+					cache.set(key, { ...existing, ...e });
+				} else {
+					cache.set(key, e);
+				}
+			}
+		},
+		rollback: () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
+	};
+}
 
 export interface UseMutationOptions<TData, TVariables> {
 	variables?: TVariables;
 	onCompleted?: (data: TData) => void;
 	onError?: (error: string, errorCode?: ErrorCode) => void;
 	update?: (cache: CacheStore, result: GraphQLResult<TData>) => void;
+	/** @deprecated Use optimisticResponse instead. Callback-based optimistic. */
 	optimistic?: (cache: CacheStore) => string;
+	/** Simpler API: pass the expected mutation response to apply optimistic entities. */
+	optimisticResponse?: TData;
 }
 
 export type UseMutationFn<TData, TVariables> = (variables?: TVariables) => Promise<GraphQLResult<TData>>;
@@ -48,6 +87,13 @@ export function useMutation<TDocument extends DocumentNode | TypedDocumentNode>(
 		const cache = client.getCacheService();
 		if (cache && options?.optimistic) {
 			optimisticId = options.optimistic(cache);
+		} else if (cache && options?.optimisticResponse) {
+			try {
+				const id = `optimistic:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+				const update = buildOptimisticUpdate(options.optimisticResponse, id);
+				cache.applyOptimistic(update);
+				optimisticId = id;
+			} catch { /* best-effort */ }
 		}
 
 		const result = await client.mutate(document, variables ?? options?.variables);

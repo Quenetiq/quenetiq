@@ -82,3 +82,103 @@ describe('useMutation optimistic', () => {
     expect(optimistic).not.toHaveBeenCalled();
   });
 });
+
+describe('useMutation optimisticResponse', () => {
+  it('applies optimisticResponse via cache.applyOptimistic', async () => {
+    const cache = {
+      applyOptimistic: vi.fn(),
+      commitOptimistic: vi.fn(),
+      rollbackOptimistic: vi.fn(),
+    } as unknown as CacheStore;
+    const client = new DumbqlClient({ endpoint: '/graphql' });
+    client.mutate = vi.fn().mockResolvedValue({ status: 'success', data: { createUser: { __typename: 'User', id: '1', name: 'Alice' } } });
+
+    const optimisticResponse = { createUser: { __typename: 'User', id: '1', name: 'Optimistic' } };
+    const { result } = renderHook(
+      () => useMutation('mutation { createUser { id name } }' as any, { optimisticResponse }),
+      { wrapper: wrapper(client, cache) },
+    );
+
+    await act(async () => {
+      await result.current.mutate();
+    });
+
+    expect(cache.applyOptimistic).toHaveBeenCalledTimes(1);
+    expect(cache.applyOptimistic).toHaveBeenCalledWith(
+      expect.objectContaining({ id: expect.stringContaining('optimistic:') }),
+    );
+    expect(cache.commitOptimistic).toHaveBeenCalledTimes(1);
+    expect(cache.commitOptimistic).toHaveBeenCalledWith(
+      expect.stringContaining('optimistic:'),
+    );
+  });
+
+  it('rolls back optimisticResponse on error', async () => {
+    const cache = {
+      applyOptimistic: vi.fn(),
+      commitOptimistic: vi.fn(),
+      rollbackOptimistic: vi.fn(),
+    } as unknown as CacheStore;
+    const client = new DumbqlClient({ endpoint: '/graphql' });
+    client.mutate = vi.fn().mockResolvedValue({ status: 'error', error: 'fail', errorCode: 'GRAPHQL_ERROR' });
+
+    const optimisticResponse = { createUser: { __typename: 'User', id: '1', name: 'Optimistic' } };
+    const { result } = renderHook(
+      () => useMutation('mutation { createUser { id name } }' as any, { optimisticResponse }),
+      { wrapper: wrapper(client, cache) },
+    );
+
+    await act(async () => {
+      await result.current.mutate();
+    });
+
+    expect(cache.applyOptimistic).toHaveBeenCalledTimes(1);
+    expect(cache.commitOptimistic).not.toHaveBeenCalled();
+    expect(cache.rollbackOptimistic).toHaveBeenCalledTimes(1);
+    expect(cache.rollbackOptimistic).toHaveBeenCalledWith(
+      expect.stringContaining('optimistic:'),
+    );
+  });
+
+  it('does not apply optimisticResponse when no cache', async () => {
+    const client = new DumbqlClient({ endpoint: '/graphql' });
+    client.mutate = vi.fn().mockResolvedValue({ status: 'success', data: { x: 1 } });
+
+    const optimisticResponse = { createUser: { __typename: 'User', id: '1', name: 'Optimistic' } };
+    const { result } = renderHook(
+      () => useMutation('mutation { x }' as any, { optimisticResponse }),
+      { wrapper: wrapper(client) },
+    );
+
+    await act(async () => {
+      await result.current.mutate();
+    });
+
+    expect(result.current.data).toEqual({ x: 1 });
+  });
+
+  it('prefers callback optimistic over optimisticResponse', async () => {
+    const cache = {
+      applyOptimistic: vi.fn().mockReturnValue('opt-from-response'),
+      commitOptimistic: vi.fn(),
+      rollbackOptimistic: vi.fn(),
+    } as unknown as CacheStore;
+    const client = new DumbqlClient({ endpoint: '/graphql' });
+    client.mutate = vi.fn().mockResolvedValue({ status: 'success', data: { x: 1 } });
+
+    const optimistic = vi.fn().mockReturnValue('opt-callback');
+    const optimisticResponse = { createUser: { __typename: 'User', id: '1', name: 'Optimistic' } };
+    const { result } = renderHook(
+      () => useMutation('mutation { x }' as any, { optimistic, optimisticResponse }),
+      { wrapper: wrapper(client, cache) },
+    );
+
+    await act(async () => {
+      await result.current.mutate();
+    });
+
+    expect(optimistic).toHaveBeenCalledWith(cache);
+    expect(cache.applyOptimistic).not.toHaveBeenCalled();
+    expect(cache.commitOptimistic).toHaveBeenCalledWith('opt-callback');
+  });
+});

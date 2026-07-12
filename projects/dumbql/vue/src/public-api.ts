@@ -16,6 +16,7 @@ export { NullOverlay } from './lib/null-overlay';
 
 export { useFragment, type UseFragmentResult } from './lib/use-fragment';
 export { usePrefetch } from './lib/use-prefetch';
+export { useInfiniteQuery, type UseInfiniteQueryOptions, type UseInfiniteQueryResult } from './lib/use-infinite-query';
 export { RateLimitGate, type RateLimitGateProps } from './lib/rate-limit-gate';
 export { useVal, type VueVal } from './lib/use-val';
 export { registerDirectives } from './lib/directives';

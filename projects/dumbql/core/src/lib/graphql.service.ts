@@ -150,6 +150,57 @@ export class GraphqlService {
 		return this.executeStreaming(queryStr, variables, endpoint) as Observable<GraphQLResult<TResponse>>;
 	}
 
+	/**
+	 * Execute a query with `@defer`/`@stream` support.
+	 * Auto-merges incremental patches into a single result as they arrive.
+	 * Each emission is the full merged result up to that point.
+	 */
+	queryDefer<TResponse, TVariables extends Record<string, unknown> = Record<string, unknown>>(
+		document: TypedQueryString<TResponse, TVariables> | DocumentNode | TypedDocumentNode<TResponse, TVariables>,
+		variables?: TVariables,
+		endpoint?: string,
+	): Observable<GraphQLResult<TResponse>> {
+		const queryStr = typeof document === 'string' ? document : print(document);
+		return new Observable<GraphQLResult<TResponse>>((subscriber) => {
+			let mergedData: unknown = undefined;
+
+			const sub = this.executeStreamingRaw(queryStr, variables, endpoint).subscribe({
+				next: (raw) => {
+					if ('data' in raw && !('incremental' in raw)) {
+						mergedData = raw['data'];
+						subscriber.next({ status: 'success', data: mergedData as TResponse });
+						return;
+					}
+
+					if ('incremental' in raw) {
+						const incrementals = raw['incremental'];
+						if (Array.isArray(incrementals)) {
+							for (const patch of incrementals) {
+								if (patch && typeof patch === 'object' && 'path' in patch && 'data' in patch) {
+									const path = (patch as Record<string, unknown>)['path'] as (string | number)[];
+									const patchData = (patch as Record<string, unknown>)['data'];
+									mergedData = applyIncrementalPatch(mergedData, path, patchData);
+								}
+							}
+						}
+						subscriber.next({ status: 'success', data: mergedData as TResponse });
+
+						if (raw['hasNext'] === false) {
+							subscriber.complete();
+						}
+						return;
+					}
+
+					subscriber.next({ status: 'success', data: raw as TResponse });
+				},
+				error: (err) => subscriber.error(err),
+				complete: () => subscriber.complete(),
+			});
+
+			return () => sub.unsubscribe();
+		});
+	}
+
 	mutate<TResponse, TVariables extends Record<string, unknown> = Record<string, unknown>>(
 		document: TypedQueryString<TResponse, TVariables> | DocumentNode | TypedDocumentNode<TResponse, TVariables>,
 		variables?: TVariables,
@@ -495,6 +546,115 @@ export class GraphqlService {
 	private parseBoundary(contentType: string): string | null {
 		const match = contentType.match(/boundary=(?:"([^"]+)"|([^;\s]+))/i);
 		return match ? (match[1] ?? match[2]) : null;
+	}
+
+	/**
+	 * Execute streaming query, yielding raw JSON objects (no toResult processing).
+	 * Used by queryDefer for @defer/@stream incremental patch merging.
+	 */
+	private executeStreamingRaw(
+		query: string,
+		variables?: Record<string, unknown>,
+		endpoint?: string,
+	): Observable<Record<string, unknown>> {
+		return new Observable<Record<string, unknown>>((subscriber) => {
+			const url = endpoint || this._endpoint;
+			const headers = this.getHeaderMap();
+			const controller = new AbortController();
+
+			(async () => {
+				try {
+					const response = await fetch(url, {
+						method: 'POST',
+						headers: {
+							...headers,
+							'Content-Type': 'application/json',
+							Accept: 'multipart/mixed;boundary=graphql;defer=stream',
+						},
+						body: JSON.stringify({ query, variables }),
+						signal: controller.signal,
+					});
+
+					if (!response.ok) {
+						subscriber.complete();
+						return;
+					}
+
+					const contentType = response.headers.get('content-type') ?? '';
+					const reader = response.body?.getReader();
+					if (!reader) {
+						subscriber.complete();
+						return;
+					}
+
+					if (contentType.includes('multipart/mixed')) {
+						const boundary = this.parseBoundary(contentType);
+						if (!boundary) {
+							subscriber.complete();
+							return;
+						}
+						await this.readMultipartRaw(reader, boundary, subscriber);
+					} else {
+						const chunks: Uint8Array[] = [];
+						let done = false;
+						while (!done) {
+							const { done: d, value } = await reader.read();
+							done = d;
+							if (value) chunks.push(value);
+						}
+						const text = new TextDecoder().decode(this.concatBuffers(chunks));
+						subscriber.next(JSON.parse(text) as Record<string, unknown>);
+						subscriber.complete();
+					}
+				} catch (err) {
+					if (err instanceof DOMException && err.name === 'AbortError') return;
+					subscriber.complete();
+				}
+			})();
+
+			return () => controller.abort();
+		});
+	}
+
+	private async readMultipartRaw(
+		reader: ReadableStreamDefaultReader<Uint8Array>,
+		boundary: string,
+		subscriber: Subscriber<Record<string, unknown>>,
+	): Promise<void> {
+		const decoder = new TextDecoder();
+		let buffer = '';
+		let done = false;
+
+		while (!done) {
+			const { done: d, value } = await reader.read();
+			done = d;
+			if (value) buffer += decoder.decode(value, { stream: !done });
+
+			const parts = buffer.split(`--${boundary}`);
+			if (parts.length > 1) {
+				buffer = parts.pop() ?? '';
+				for (const part of parts) {
+					const trimmed = part.trim();
+					if (!trimmed || trimmed === '--') continue;
+					const jsonStart = trimmed.indexOf('\n\n');
+					if (jsonStart === -1) continue;
+					const jsonStr = trimmed.slice(jsonStart + 2).trim();
+					if (!jsonStr) continue;
+					try {
+						const raw = JSON.parse(jsonStr) as Record<string, unknown>;
+						subscriber.next(raw);
+						if (raw['hasNext'] === false) {
+							subscriber.complete();
+							return;
+						}
+					} catch {
+						// skip malformed chunks
+					}
+				}
+			}
+		}
+
+		subscriber.complete();
 	}
 
 	private async readMultipartStream(
@@ -896,4 +1056,31 @@ function replaceFiles(value: unknown, files: FileEntry[], segments: string[]): u
 		return result;
 	}
 	return value;
+}
+
+function applyIncrementalPatch(data: unknown, path: (string | number)[], patchData: unknown): unknown {
+	if (path.length === 0) return patchData;
+
+	if (!data || typeof data !== 'object') return data;
+
+	if (Array.isArray(data)) {
+		const result = [...data];
+		const [head, ...rest] = path;
+		if (typeof head === 'number') {
+			if (head >= result.length) {
+				while (result.length < head) result.push(null);
+				result.push(applyIncrementalPatch(undefined, rest, patchData));
+			} else {
+				result[head] = applyIncrementalPatch(result[head], rest, patchData);
+			}
+		}
+		return result;
+	}
+
+	const obj = { ...(data as Record<string, unknown>) };
+	const [head, ...rest] = path;
+	if (typeof head === 'string') {
+		obj[head] = applyIncrementalPatch(obj[head], rest, patchData);
+	}
+	return obj;
 }

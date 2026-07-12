@@ -19,8 +19,7 @@ export interface RetryExchangeConfig {
 
 export interface OnErrorServiceConfig {
 	readonly provide: AbstractType<unknown> | InjectionToken<unknown>;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	readonly use: (service: any, error: string) => Observable<unknown>;
+	readonly use: (service: unknown, error: string) => Observable<unknown>;
 }
 
 export interface GraphqlCoreConfig {

@@ -12,9 +12,33 @@ export type MutateEndpointParam<Yaml extends EndpointsYaml | undefined = undefin
 		? InferEndpointNames<Yaml>
 		: string | Signal<string>;
 
-export interface MutateOptions {
-	/** Apply optimistic cache update. Return a unique ID for the update. */
+interface EntityRef {
+	__typename: string;
+	id: string;
+}
+
+function extractEntitiesFromData(data: unknown): EntityRef[] {
+	const entities: EntityRef[] = [];
+	if (!data || typeof data !== 'object') return entities;
+	if (Array.isArray(data)) {
+		for (const item of data) entities.push(...extractEntitiesFromData(item));
+		return entities;
+	}
+	const obj = data as Record<string, unknown>;
+	if (typeof obj['__typename'] === 'string' && (typeof obj['id'] === 'string' || typeof obj['id'] === 'number')) {
+		entities.push({ __typename: obj['__typename'] as string, id: String(obj['id']) });
+	}
+	for (const v of Object.values(obj)) {
+		if (v && typeof v === 'object') entities.push(...extractEntitiesFromData(v));
+	}
+	return entities;
+}
+
+export interface MutateOptions<TData = unknown> {
+	/** @deprecated Use optimisticResponse instead. Callback-based optimistic. */
 	readonly optimistic?: (cache: GraphqlCacheLike) => string;
+	/** Simpler API: pass the expected mutation response to apply optimistic entities. */
+	readonly optimisticResponse?: TData;
 	/** Re-execute these queries after a successful mutation. */
 	readonly refetchQueries?: readonly RefetchQueryDef[];
 }
@@ -31,7 +55,7 @@ export function mutate<
 	document: TDocument,
 	endpoint?: MutateEndpointParam,
 	variables?: TVariables,
-	options?: MutateOptions,
+	options?: MutateOptions<TResponse>,
 ): Observable<GraphQLResult<TResponse>> {
 	return defer(() => {
 		const svc = inject(GraphqlService);
@@ -62,8 +86,18 @@ export function mutate<
 			}
 		}
 
+		const optimistic: ((cache: GraphqlCacheLike) => string) | undefined = options?.optimistic
+			?? (options?.optimisticResponse
+				? (cache: GraphqlCacheLike) => {
+					const entities = extractEntitiesFromData(options.optimisticResponse);
+					if (entities.length === 0) return '';
+					const id = `optimistic:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+					return cache.applyOptimistic({ id, entities });
+				}
+				: undefined);
+
 		return svc.mutate<TResponse, TVariables>(
-			document, variables, url, options?.optimistic, overrideCfg,
+			document, variables, url, optimistic, overrideCfg,
 			options?.refetchQueries,
 		);
 	});

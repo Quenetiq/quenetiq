@@ -8,10 +8,15 @@ import {
 	buildTypedPipeline,
 } from './middleware';
 import { cacheMiddleware } from './cache-middleware';
+import {
+	PersistedQueryRegistry,
+	buildApqPayload,
+	isPersistedQueryNotFound,
+} from './persisted-queries';
 import type { GraphQLResult, GraphQLResponse } from './result';
 import { resultError } from './result';
 import type { ClientConfig } from './config';
-import type { CacheStore } from '@dumbql/cache';
+import type { CacheStore, CacheEntity, OptimisticUpdate } from '@dumbql/cache';
 import type { FetchPolicy } from './middleware';
 
 export type { ClientConfig };
@@ -28,6 +33,11 @@ const dedupCache = new Map<string, Promise<GraphQLResult<any>>>();
 export interface QueryOptions {
 	fetchPolicy?: FetchPolicy;
 	signal?: AbortSignal;
+}
+
+export interface MutateOptions<TData> {
+	/** Apply optimistic response to the cache before the mutation fires. */
+	readonly optimisticResponse?: TData;
 }
 
 interface BatchEntry {
@@ -51,6 +61,7 @@ export class DumbqlClient {
 	private dedupEnabled: boolean;
 	private pipeline: TypedPipeline;
 	private _cacheService: CacheStore | null = null;
+	private _apqRegistry: PersistedQueryRegistry | null = null;
 
 	private batchQueue: BatchEntry[] | null = null;
 	private batchTimer: ReturnType<typeof setTimeout> | null = null;
@@ -67,6 +78,9 @@ export class DumbqlClient {
 		this.batchWindow = config.batchWindow ?? 0;
 		this.dedupEnabled = config.dedup ?? false;
 		this._cacheService = cache ?? null;
+		if (config.persistedQueries?.enabled) {
+			this._apqRegistry = new PersistedQueryRegistry(config.persistedQueries);
+		}
 		this.pipeline = this.buildPipeline(config);
 	}
 
@@ -135,6 +149,7 @@ export class DumbqlClient {
 		document: TDocument,
 		variables?: InferVars<TDocument>,
 		endpoint?: string,
+		options?: MutateOptions<InferData<TDocument>>,
 	): Promise<GraphQLResult<InferData<TDocument>>> {
 		const query = print(document);
 		let result$: Promise<GraphQLResult<InferData<TDocument>>>;
@@ -145,6 +160,31 @@ export class DumbqlClient {
 			result$ = this.withRetry(
 				() => this.request<InferData<TDocument>>(query, variables, 'mutation', endpoint),
 			);
+		}
+
+		let optimisticId: string | undefined;
+		if (options?.optimisticResponse && this._cacheService) {
+			try {
+				const id = `optimistic:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+				const entities = extractEntitiesFromData(options.optimisticResponse);
+				const update: OptimisticUpdate = {
+					id,
+					apply: (cache: Map<string, CacheEntity>) => {
+						for (const e of entities) {
+							const key = `${e.__typename}:${e.id}`;
+							const existing = cache.get(key);
+							if (existing) {
+								cache.set(key, { ...existing, ...e });
+							} else {
+								cache.set(key, e);
+							}
+						}
+					},
+					rollback: () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
+				};
+				this._cacheService.applyOptimistic(update);
+				optimisticId = id;
+			} catch { /* best-effort */ }
 		}
 
 		const result = await result$;
@@ -159,6 +199,11 @@ export class DumbqlClient {
 			} catch {
 				// cache invalidation is best-effort
 			}
+			if (optimisticId) {
+				try { this._cacheService.commitOptimistic(optimisticId); } catch { /* best-effort */ }
+			}
+		} else if (optimisticId && this._cacheService) {
+			try { this._cacheService.rollbackOptimistic(optimisticId); } catch { /* best-effort */ }
 		}
 
 		return result;
@@ -173,6 +218,142 @@ export class DumbqlClient {
 		const key = this.dedupKey(query, variables);
 		dedupCache.delete(key);
 		return this.query<TDocument>(document, variables, endpoint);
+	}
+
+	/**
+	 * Execute a query with `@defer`/`@stream` support.
+	 * Auto-merges incremental patches into a single result as they arrive.
+	 * Each emission is the full merged result up to that point.
+	 */
+	queryDefer<TDocument extends DocumentNode | TypedDocumentNode>(
+		document: TDocument,
+		variables?: InferVars<TDocument>,
+		endpoint?: string,
+	): AsyncIterable<GraphQLResult<InferData<TDocument>>> {
+		const queryStr = print(document);
+		return this.executeDefer<InferData<TDocument>>(queryStr, variables, endpoint);
+	}
+
+	private async *executeDefer<T>(
+		query: string,
+		variables?: Record<string, unknown>,
+		endpoint?: string,
+	): AsyncIterable<GraphQLResult<T>> {
+		let mergedData: unknown = undefined;
+
+		const rawChunks = this.executeStreamingRaw(query, variables, endpoint);
+
+		for await (const raw of rawChunks) {
+			if ('data' in raw && !('incremental' in raw)) {
+				// First chunk: initial data
+				mergedData = raw['data'];
+				yield { status: 'success', data: mergedData as T };
+				continue;
+			}
+
+			if ('incremental' in raw) {
+				// Incremental patch: merge into existing data
+				const incrementals = raw['incremental'];
+				if (Array.isArray(incrementals)) {
+					for (const patch of incrementals) {
+						if (patch && typeof patch === 'object' && 'path' in patch && 'data' in patch) {
+							const path = (patch as Record<string, unknown>)['path'] as (string | number)[];
+							const patchData = (patch as Record<string, unknown>)['data'];
+							mergedData = applyPatch(mergedData, path, patchData);
+						}
+					}
+				}
+				yield { status: 'success', data: mergedData as T };
+
+				if (raw['hasNext'] === false) return;
+				continue;
+			}
+
+			// Fallback: yield as-is
+			yield { status: 'success', data: raw as T };
+		}
+	}
+
+	private async *executeStreamingRaw(
+		query: string,
+		variables?: Record<string, unknown>,
+		endpoint?: string,
+	): AsyncIterable<Record<string, unknown>> {
+		const url = endpoint || this._endpoint;
+		const headers = this.getHeaderMap();
+		const controller = new AbortController();
+
+		try {
+			const response = await fetch(url, {
+				method: 'POST',
+				headers: {
+					...headers,
+					'Content-Type': 'application/json',
+					Accept: 'multipart/mixed;boundary=graphql;defer=stream',
+				},
+				body: JSON.stringify({ query, variables }),
+				signal: controller.signal,
+			});
+
+			if (!response.ok) return;
+
+			const contentType = response.headers.get('content-type') ?? '';
+			const reader = response.body?.getReader();
+			if (!reader) return;
+
+			if (contentType.includes('multipart/mixed')) {
+				const boundary = this.parseBoundary(contentType);
+				if (!boundary) return;
+				yield* this.readMultipartRaw(reader, boundary);
+			} else {
+				const chunks: Uint8Array[] = [];
+				let done = false;
+				while (!done) {
+					const { done: d, value } = await reader.read();
+					done = d;
+					if (value) chunks.push(value);
+				}
+				const text = new TextDecoder().decode(this.concatBuffers(chunks));
+				yield JSON.parse(text) as Record<string, unknown>;
+			}
+		} catch (err) {
+			if (err instanceof DOMException && err.name === 'AbortError') return;
+		}
+	}
+
+	private async *readMultipartRaw(
+		reader: ReadableStreamDefaultReader<Uint8Array>,
+		boundary: string,
+	): AsyncIterable<Record<string, unknown>> {
+		const decoder = new TextDecoder();
+		let buffer = '';
+		let done = false;
+
+		while (!done) {
+			const { done: d, value } = await reader.read();
+			done = d;
+			if (value) buffer += decoder.decode(value, { stream: !done });
+
+			const parts = buffer.split(`--${boundary}`);
+			if (parts.length > 1) {
+				buffer = parts.pop() ?? '';
+				for (const part of parts) {
+					const trimmed = part.trim();
+					if (!trimmed || trimmed === '--') continue;
+					const jsonStart = trimmed.indexOf('\n\n');
+					if (jsonStart === -1) continue;
+					const jsonStr = trimmed.slice(jsonStart + 2).trim();
+					if (!jsonStr) continue;
+					try {
+						const raw = JSON.parse(jsonStr) as Record<string, unknown>;
+						yield raw;
+						if (raw['hasNext'] === false) return;
+					} catch {
+						// skip malformed chunks
+					}
+				}
+			}
+		}
 	}
 
 	private async executeQuery<T>(
@@ -271,6 +452,19 @@ export class DumbqlClient {
 				return this.toResult(json);
 			}
 
+			// APQ: try hash-only first if registry says query is registered
+			if (this._apqRegistry && request.type === 'query') {
+				const hash = await this._apqRegistry.registerAsync(request.query);
+				if (this._apqRegistry.isRegistered(hash)) {
+					const apqResult = await this.executeApqHashOnly(url, hash, request.variables, request.signal);
+					if (apqResult) {
+						return apqResult;
+					}
+					// PersistedQueryNotFound: re-send full query below
+					this._apqRegistry.markRegistered(hash); // reset for re-registration
+				}
+			}
+
 			const body: Record<string, unknown> = { query: request.query, variables: request.variables };
 			if (request.extensions) {
 				body['extensions'] = request.extensions;
@@ -291,6 +485,15 @@ export class DumbqlClient {
 			}
 
 			const json2: GraphQLResponse<unknown> = await response.json();
+
+			// APQ: if autoPersist is enabled, mark hash as registered on success
+			if (this._apqRegistry && request.type === 'query' && this.config.persistedQueries?.autoPersist) {
+				const hash = this._apqRegistry.getHash(request.query);
+				if (hash && !isPersistedQueryNotFound(json2)) {
+					this._apqRegistry.markRegistered(hash);
+				}
+			}
+
 			return this.toResult(json2);
 		} catch (err) {
 			if (err instanceof DOMException && err.name === 'AbortError') {
@@ -298,6 +501,44 @@ export class DumbqlClient {
 			}
 			return this.toHttpError(err instanceof Error ? err : new Error('Unknown error'));
 		}
+	}
+
+	private async executeApqHashOnly(
+		url: string,
+		hash: string,
+		variables?: Record<string, unknown>,
+		signal?: AbortSignal,
+	): Promise<GraphQLResult<unknown> | null> {
+		const config = this.config.persistedQueries;
+		const extensions = buildApqPayload(hash);
+
+		if (config?.useGetForHashedQueries) {
+			const params = new URLSearchParams();
+			params.set('extensions', JSON.stringify(extensions));
+			if (variables && Object.keys(variables).length > 0) {
+				params.set('variables', JSON.stringify(variables));
+			}
+			const response = await fetch(`${url}?${params.toString()}`, {
+				method: 'GET',
+				headers: this.getHeaderMap(),
+				signal,
+			});
+			if (!response.ok) return null;
+			const json: GraphQLResponse<unknown> = await response.json();
+			if (isPersistedQueryNotFound(json)) return null;
+			return this.toResult(json);
+		}
+
+		const response = await fetch(url, {
+			method: 'POST',
+			headers: this.getHeaderMap(),
+			body: JSON.stringify({ variables, extensions }),
+			signal,
+		});
+		if (!response.ok) return null;
+		const json2: GraphQLResponse<unknown> = await response.json();
+		if (isPersistedQueryNotFound(json2)) return null;
+		return this.toResult(json2);
 	}
 
 	private async *executeStreaming(
@@ -714,6 +955,57 @@ function extractTypeNames(data: unknown, types: Set<string>): void {
 	}
 }
 
+interface EntityRef {
+	__typename: string;
+	id: string;
+	[key: string]: unknown;
+}
+
+function extractEntitiesFromData(data: unknown): EntityRef[] {
+	const entities: EntityRef[] = [];
+	if (!data || typeof data !== 'object') return entities;
+	if (Array.isArray(data)) {
+		for (const item of data) entities.push(...extractEntitiesFromData(item));
+		return entities;
+	}
+	const obj = data as Record<string, unknown>;
+	if (typeof obj['__typename'] === 'string' && (typeof obj['id'] === 'string' || typeof obj['id'] === 'number')) {
+		entities.push({ __typename: obj['__typename'] as string, id: String(obj['id']) });
+	}
+	for (const v of Object.values(obj)) {
+		if (v && typeof v === 'object') entities.push(...extractEntitiesFromData(v));
+	}
+	return entities;
+}
+
 export function createClient(config: ClientConfig, cache?: CacheStore): DumbqlClient {
 	return new DumbqlClient(config, cache);
+}
+
+function applyPatch(data: unknown, path: (string | number)[], patchData: unknown): unknown {
+	if (path.length === 0) return patchData;
+
+	if (!data || typeof data !== 'object') return data;
+
+	if (Array.isArray(data)) {
+		const result = [...data];
+		const [head, ...rest] = path;
+		if (typeof head === 'number') {
+			if (head >= result.length) {
+				// Extend the array (for @stream appends)
+				while (result.length < head) result.push(null);
+				result.push(applyPatch(undefined, rest, patchData));
+			} else {
+				result[head] = applyPatch(result[head], rest, patchData);
+			}
+		}
+		return result;
+	}
+
+	const obj = { ...(data as Record<string, unknown>) };
+	const [head, ...rest] = path;
+	if (typeof head === 'string') {
+		obj[head] = applyPatch(obj[head], rest, patchData);
+	}
+	return obj;
 }

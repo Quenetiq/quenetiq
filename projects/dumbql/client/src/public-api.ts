@@ -1,4 +1,4 @@
-export { DumbqlClient, createClient, type ClientConfig as DumbqlClientConfig, type QueryOptions, type InferData, type InferVars } from './lib/client';
+export { DumbqlClient, createClient, type ClientConfig as DumbqlClientConfig, type QueryOptions, type MutateOptions, type InferData, type InferVars } from './lib/client';
 export type { GraphQLResult, GraphQLResponse, GraphQLError, NetworkErrorInfo, ErrorCode } from './lib/result';
 export { gql, type DocumentNode, type TypedDocumentNode, print } from './lib/gql';
 export {
@@ -38,3 +38,5 @@ export {
 	type NullValueInfo,
 	type QueryErrorInfo,
 } from './lib/null-detection';
+
+export { devToolsMiddleware, type DevToolsConfig, type QueryLogEntry, type DevToolsState } from './lib/devtools';

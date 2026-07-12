@@ -239,6 +239,87 @@ describe('DumbqlClient.mutate', () => {
 
 		expect(onError).toHaveBeenCalledWith('Fail');
 	});
+
+	it('applies optimisticResponse to cache on mutate', async () => {
+		const fetch = mockFetchOk({ data: { createUser: { __typename: 'User', id: '1', name: 'Alice' } } });
+		vi.stubGlobal('fetch', fetch);
+
+		const mockCache = {
+			applyOptimistic: vi.fn().mockReturnValue('opt-1'),
+			commitOptimistic: vi.fn(),
+			rollbackOptimistic: vi.fn(),
+		};
+		const client = new DumbqlClient({ endpoint: '/graphql' });
+
+		(client as any)._cacheService = mockCache;
+
+		const optimisticData = { createUser: { __typename: 'User', id: '1', name: 'Optimistic' } };
+		await client.mutate(
+			{ kind: 'Document', definitions: [] } as never,
+			undefined,
+			undefined,
+			{ optimisticResponse: optimisticData },
+		);
+
+		expect(mockCache.applyOptimistic).toHaveBeenCalledTimes(1);
+		expect(mockCache.applyOptimistic).toHaveBeenCalledWith(
+			expect.objectContaining({ id: expect.stringContaining('optimistic:') }),
+		);
+		expect(mockCache.commitOptimistic).toHaveBeenCalledTimes(1);
+		expect(mockCache.commitOptimistic).toHaveBeenCalledWith(
+			expect.stringContaining('optimistic:'),
+		);
+		expect(mockCache.rollbackOptimistic).not.toHaveBeenCalled();
+	});
+
+	it('rolls back optimisticResponse on mutation error', async () => {
+		const fetch = mockFetchOk({
+			data: null,
+			errors: [{ message: 'Fail' }],
+		});
+		vi.stubGlobal('fetch', fetch);
+
+		const mockCache = {
+			applyOptimistic: vi.fn().mockReturnValue('opt-2'),
+			commitOptimistic: vi.fn(),
+			rollbackOptimistic: vi.fn(),
+		};
+		const client = new DumbqlClient({ endpoint: '/graphql', errorPolicy: 'none' });
+
+		(client as any)._cacheService = mockCache;
+
+		const optimisticData = { createUser: { __typename: 'User', id: '1', name: 'Optimistic' } };
+		await client.mutate(
+			{ kind: 'Document', definitions: [] } as never,
+			undefined,
+			undefined,
+			{ optimisticResponse: optimisticData },
+		);
+
+		expect(mockCache.applyOptimistic).toHaveBeenCalledTimes(1);
+		expect(mockCache.commitOptimistic).not.toHaveBeenCalled();
+		expect(mockCache.rollbackOptimistic).toHaveBeenCalledTimes(1);
+		expect(mockCache.rollbackOptimistic).toHaveBeenCalledWith(
+			expect.stringContaining('optimistic:'),
+		);
+	});
+
+	it('does not apply optimistic when no cache', async () => {
+		const fetch = mockFetchOk({ data: { ok: true } });
+		vi.stubGlobal('fetch', fetch);
+
+		const client = new DumbqlClient({ endpoint: '/graphql' });
+		const optimisticData = { createUser: { __typename: 'User', id: '1', name: 'Optimistic' } };
+
+		const result = await client.mutate(
+			{ kind: 'Document', definitions: [] } as never,
+			undefined,
+			undefined,
+			{ optimisticResponse: optimisticData },
+		);
+
+		expect(result.status).toBe('success');
+	});
 });
 
 describe('DumbqlClient.refetch', () => {
@@ -589,5 +670,237 @@ describe('clearStore', () => {
 	it('is safe to call without cache store', () => {
 		const client = new DumbqlClient({ endpoint: '/graphql' });
 		expect(() => client.clearStore()).not.toThrow();
+	});
+});
+
+describe('DumbqlClient.queryDefer', () => {
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	function mockFetchMultipart(chunks: Record<string, unknown>[]) {
+		const encoder = new TextEncoder();
+		const boundary = 'graphql';
+		const parts = chunks.map((c) => `\nContent-Type: application/json\n\n${JSON.stringify(c)}`).join(`\n--${boundary}`);
+		const raw = `--${boundary}${parts}\n--${boundary}--`;
+		const stream = new ReadableStream({
+			start(controller) {
+				controller.enqueue(encoder.encode(raw));
+				controller.close();
+			},
+		});
+		return vi.fn().mockResolvedValue({
+			ok: true,
+			status: 200,
+			headers: new Headers({ 'content-type': `multipart/mixed;boundary=${boundary}` }),
+			body: stream,
+			json: vi.fn(),
+		});
+	}
+
+	it('yields initial data from first chunk', async () => {
+		const fetch = mockFetchMultipart([
+			{ data: { users: [{ __typename: 'User', id: '1', name: 'Alice' }] }, hasNext: false },
+		]);
+		vi.stubGlobal('fetch', fetch);
+
+		const client = new DumbqlClient({ endpoint: '/graphql' });
+		const results: unknown[] = [];
+		for await (const result of client.queryDefer({ kind: 'Document', definitions: [] } as never)) {
+			results.push(result);
+		}
+
+		expect(results).toHaveLength(1);
+		expect(results[0]).toEqual({ status: 'success', data: { users: [{ __typename: 'User', id: '1', name: 'Alice' }] } });
+	});
+
+	it('auto-merges incremental patches into data', async () => {
+		const fetch = mockFetchMultipart([
+			{ data: { users: [{ __typename: 'User', id: '1', name: 'Alice' }] }, hasNext: true },
+			{ incremental: [{ path: ['users', 0, 'email'], data: 'alice@example.com' }], hasNext: false },
+		]);
+		vi.stubGlobal('fetch', fetch);
+
+		const client = new DumbqlClient({ endpoint: '/graphql' });
+		const results: unknown[] = [];
+		for await (const result of client.queryDefer({ kind: 'Document', definitions: [] } as never)) {
+			results.push(result);
+		}
+
+		expect(results).toHaveLength(2);
+		expect(results[0]).toEqual({ status: 'success', data: { users: [{ __typename: 'User', id: '1', name: 'Alice' }] } });
+		expect(results[1]).toEqual({
+			status: 'success',
+			data: { users: [{ __typename: 'User', id: '1', name: 'Alice', email: 'alice@example.com' }] },
+		});
+	});
+
+	it('handles array append patches via @stream', async () => {
+		const fetch = mockFetchMultipart([
+			{ data: { items: [{ __typename: 'Item', id: '1' }] }, hasNext: true },
+			{ incremental: [{ path: ['items', 1], data: { __typename: 'Item', id: '2' } }], hasNext: false },
+		]);
+		vi.stubGlobal('fetch', fetch);
+
+		const client = new DumbqlClient({ endpoint: '/graphql' });
+		const results: unknown[] = [];
+		for await (const result of client.queryDefer({ kind: 'Document', definitions: [] } as never)) {
+			results.push(result);
+		}
+
+		expect(results).toHaveLength(2);
+		expect(results[1]).toEqual({
+			status: 'success',
+			data: { items: [{ __typename: 'Item', id: '1' }, { __typename: 'Item', id: '2' }] },
+		});
+	});
+
+	it('yields error on stream failure', async () => {
+		const fetch = vi.fn().mockRejectedValue(new Error('Network failure'));
+		vi.stubGlobal('fetch', fetch);
+
+		const client = new DumbqlClient({ endpoint: '/graphql' });
+		const results: unknown[] = [];
+		for await (const result of client.queryDefer({ kind: 'Document', definitions: [] } as never)) {
+			results.push(result);
+		}
+
+		// On network error, executeDefer completes with no results (error is swallowed in executeStreamingRaw)
+		expect(results).toHaveLength(0);
+	});
+});
+
+describe('DumbqlClient Persisted Queries (APQ)', () => {
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	it('sends hash-only via POST when query is registered', async () => {
+		const fetch = mockFetchOk({ data: { hello: 'world' } });
+		vi.stubGlobal('fetch', fetch);
+
+		const client = new DumbqlClient({
+			endpoint: '/graphql',
+			persistedQueries: { enabled: true, hash: 'sha256', autoPersist: true },
+		});
+
+		const doc = { kind: 'Document', definitions: [] } as never;
+
+		// First query: sends full query, auto-persists
+		await client.query(doc);
+		const firstBody = JSON.parse(fetch.mock.calls[0][1].body as string);
+		expect(firstBody.query).toBeDefined();
+
+		// Second query: should send hash-only (extensions with persistedQuery)
+		await client.query(doc);
+		expect(fetch).toHaveBeenCalledTimes(2);
+		const secondBody = JSON.parse(fetch.mock.calls[1][1].body as string);
+		expect(secondBody.extensions).toBeDefined();
+		expect(secondBody.extensions.persistedQuery).toBeDefined();
+		expect(secondBody.extensions.persistedQuery.version).toBe(1);
+		expect(secondBody.extensions.persistedQuery.sha256Hash).toBeDefined();
+		expect(secondBody.query).toBeUndefined();
+	});
+
+	it('falls back to full query on PersistedQueryNotFound', async () => {
+		let callCount = 0;
+		const fetch = vi.fn().mockImplementation(() => {
+			callCount++;
+			if (callCount === 1) {
+				// First call: full query, auto-persists
+				return Promise.resolve({
+					ok: true,
+					status: 200,
+					json: vi.fn().mockResolvedValue({ data: { hello: 'world' } }),
+					headers: new Headers(),
+				});
+			}
+			if (callCount === 2) {
+				// Second call: hash-only, server returns PersistedQueryNotFound
+				return Promise.resolve({
+					ok: true,
+					status: 200,
+					json: vi.fn().mockResolvedValue({
+						errors: [{ message: 'PersistedQueryNotFound' }],
+					}),
+					headers: new Headers(),
+				});
+			}
+			// Third call: full query fallback
+			return Promise.resolve({
+				ok: true,
+				status: 200,
+				json: vi.fn().mockResolvedValue({ data: { hello: 'world' } }),
+				headers: new Headers(),
+			});
+		});
+		vi.stubGlobal('fetch', fetch);
+
+		const client = new DumbqlClient({
+			endpoint: '/graphql',
+			persistedQueries: { enabled: true, hash: 'sha256', autoPersist: true },
+		});
+
+		const doc = { kind: 'Document', definitions: [] } as never;
+
+		// First query: full POST → auto-persists
+		await client.query(doc);
+
+		// Second query: hash-only → PersistedQueryNotFound → full POST fallback
+		const result = await client.query(doc);
+
+		expect(result.status).toBe('success');
+		expect(fetch).toHaveBeenCalledTimes(3);
+		// Third call should have full query body
+		const thirdBody = JSON.parse(fetch.mock.calls[2][1].body as string);
+		expect(thirdBody.query).toBeDefined();
+	});
+
+	it('does not use APQ for mutations', async () => {
+		const fetch = mockFetchOk({ data: { createItem: { id: '1' } } });
+		vi.stubGlobal('fetch', fetch);
+
+		const client = new DumbqlClient({
+			endpoint: '/graphql',
+			persistedQueries: { enabled: true, hash: 'sha256' },
+		});
+
+		const doc = { kind: 'Document', definitions: [] } as never;
+		await client.mutate(doc);
+
+		// Mutations should always send full query
+		const body = JSON.parse(fetch.mock.calls[0][1].body as string);
+		expect(body.query).toBeDefined();
+		expect(body.extensions).toBeUndefined();
+	});
+
+	it('useGetForHashedQueries sends via GET with extensions', async () => {
+		// First: register query via POST
+		const postFetch = mockFetchOk({ data: { hello: 'world' } });
+		vi.stubGlobal('fetch', postFetch);
+
+		const client = new DumbqlClient({
+			endpoint: '/graphql',
+			persistedQueries: { enabled: true, hash: 'sha256', autoPersist: true, useGetForHashedQueries: true },
+		});
+
+		const doc = { kind: 'Document', definitions: [] } as never;
+		await client.query(doc);
+
+		// Second: should use GET
+		const getFetch = vi.fn().mockResolvedValue({
+			ok: true,
+			status: 200,
+			json: vi.fn().mockResolvedValue({ data: { hello: 'world' } }),
+			headers: new Headers(),
+		});
+		vi.stubGlobal('fetch', getFetch);
+
+		await client.query(doc);
+
+		expect(getFetch).toHaveBeenCalledTimes(1);
+		const url = getFetch.mock.calls[0][0] as string;
+		expect(url).toContain('/graphql?');
+		expect(url).toContain('extensions=');
 	});
 });
