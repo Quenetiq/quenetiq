@@ -512,3 +512,82 @@ describe('config headers', () => {
 		);
 	});
 });
+
+describe('resetStore', () => {
+	it('clears dedup cache for in-flight requests', async () => {
+		const fetch = mockFetchOk({ data: { ok: true } });
+		vi.stubGlobal('fetch', fetch);
+
+		const client = new DumbqlClient({ endpoint: '/graphql', dedup: true });
+		const doc = { kind: 'Document', definitions: [] } as never;
+
+		const p1 = client.query(doc);
+		const p2 = client.query(doc);
+		expect(fetch).toHaveBeenCalledTimes(1);
+
+		client.resetStore();
+
+		await Promise.all([p1, p2]);
+		expect(fetch).toHaveBeenCalledTimes(1);
+	});
+
+	it('clears cache store', () => {
+		const clearLocalState = vi.fn();
+		const client = new DumbqlClient(
+			{ endpoint: '/graphql' },
+			{ clearLocalState } as never,
+		);
+
+		client.resetStore();
+		expect(clearLocalState).toHaveBeenCalledTimes(1);
+	});
+
+	it('clears batch queue', async () => {
+		const fetch = mockFetchOk({ data: { ok: true } });
+		vi.stubGlobal('fetch', fetch);
+
+		const client = new DumbqlClient({ endpoint: '/graphql', batchWindow: 100 });
+
+		client.resetStore();
+		expect(fetch).not.toHaveBeenCalled();
+	});
+
+	it('is safe to call without cache store', () => {
+		const client = new DumbqlClient({ endpoint: '/graphql' });
+		expect(() => client.resetStore()).not.toThrow();
+	});
+});
+
+describe('clearStore', () => {
+	it('clears cache store', () => {
+		const clearLocalState = vi.fn();
+		const client = new DumbqlClient(
+			{ endpoint: '/graphql' },
+			{ clearLocalState } as never,
+		);
+
+		client.clearStore();
+		expect(clearLocalState).toHaveBeenCalledTimes(1);
+	});
+
+	it('does not clear dedup cache', async () => {
+		const fetch = mockFetchOk({ data: { ok: true } });
+		vi.stubGlobal('fetch', fetch);
+
+		const client = new DumbqlClient({ endpoint: '/graphql', dedup: true });
+		const doc = { kind: 'Document', definitions: [] } as never;
+
+		const p1 = client.query(doc);
+		const p2 = client.query(doc);
+
+		client.clearStore();
+
+		await Promise.all([p1, p2]);
+		expect(fetch).toHaveBeenCalledTimes(1);
+	});
+
+	it('is safe to call without cache store', () => {
+		const client = new DumbqlClient({ endpoint: '/graphql' });
+		expect(() => client.clearStore()).not.toThrow();
+	});
+});

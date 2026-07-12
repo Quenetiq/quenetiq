@@ -82,6 +82,26 @@ export class DumbqlClient {
 		return this._cacheService;
 	}
 
+	resetStore(): void {
+		dedupCache.clear();
+		if (this.batchQueue) {
+			this.batchQueue = null;
+		}
+		if (this.batchTimer) {
+			clearTimeout(this.batchTimer);
+			this.batchTimer = null;
+		}
+		if (this._cacheService) {
+			this._cacheService.clearLocalState();
+		}
+	}
+
+	clearStore(): void {
+		if (this._cacheService) {
+			this._cacheService.clearLocalState();
+		}
+	}
+
 	query<TDocument extends DocumentNode | TypedDocumentNode>(
 		document: TDocument,
 		variables?: InferVars<TDocument>,
