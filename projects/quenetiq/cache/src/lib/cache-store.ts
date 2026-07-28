@@ -3,7 +3,7 @@ import { CacheGc } from './cache-gc';
 import { CachePersistence, type CachePersistConfig } from './cache-persist';
 import { CacheEvents } from './cache-events';
 import { CacheMetrics } from './cache-metrics';
-import { CrossTabSync, type CrossTabSyncConfig } from './cross-tab-sync';
+import { CrossTabSync } from './cross-tab-sync';
 import { SmartPersistence } from './smart-persistence';
 
 const LOCAL_STATE_PREFIX = '__local__';
