@@ -17,31 +17,62 @@ echo ""
 echo "=== Deploying Quenetiq to $DOMAIN ==="
 echo ""
 
-# ── 1. Clone ──────────────────────────────────────────────────────────
-echo "=== 1/6 Cloning $REPO_URL ==="
-git clone --depth=1 "$REPO_URL" "$TEMP_DIR"
+# ── 1. Select branch ──────────────────────────────────────────────────
+DEFAULT_BRANCH="main"
+SELECTED_BRANCH="${2:-}"
+
+if [[ -z "$SELECTED_BRANCH" ]]; then
+  echo "=== Fetching available branches ==="
+  mapfile -t BRANCHES < <(
+    git ls-remote --heads "$REPO_URL" \
+      | awk '{print $2}' \
+      | sed 's|refs/heads/||' \
+      | sort -V
+  )
+
+  if [[ ${#BRANCHES[@]} -eq 0 ]]; then
+    echo "ERROR: no branches found at $REPO_URL"
+    exit 1
+  fi
+
+  echo ""
+  echo "Select branch to deploy:"
+  select SELECTED_BRANCH in "${BRANCHES[@]}"; do
+    if [[ -n "$SELECTED_BRANCH" ]]; then
+      break
+    fi
+    echo "Invalid choice, try again."
+  done
+fi
+
+echo "Using branch: $SELECTED_BRANCH"
+echo ""
+
+# ── 2. Clone ──────────────────────────────────────────────────────────
+echo "=== 2/7 Cloning $SELECTED_BRANCH from $REPO_URL ==="
+git clone --depth=1 --branch "$SELECTED_BRANCH" "$REPO_URL" "$TEMP_DIR"
 cd "$TEMP_DIR"
 
-# ── 2. Install ────────────────────────────────────────────────────────
-echo "=== 2/6 Installing dependencies ==="
+# ── 3. Install ────────────────────────────────────────────────────────
+echo "=== 3/7 Installing dependencies ==="
 npm ci
 
-# ── 3. Build packages ─────────────────────────────────────────────────
-echo "=== 3/6 Building @quenetiq/* packages ==="
+# ── 4. Build packages ─────────────────────────────────────────────────
+echo "=== 4/7 Building @quenetiq/* packages ==="
 node scripts/build-packages.mjs
 
-# ── 4. Build Angular ──────────────────────────────────────────────────
-echo "=== 4/6 Building Angular app ==="
+# ── 5. Build Angular ──────────────────────────────────────────────────
+echo "=== 5/7 Building Angular app ==="
 npx ng build --configuration=production --progress=false
 
-# ── 5. Copy ───────────────────────────────────────────────────────────
-echo "=== 5/6 Deploying to $BUILD_DIR ==="
+# ── 6. Copy ───────────────────────────────────────────────────────────
+echo "=== 6/7 Deploying to $BUILD_DIR ==="
 sudo mkdir -p "$BUILD_DIR"
 sudo cp -r dist/dumb-keystore/* "$BUILD_DIR"
 cd / && rm -rf "$TEMP_DIR"
 
-# ── 6. nginx + SSL ────────────────────────────────────────────────────
-echo "=== 6/6 Configuring nginx + SSL ==="
+# ── 7. nginx + SSL ────────────────────────────────────────────────────
+echo "=== 7/7 Configuring nginx + SSL ==="
 
 NGINX_CONF="/etc/nginx/sites-available/$DOMAIN"
 NGINX_ENABLED="/etc/nginx/sites-enabled/$DOMAIN"
