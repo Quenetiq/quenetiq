@@ -137,7 +137,7 @@ export class CrossTabSync {
 			}
 			break;
 		case 'clear':
-			this.ops.clear().catch(() => {});
+			this.ops.clear().catch(() => {/* clear is fire-and-forget */});
 			break;
 		}
 	}

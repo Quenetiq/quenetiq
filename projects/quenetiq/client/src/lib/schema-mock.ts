@@ -11,7 +11,6 @@ import {
 	type GraphQLOutputType,
 	type GraphQLObjectType,
 	getNamedType,
-	getNullableType,
 	isObjectType,
 	isScalarType,
 	isEnumType,
@@ -19,8 +18,6 @@ import {
 	isListType,
 	isNonNullType,
 	GraphQLEnumType,
-	GraphQLScalarType,
-	type GraphQLNamedType,
 } from 'graphql';
 
 const counter = new Map<string, number>();

@@ -4,7 +4,6 @@ import {
 	LocalEntityStorage,
 	type EntityStorage,
 	type EntityStorageConfig,
-	type StoredEntityMeta,
 } from './entity-storage';
 import { IndexedDbEntityStorage } from './entity-storage-idb';
 
@@ -56,7 +55,7 @@ export class SmartPersistence implements CacheStorePersist {
 		try {
 			localStorage.setItem('qntc:ls', JSON.stringify(state));
 		} catch {
-			// ignore
+			/* empty */
 		}
 	}
 }

@@ -7,19 +7,16 @@ export function cacheFirst<TData>(
 	fetch: () => Promise<TData>,
 ): Observable<TData | undefined> {
 	return new Observable<TData | undefined>((subscriber) => {
-		let latest: TData | undefined;
 		let completed = false;
 
 		const cached = store.readQuery<TData>(queryHash);
 		if (cached !== undefined) {
-			latest = cached;
 			subscriber.next(cached);
 		}
 
 		fetch()
 			.then((fresh) => {
 				if (completed) return;
-				latest = fresh;
 				subscriber.next(fresh);
 				subscriber.complete();
 			})

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { firstValueFrom, toArray } from 'rxjs';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { firstValueFrom } from 'rxjs';
 import { CacheStore } from '@quenetiq/cache';
 import { observeEntity } from '../observe-entity';
 

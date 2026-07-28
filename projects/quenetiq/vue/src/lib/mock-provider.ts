@@ -1,6 +1,6 @@
 import { defineComponent, type PropType, provide, type SlotsType } from 'vue';
 import { QUENETIQ_CLIENT_KEY } from './plugin';
-import { createCache, type CacheStore, type CacheStoreConfig } from '@quenetiq/cache';
+import { createCache, type CacheStore } from '@quenetiq/cache';
 import {
 	QuenetiqClient,
 	createSchemaMock,
@@ -89,7 +89,7 @@ function buildMockClient(
 				`\nVariables: ${JSON.stringify(request.variables)}`,
 			);
 		}
-		return { status: 'error', error: `No mock defined for query` };
+		return { status: 'error', error: 'No mock defined for query' };
 	};
 
 	return new QuenetiqClient(
