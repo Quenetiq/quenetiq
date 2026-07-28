@@ -65,6 +65,20 @@ jobs:
           ref: ${{ inputs.branch || github.ref_name }}
           fetch-depth: 0
 
+      - name: Auto-detect latest pre-release branch
+        if: ${{ inputs.type == 'beta' || inputs.type == 'rc' || inputs.type == 'alpha' }}
+        run: |
+          PREFIX="${{ inputs.type }}"
+          git fetch origin "${PREFIX}/*:refs/remotes/origin/${PREFIX}/*" 2>/dev/null || true
+          LATEST=$(git branch -r | grep "origin/${PREFIX}/" | sed 's|.*origin/||' | sort -V | tail -1)
+          if [ -z "$LATEST" ]; then
+            echo "No ${PREFIX}/* branches found, keeping original ref"
+          else
+            echo "Auto-detected latest ${PREFIX} branch: $LATEST"
+            git checkout "$LATEST"
+            echo "Using branch: $LATEST"
+          fi
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
