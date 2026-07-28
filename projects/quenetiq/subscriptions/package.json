@@ -21,7 +21,7 @@
   "sideEffects": false,
   "peerDependencies": {
     "@angular/core": "^22.0.0",
-    "@quenetiq/core": "^0.0.3",
+    "@quenetiq/core": "^1.0.0",
     "rxjs": "~7.8.0"
   },
   "peerDependenciesMeta": {

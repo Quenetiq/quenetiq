@@ -1,6 +1,6 @@
 {
 	"name": "@quenetiq/observables",
-	"version": "1.0.0-beta",
+	"version": "1.0.6-beta",
 	"description": "RxJS operators for @quenetiq/cache — observe entity changes, build cache-first/ stale-while-revalidate streams, and reactively watch GraphQL queries",
 	"keywords": [
 		"graphql",

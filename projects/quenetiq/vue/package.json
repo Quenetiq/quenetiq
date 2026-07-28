@@ -25,7 +25,7 @@
   "sideEffects": false,
   "peerDependencies": {
     "vue": "^3.0.0",
-    "@quenetiq/client": "^0.0.3",
+    "@quenetiq/client": "^1.0.0",
     "graphql": "^17.0.0"
   }
 }

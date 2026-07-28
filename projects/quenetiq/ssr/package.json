@@ -10,7 +10,7 @@
   "peerDependencies": {
     "@angular/common": "^22.0.0",
     "@angular/core": "^22.0.0",
-    "@quenetiq/cache": "^0.0.3",
+    "@quenetiq/cache": "^1.0.0",
     "rxjs": "~7.8.0"
   },
   "sideEffects": false
