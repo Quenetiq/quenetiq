@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { CacheService } from '@dumbql/cache/angular';
-import { CachePersistence } from '@dumbql/cache';
+import { CacheService } from '@quenetiq/cache/angular';
+import { CachePersistence } from '@quenetiq/cache';
 
 describe('CacheService', () => {
 	const userEntity = { __typename: 'User', id: '1', name: 'Alice', age: 30 };

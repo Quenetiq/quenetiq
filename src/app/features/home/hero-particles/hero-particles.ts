@@ -38,18 +38,8 @@ interface TextParticle {
 	selector: 'app-hero-particles',
 	standalone: true,
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	template: '<canvas #canvas></canvas>',
-	styles: [
-		`
-			canvas {
-				position: fixed;
-				inset: 0;
-				z-index: 0;
-				pointer-events: none;
-				display: block;
-			}
-		`,
-	],
+	templateUrl: './hero-particles.component.html',
+	styleUrl: './hero-particles.component.scss',
 })
 export class HeroParticles {
 	private readonly canvasRef = viewChild<ElementRef<HTMLCanvasElement>>('canvas');

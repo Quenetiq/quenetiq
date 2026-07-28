@@ -1,0 +1,9 @@
+{
+  "name": "@dumbql/vue",
+  "version": "1.0.0-deprecated.0",
+  "description": "DEPRECATED — use @quenetiq/vue instead",
+  "main": "public-api.js",
+  "peerDependencies": {
+    "@quenetiq/vue": "*"
+  }
+}

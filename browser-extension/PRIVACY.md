@@ -1,4 +1,4 @@
-# Privacy Policy for DumbQL GraphQL Debugger
+# Privacy Policy for Quenetiq GraphQL Debugger
 
 **Last updated:** 2026-06-28
 
@@ -42,4 +42,4 @@ in the DevTools panel. This is a user-initiated action.
 ## Contact
 
 For questions about this privacy policy, open an issue at:
-https://github.com/DumbGQL/dumbql
+https://github.com/Quenetiq/quenetiq

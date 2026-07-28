@@ -1,0 +1,16 @@
+@if (visible()) {
+	<div class="null-overlay" [class.null]="isNull()" [class.error]="!isNull()">
+		<div class="null-overlay-content">
+			<div class="null-overlay-icon">
+				@if (isNull()) {
+					<span class="null-symbol">∅</span>
+				} @else {
+					<span class="error-symbol">⚠</span>
+				}
+			</div>
+			<div class="null-overlay-title">{{ title() }}</div>
+			<div class="null-overlay-message">{{ message() }}</div>
+			<div class="null-overlay-sub">THE DATA IS CORRUPTED</div>
+		</div>
+	</div>
+}

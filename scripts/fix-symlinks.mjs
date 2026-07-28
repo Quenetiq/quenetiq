@@ -2,8 +2,8 @@ import { existsSync, readdirSync, rmSync, symlinkSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const ROOT = resolve(import.meta.dirname, '..');
-const NM = join(ROOT, 'node_modules', '@dumbql');
-const DIST = join(ROOT, 'dist', 'dumbql');
+const NM = join(ROOT, 'node_modules', '@quenetiq');
+const DIST = join(ROOT, 'dist', 'quenetiq');
 
 if (!existsSync(NM)) process.exit(0);
 

@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join, resolve } from 'path';
-import { generateSchemaTypes, generateIndexCode, findGraphqlFiles, parseGraphqlFile, generateTypedDocumentsCode } from '@dumbql/codegen';
+import { generateSchemaTypes, generateIndexCode, findGraphqlFiles, parseGraphqlFile, generateTypedDocumentsCode } from '@quenetiq/codegen';
 import { loadConfig } from './load-config.mjs';
 
 async function run() {
@@ -22,7 +22,7 @@ async function run() {
   if (shouldDownload && codegen.schema?.endpoint) {
     console.log(`Auto-downloading schema from ${codegen.schema.endpoint}...`);
     try {
-      const { downloadAndStoreSchema } = await import('@dumbql/downloader');
+      const { downloadAndStoreSchema } = await import('@quenetiq/downloader');
       await downloadAndStoreSchema({
         endpoint: codegen.schema.endpoint,
         outputDir: schemaDir,
@@ -60,7 +60,7 @@ async function run() {
   const outputPath = join(typesDir, 'index.ts');
 
   if (codegen.types?.merge) {
-    const { mergeGeneratedTypes } = await import('@dumbql/codegen');
+    const { mergeGeneratedTypes } = await import('@quenetiq/codegen');
     const content = mergeGeneratedTypes(outputPath, typesCode);
     writeFileSync(outputPath, content);
     console.log(`Types merged: ${outputPath}`);

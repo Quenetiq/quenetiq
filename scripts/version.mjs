@@ -3,7 +3,7 @@ import { join, resolve } from 'node:path';
 import { execSync } from 'node:child_process';
 
 const ROOT = resolve(import.meta.dirname, '..');
-const PKGS_DIR = join(ROOT, 'projects', 'dumbql');
+const PKGS_DIR = join(ROOT, 'projects', 'quenetiq');
 const CORE_PKG = join(PKGS_DIR, 'core', 'package.json');
 
 function readJson(path) {
@@ -99,7 +99,7 @@ if (!dryRun) {
       const pkgPath = join(dir, entry, 'package.json');
       if (existsSync(pkgPath)) {
         const pkg = readJson(pkgPath);
-        if (pkg.name?.startsWith('@dumbql/')) {
+        if (pkg.name?.startsWith('@quenetiq/')) {
           bumpFile(pkgPath, pkg.name);
         }
       }
@@ -129,14 +129,14 @@ if (!dryRun) {
     }
   }
 
-  // Also bump dist/dumbql/* if present (for local publish testing)
-  const distDir = join(ROOT, 'dist', 'dumbql');
+  // Also bump dist/quenetiq/* if present (for local publish testing)
+  const distDir = join(ROOT, 'dist', 'quenetiq');
   if (existsSync(distDir)) {
     for (const entry of readdirSync(distDir)) {
       const pkgPath = join(distDir, entry, 'package.json');
       if (existsSync(pkgPath)) {
         const pkg = readJson(pkgPath);
-        if (pkg.name?.startsWith('@dumbql/')) {
+        if (pkg.name?.startsWith('@quenetiq/')) {
           pkg.version = next;
           writeJson(pkgPath, pkg);
         }

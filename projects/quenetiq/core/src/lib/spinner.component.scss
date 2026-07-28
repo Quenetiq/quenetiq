@@ -1,0 +1,92 @@
+:host {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.quenetiq-spinner {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+}
+
+.quenetiq-spinner-svg {
+	animation: quenetiq-spin 0.8s linear infinite;
+}
+
+.quenetiq-spinner-circle {
+	stroke-linecap: round;
+	stroke-dasharray: 90, 150;
+	stroke-dashoffset: 0;
+	animation: quenetiq-dash 1.4s ease-in-out infinite;
+}
+
+.quenetiq-spinner-label {
+	font-size: 12px;
+	opacity: 0.7;
+}
+
+.quenetiq-spinner-xs .quenetiq-spinner-svg {
+	width: 14px;
+	height: 14px;
+}
+
+.quenetiq-spinner-sm .quenetiq-spinner-svg {
+	width: 18px;
+	height: 18px;
+}
+
+.quenetiq-spinner-md .quenetiq-spinner-svg {
+	width: 28px;
+	height: 28px;
+}
+
+.quenetiq-spinner-lg .quenetiq-spinner-svg {
+	width: 40px;
+	height: 40px;
+}
+
+.quenetiq-spinner-xl .quenetiq-spinner-svg {
+	width: 56px;
+	height: 56px;
+}
+
+.quenetiq-spinner-primary .quenetiq-spinner-circle {
+	stroke: var(--quenetiq-primary, #3b82f6);
+}
+
+.quenetiq-spinner-accent .quenetiq-spinner-circle {
+	stroke: var(--quenetiq-accent, #8b5cf6);
+}
+
+.quenetiq-spinner-warn .quenetiq-spinner-circle {
+	stroke: var(--quenetiq-warn, #ef4444);
+}
+
+.quenetiq-spinner-inherit .quenetiq-spinner-circle {
+	stroke: currentcolor;
+}
+
+@keyframes quenetiq-spin {
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes quenetiq-dash {
+	0% {
+		stroke-dasharray: 1, 150;
+		stroke-dashoffset: 0;
+	}
+
+	50% {
+		stroke-dasharray: 90, 150;
+		stroke-dashoffset: -35;
+	}
+
+	100% {
+		stroke-dasharray: 90, 150;
+		stroke-dashoffset: -124;
+	}
+}

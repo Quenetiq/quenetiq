@@ -1,4 +1,4 @@
-import { useQuery, gql } from '@dumbql/react';
+import { useQuery, gql } from '@quenetiq/react';
 
 const GET_NOTES = gql`
   query {
@@ -24,7 +24,7 @@ export default function App() {
 
   return (
     <div>
-      <h1>DumbQL + React</h1>
+      <h1>Quenetiq + React</h1>
       <ul>
         {data?.getNotes.map(note => (
           <li key={note.id}>

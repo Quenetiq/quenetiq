@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { CacheStore, createCache, CachePersistence } from '@dumbql/cache';
+import { CacheStore, createCache, CachePersistence } from '@quenetiq/cache';
 
 describe('CacheStore', () => {
 	const user1 = { __typename: 'User', id: '1', name: 'Alice', age: 30 };

@@ -47,9 +47,9 @@ on:
           Tag: latest|rc|beta|alpha|skip (skip = don't publish)
           Version: exact version override (optional)
           Examples:
-            @dumbql/cache:rc
-            @dumbql/opentelemetry:skip
-            @dumbql/core:latest:1.0.6
+            @quenetiq/cache:rc
+            @quenetiq/opentelemetry:skip
+            @quenetiq/core:latest:1.0.6
         required: false
         default: ''
         type: string
@@ -146,9 +146,9 @@ jobs:
               const config = JSON.parse(require('fs').readFileSync('packages-config.json', 'utf-8'));
               const fs = require('fs');
               const path = require('path');
-              const dirs = fs.readdirSync('projects/dumbql');
+              const dirs = fs.readdirSync('projects/quenetiq');
               for (const dir of dirs) {
-                const pkgPath = path.join('projects/dumbql', dir, 'package.json');
+                const pkgPath = path.join('projects/quenetiq', dir, 'package.json');
                 if (!fs.existsSync(pkgPath)) continue;
                 const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
                 const cfg = config[pkg.name];
@@ -178,7 +178,7 @@ jobs:
       - name: Verify version in dist
         run: |
           echo "Publish version:"
-          for pkg in dist/dumbql/*/; do
+          for pkg in dist/quenetiq/*/; do
             [ -f "${pkg}package.json" ] && node -p "require('./${pkg}package.json').name + ' @ ' + require('./${pkg}package.json').version"
           done
 
@@ -192,7 +192,7 @@ jobs:
             exit 0
           fi
 
-          for pkg in dist/dumbql/*/; do
+          for pkg in dist/quenetiq/*/; do
             if [ -f "${pkg}package.json" ]; then
               name=$(node -p "require('./${pkg}package.json').name")
 

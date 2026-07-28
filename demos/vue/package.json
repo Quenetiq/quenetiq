@@ -1,5 +1,5 @@
 {
-  "name": "@dumbql/demo-vue",
+  "name": "@quenetiq/demo-vue",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,8 +8,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@dumbql/client": "*",
-    "@dumbql/vue": "*",
+    "@quenetiq/client": "*",
+    "@quenetiq/vue": "*",
     "graphql": "^17.0.0",
     "vue": "^3.5.0"
   },

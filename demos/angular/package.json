@@ -1,5 +1,5 @@
 {
-  "name": "@dumbql/demo-angular",
+  "name": "@quenetiq/demo-angular",
   "private": true,
   "scripts": {
     "start": "node mock.js & ng serve --host 0.0.0.0",
@@ -10,8 +10,8 @@
     "@angular/platform-browser": "^22.0.0",
     "@angular/platform-browser-dynamic": "^22.0.0",
     "@angular/router": "^22.0.0",
-    "@dumbql/client": "*",
-    "@dumbql/core": "*",
+    "@quenetiq/client": "*",
+    "@quenetiq/core": "*",
     "graphql": "^17.0.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.0",

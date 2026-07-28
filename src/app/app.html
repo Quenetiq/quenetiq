@@ -1,5 +1,5 @@
 <tui-root>
-	<dumbql-null-overlay />
+	<qtq-null-overlay />
 	<header class="app-header">
 		@if (showDocsMenu()) {
 			<button
@@ -25,15 +25,25 @@
 				></button>
 			}
 		}
+		<button
+			tuiIconButton
+			type="button"
+			iconStart="@tui.menu"
+			appearance="flat"
+			size="s"
+			class="mobile-hamburger"
+			(click)="mobileMenuOpen.set(true)"
+			aria-label="Open menu"
+		></button>
 		<a class="app-logo" routerLink="/">
 			<app-logo size="icon" />
-			<span class="app-name">DumbQL</span>
+			<span class="app-name">Quenetiq</span>
 		</a>
 		<nav class="app-nav">
 			<a tuiLink routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
 			<a tuiLink routerLink="/docs" routerLinkActive="active">Docs</a>
 			<a tuiLink routerLink="/playground" routerLinkActive="active">Playground</a>
-			<a tuiLink href="https://github.com/DumbGQL/dumbql" target="_blank" rel="noopener">GitHub</a>
+			<a tuiLink href="https://github.com/Quenetiq/quenetiq" target="_blank" rel="noopener">GitHub</a>
 		</nav>
 		<button
 			tuiButton
@@ -60,6 +70,67 @@
 			{{ isDarkMode() ? '☀️' : '🌙' }}
 		</button>
 	</header>
+
+	@if (mobileMenuOpen()) {
+		<div class="mobile-overlay"
+			tabindex="-1"
+			(click)="mobileMenuOpen.set(false)"
+			(keydown.escape)="mobileMenuOpen.set(false)"
+		></div>
+		<aside class="mobile-drawer">
+			<div class="mobile-drawer-header">
+				<a class="app-logo" routerLink="/" (click)="mobileMenuOpen.set(false)">
+					<app-logo size="icon" />
+					<span class="app-name">Quenetiq</span>
+				</a>
+				<button
+					tuiIconButton
+					type="button"
+					iconStart="@tui.x"
+					appearance="flat"
+					size="s"
+					(click)="mobileMenuOpen.set(false)"
+					aria-label="Close menu"
+				></button>
+			</div>
+			<nav class="mobile-drawer-nav">
+				<a tuiLink routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="mobileMenuOpen.set(false)">Home</a>
+				<a tuiLink routerLink="/docs" routerLinkActive="active" (click)="mobileMenuOpen.set(false)">Docs</a>
+				<a tuiLink routerLink="/playground" routerLinkActive="active" (click)="mobileMenuOpen.set(false)">Playground</a>
+				<a tuiLink href="https://github.com/Quenetiq/quenetiq" target="_blank" rel="noopener">GitHub</a>
+			</nav>
+			<div class="mobile-drawer-footer">
+				<div class="mobile-drawer-version">
+					<label class="mobile-version-label" for="mobile-version-btn">Version</label>
+					<button
+						id="mobile-version-btn"
+						tuiButton
+						appearance="flat"
+						size="s"
+						iconStart="@tui.chevron-down"
+						class="mobile-version-select"
+						[tuiDropdown]="mobileVersionMenu"
+						[tuiDropdownManual]="mobileVersionOpen()"
+						(tuiActiveZoneChange)="mobileVersionOpen.set($event)"
+						(tuiObscured)="mobileVersionOpen.set(false)"
+						(click)="mobileVersionOpen.update((v) => !v)"
+					>
+						v{{ versionService.currentVersion() }}
+					</button>
+					<ng-template #mobileVersionMenu>
+						<tui-data-list>
+							@for (v of versionService.allVersions; track v) {
+								<button type="button" tuiOption (click)="versionService.setVersion(v); mobileVersionOpen.set(false)">v{{ v }}</button>
+							}
+						</tui-data-list>
+					</ng-template>
+				</div>
+				<button tuiButton appearance="secondary" size="s" class="mobile-theme-toggle" (click)="toggleTheme()">
+					{{ isDarkMode() ? '☀️' : '🌙' }} {{ isDarkMode() ? 'Light mode' : 'Dark mode' }}
+				</button>
+			</div>
+		</aside>
+	}
 	<main class="app-main">
 		<div class="app-loader" [class.app-loader--hidden]="!loading()">
 			<app-logo size="icon" class="app-loader-logo" />
@@ -67,6 +138,7 @@
 		<router-outlet class="app-outlet" />
 	</main>
 	<footer class="app-footer">
-		<span>DumbQL — GraphQL for the rest of us</span>
+		<span>Quenetiq — GraphQL for the rest of us</span>
 	</footer>
+	<app-search-dialog />
 </tui-root>

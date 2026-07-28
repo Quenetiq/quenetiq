@@ -1,38 +1,40 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import type { Observable } from 'rxjs';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideTaiga, TuiNotificationService } from '@taiga-ui/core';
 import {
-	provideDumbql,
+	provideQuenetiq,
 	loggingMiddleware,
 	devtoolsMiddleware,
 	provideDevtools,
 	nullDetectionMiddleware,
 	provideNullDetection,
-} from '@dumbql/core';
-import type { DevtoolsConfig } from '@dumbql/core';
-import dumbqlConfig from '../../dumbql.config';
+} from '@quenetiq/core';
+import type { DevtoolsConfig } from '@quenetiq/core';
+import quenetiqConfig from '../../quenetiq.config';
 
 import { routes } from './app.routes';
 
 const devtoolsCfg: DevtoolsConfig | undefined =
-	typeof dumbqlConfig.devtools === 'object' ? dumbqlConfig.devtools : undefined;
+	typeof quenetiqConfig.devtools === 'object' ? quenetiqConfig.devtools : undefined;
 
 export const appConfig: ApplicationConfig = {
 	providers: [
 		provideBrowserGlobalErrorListeners(),
 		provideHttpClient(),
 		provideTaiga(),
-		provideDumbql({
-			...dumbqlConfig,
+		provideQuenetiq({
+			...quenetiqConfig,
 			middleware: [
-				loggingMiddleware('DumbQL'),
+				loggingMiddleware('Quenetiq'),
 				...(devtoolsCfg ? [devtoolsMiddleware(devtoolsCfg)] : []),
 				nullDetectionMiddleware(),
 			],
 			onError: {
 				provide: TuiNotificationService,
-				use: (alerts, err) => alerts.open(err, { label: 'GraphQL Error', appearance: 'negative' }),
+				use: (service: unknown, error: string) =>
+					(service as TuiNotificationService).open(error, { label: 'GraphQL Error', appearance: 'negative' }) as Observable<unknown>,
 			},
 		}),
 		...(devtoolsCfg ? provideDevtools(devtoolsCfg) : []),

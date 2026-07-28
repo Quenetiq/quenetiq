@@ -1,0 +1,14 @@
+{
+  "name": "@quenetiq/fragments",
+  "version": "1.0.6-beta",
+  "keywords": [
+    "graphql",
+    "fragments",
+    "quenetiq"
+  ],
+  "peerDependencies": {
+    "@angular/core": "^22.0.0",
+    "graphql": "^17.0.0"
+  },
+  "sideEffects": false
+}

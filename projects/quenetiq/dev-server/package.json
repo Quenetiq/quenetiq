@@ -1,0 +1,28 @@
+{
+  "name": "@quenetiq/dev-server",
+  "version": "1.0.6-beta",
+  "description": "Unified development server for Quenetiq — mock GraphQL backend + frontend proxy, no CORS hassle",
+  "keywords": [
+    "graphql",
+    "dev-server",
+    "mock",
+    "proxy",
+    "quenetiq"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "main": "public-api.js",
+  "types": "public-api.d.ts",
+  "exports": {
+    ".": "./public-api.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "quenetiq-dev": "./bin/quenetiq-dev.mjs"
+  },
+  "sideEffects": false,
+  "dependencies": {
+    "graphql": "^17.0.0",
+    "graphql-yoga": "^5.0.0"
+  }
+}

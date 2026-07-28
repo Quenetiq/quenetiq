@@ -14,7 +14,7 @@
   - Two-way bound / CVA (ControlValueAccessor) components: writing a value, then having the user change it, then calling `writeValue` again — order-of-operations bugs are common here
   - Unsubscribing / `DestroyRef` cleanup — verify a subscription doesn't fire after the component is destroyed
 
-## Services / Apollo Angular / DumbQL-style GraphQL clients
+## Services / Apollo Angular / Quenetiq-style GraphQL clients
 
 - Don't just assert a query was called — assert the resulting signal/observable exposes the correct transformed data, including on the error path (query rejects, partial data with GraphQL errors array populated).
 - Test cache normalization edge cases if applicable: same entity returned from two different queries should update both call sites (this is a known problem area in this user's own bug reports about Apollo Angular DI issues).

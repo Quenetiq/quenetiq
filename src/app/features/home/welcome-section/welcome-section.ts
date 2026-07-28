@@ -12,7 +12,7 @@ import { HeroParticles } from '../hero-particles/hero-particles';
 	styleUrl: './welcome-section.scss',
 })
 export class WelcomeSection {
-	readonly title = input('DumbQL');
+	readonly title = input('Quenetiq');
 	readonly subtitle = input('GraphQL for the rest of us');
 	readonly description = input('A lightweight, modular GraphQL client built for Angular. Zero magic, full control.');
 	readonly ctaText = input('Get Started');

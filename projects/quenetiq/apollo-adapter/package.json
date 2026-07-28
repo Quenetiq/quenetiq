@@ -1,0 +1,19 @@
+{
+  "name": "@quenetiq/apollo-adapter",
+  "version": "1.0.6-beta",
+  "description": "Migration adapter from Apollo Client to Quenetiq",
+  "keywords": [
+    "graphql",
+    "apollo",
+    "migration",
+    "adapter",
+    "quenetiq"
+  ],
+  "main": "src/public-api.ts",
+  "module": "src/public-api.ts",
+  "types": "src/public-api.ts",
+  "sideEffects": false,
+  "bin": {
+    "quenetiq-migrate": "src/bin/migrate.js"
+  }
+}

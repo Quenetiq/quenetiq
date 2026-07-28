@@ -4,18 +4,11 @@
 	}
 
 	<aside class="docs-sidebar" [class.open]="sidebar.open()">
-		<div class="sidebar-header">
-			<div class="sidebar-title">Documentation</div>
-			<button
-				tuiIconButton
-				type="button"
-				iconStart="@tui.x"
-				appearance="flat"
-				size="s"
-				class="sidebar-close"
-				(click)="closeSidebar()"
-				aria-label="Close sidebar"
-			></button>
+		<div class="sidebar-top">
+			<a routerLink="/" class="sidebar-logo">
+				<app-logo size="icon" />
+			</a>
+			<app-search-trigger />
 		</div>
 		<div class="sidebar-version">
 			<label class="version-label" for="sidebar-version-input">Version</label>
@@ -42,51 +35,71 @@
 				</tui-data-list>
 			</ng-template>
 		</div>
-		<nav class="sidebar-nav">
-			@for (item of navItems(); track item.path) {
-				<a
-					[routerLink]="item.path"
-					routerLinkActive="active"
-					[routerLinkActiveOptions]="{ exact: false }"
-					class="nav-link"
-					(click)="closeSidebar()"
-				>
-					{{ item.label }}
-				</a>
-			}
-		</nav>
+		<app-docs-sidebar />
 		<div class="sidebar-footer">
-			<a class="repo-link" href="https://github.com/DumbGQL/dumbql" target="_blank" rel="noopener">GitHub →</a>
+			<a class="repo-link" href="https://github.com/Quenetiq/quenetiq" target="_blank" rel="noopener">
+				<tui-icon icon="@tui.github" />
+				GitHub
+			</a>
 		</div>
 	</aside>
-	<div class="docs-content">
-		@if (contentLoading()) {
-			<div class="docs-loader">
-				<app-logo size="icon" class="docs-loader-logo" />
-			</div>
-		}
-		<router-outlet />
+
+	<div class="docs-main">
+		<header class="docs-header-bar">
+			<button
+				tuiButton
+				appearance="flat"
+        size="s"
+				iconStart="@tui.menu"
+				class="mobile-menu-btn"
+				(click)="sidebar.toggle()"
+				aria-label="Open sidebar"
+			></button>
+      <div class="breadcrumbs">
+        <app-docs-breadcrumbs />
+      </div>
+			@if (tocService.sections().length) {
+				<button
+					tuiButton
+					appearance="flat"
+					iconStart="@tui.list"
+					class="mobile-toc-btn"
+          size="xs"
+					(click)="tocService.toggle()"
+					aria-label="Table of contents"
+				></button>
+			}
+		</header>
+
+		<div class="docs-content">
+			@if (contentLoading()) {
+				<div class="docs-loader">
+					<app-logo size="icon" class="docs-loader-logo" />
+				</div>
+			}
+			<router-outlet />
+		</div>
 	</div>
 
-	@if (tocService.sections().length) {
-		@if (tocService.open()) {
-			<button class="toc-overlay" (click)="closeToc()" aria-label="Close table of contents"></button>
-		}
-		<aside class="docs-toc" [class.open]="tocService.open()">
-			<div class="toc-header">
-				<div class="toc-heading">On this page</div>
-				<button
-					tuiIconButton
-					type="button"
-					iconStart="@tui.x"
-					appearance="flat"
-					size="s"
-					class="toc-close"
-					(click)="closeToc()"
-					aria-label="Close table of contents"
-				></button>
-			</div>
-			<app-docs-toc [sections]="tocService.sections()" />
-		</aside>
+	@if (tocService.open()) {
+		<button class="toc-overlay" (click)="closeToc()" aria-label="Close table of contents"></button>
 	}
+	<aside class="docs-toc" [class.open]="tocService.open()">
+		<div class="toc-header">
+			<div class="toc-heading">On this page</div>
+			<button
+				tuiIconButton
+				type="button"
+				iconStart="@tui.x"
+				appearance="flat"
+				size="xs"
+				class="toc-close"
+				(click)="closeToc()"
+				aria-label="Close table of contents"
+			></button>
+		</div>
+		@if (tocService.sections().length) {
+			<app-docs-toc [sections]="tocService.sections()" />
+		}
+	</aside>
 </div>

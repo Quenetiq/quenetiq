@@ -1,0 +1,9 @@
+{
+  "name": "@dumbql/ssr",
+  "version": "1.0.0-deprecated.0",
+  "description": "DEPRECATED — use @quenetiq/ssr instead",
+  "main": "public-api.js",
+  "peerDependencies": {
+    "@quenetiq/ssr": "*"
+  }
+}

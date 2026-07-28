@@ -1,35 +1,86 @@
-$dumbql-cyan: #00c8ff;
-$dumbql-cyan-hover: #00b0e0;
-$dumbql-cyan-active: #0098c0;
-$dumbql-accent: #6c5ce7;
-$dumbql-accent-hover: #5a4bd4;
-$dumbql-accent-active: #4a3cbc;
+// ─── angular.dev color palette ────────────────────────────────────────
+$q-bright-blue: oklch(51.01% 0.274 263.83);
+$q-electric-violet: oklch(53.18% 0.28 296.97);
+$q-french-violet: oklch(47.66% 0.246 305.88);
+$q-vivid-pink: oklch(69.02% 0.277 332.77);
+$q-hot-pink: oklch(59.91% 0.239 8.14);
+$q-hot-red: oklch(61.42% 0.238 15.34);
+$q-orange-red: oklch(63.32% 0.24 31.68);
+$q-super-green: oklch(79.12% 0.257 155.13);
 
-:root {
-  --tui-background-accent-1: #{$dumbql-cyan};
-  --tui-background-accent-1-hover: #{$dumbql-cyan-hover};
-  --tui-background-accent-1-active: #{$dumbql-cyan-active};
-  --tui-background-accent-2: #{$dumbql-accent};
-  --tui-background-accent-2-hover: #{$dumbql-accent-hover};
-  --tui-background-accent-2-active: #{$dumbql-accent-active};
-  --tui-text-action: #{$dumbql-cyan};
-  --tui-text-action-hover: #{$dumbql-cyan-hover};
-  --tui-border-focus: #{$dumbql-cyan};
-  --tui-status-positive: #2ed573;
-  --tui-status-negative: #ff4757;
-  --tui-status-warning: #ffa502;
-  --tui-status-info: #{$dumbql-cyan};
+// ─── Light mode ──────────────────────────────────────────────────────
+.docs-light-mode,
+[tuiTheme='light'] {
+	color-scheme: light;
+	--q-page-bg: #ffffff;
+	--q-text-primary: oklch(19.37% 0.006 300.98deg);
+	--q-text-secondary: oklch(36.98% 0.014 302.71deg);
+	--q-text-tertiary: oklch(54.84% 0.023 304.99deg);
+	--q-text-quaternary: oklch(66.98% 0 0);
+	--q-border: oklch(91.75% 0.004 301.42deg);
+	--q-border-hover: oklch(84.01% 0.009 308.34deg);
+	--q-surface: #ffffff;
+	--q-surface-alt: oklch(97.12% 0.002 325.59deg);
+	--q-surface-raised: oklch(98.81% 0 0deg);
+	--q-surface-neutral: oklch(97.12% 0.002 325.59deg);
+	--q-link: #{$q-bright-blue};
+	--q-link-hover: #{$q-vivid-pink};
+	--q-link-active: #{$q-hot-red};
+	--q-selection-bg: color-mix(in srgb, #{$q-vivid-pink} 30%, white);
+	--q-selection-text: #{$q-vivid-pink};
+	--q-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05);
+	--q-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+	--q-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
 }
 
-body[tuiTheme="dark"] {
-  --tui-background-base: #0a0a1a;
-  --tui-background-base-alt: #12122a;
-  --tui-background-elevation-1: #161630;
-  --tui-background-elevation-2: #1c1c3a;
-  --tui-background-neutral-1: rgb(0 200 255 / 6%);
-  --tui-background-neutral-2: rgb(0 200 255 / 12%);
-  --tui-text-primary: #e8e8f0;
-  --tui-text-secondary: #8888a8;
-  --tui-border-normal: rgb(0 200 255 / 10%);
-  --tui-border-hover: rgb(0 200 255 / 20%);
+// ─── Dark mode ───────────────────────────────────────────────────────
+.docs-dark-mode,
+[tuiTheme='dark'] {
+	color-scheme: dark;
+	--q-page-bg: oklch(16.93% 0.004 285.95deg);
+	--q-text-primary: oklch(98.81% 0 0deg);
+	--q-text-secondary: oklch(84.01% 0.009 308.34deg);
+	--q-text-tertiary: oklch(70.9% 0.015 304.04deg);
+	--q-text-quaternary: oklch(54.84% 0.023 304.99deg);
+	--q-border: oklch(36.98% 0.014 302.71deg);
+	--q-border-hover: oklch(54.84% 0.023 304.99deg);
+	--q-surface: oklch(16.93% 0.004 285.95deg);
+	--q-surface-alt: oklch(19.37% 0.006 300.98deg);
+	--q-surface-raised: oklch(22% 0.006 300.98deg);
+	--q-surface-neutral: oklch(22% 0.006 300.98deg);
+	--q-link: oklch(67% 0.18 263.83);
+	--q-link-hover: oklch(76% 0.18 332.77);
+	--q-link-active: oklch(72% 0.18 15.34);
+	--q-selection-bg: color-mix(in srgb, #{$q-vivid-pink} 30%, oklch(16.93% 0.004 285.95deg));
+	--q-selection-text: #{$q-vivid-pink};
+	--q-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+	--q-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+	--q-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+
+	// Override ALL Taiga UI vars for dark mode so dropdowns/popups get correct colors
+	--tui-background-base: oklch(16.93% 0.004 285.95deg);
+	--tui-background-base-alt: oklch(19.37% 0.006 300.98deg);
+	--tui-background-elevation-1: oklch(22% 0.006 300.98deg);
+	--tui-background-elevation-2: oklch(22% 0.006 300.98deg);
+	--tui-background-elevation-3: oklch(25% 0.006 300.98deg);
+	--tui-background-neutral-1: oklch(25% 0.006 300.98deg);
+	--tui-background-neutral-1-hover: oklch(30% 0.006 300.98deg);
+	--tui-background-neutral-2: oklch(30% 0.006 300.98deg);
+	--tui-background-accent-1: oklch(67% 0.18 263.83);
+	--tui-background-accent-1-hover: oklch(73% 0.18 263.83);
+	--tui-background-accent-2: oklch(65% 0.18 296.97);
+	--tui-background-accent-2-hover: oklch(71% 0.18 296.97);
+	--tui-text-primary: oklch(98.81% 0 0deg);
+	--tui-text-secondary: oklch(84.01% 0.009 308.34deg);
+	--tui-text-tertiary: oklch(70.9% 0.015 304.04deg);
+	--tui-text-action: oklch(67% 0.18 263.83);
+	--tui-text-action-hover: oklch(73% 0.18 263.83);
+	--tui-border-normal: oklch(36.98% 0.014 302.71deg);
+	--tui-border-hover: oklch(54.84% 0.023 304.99deg);
+	--tui-border-focus: oklch(67% 0.18 263.83);
+	--tui-status-positive: oklch(79% 0.16 155);
+	--tui-status-negative: oklch(72% 0.18 15.34);
+	--tui-status-warning: oklch(75% 0.16 65);
+	--tui-status-info: oklch(67% 0.18 263.83);
+	--tui-shadow-popup: 0 0.5rem 2rem rgb(0 0 0 / 0.5);
 }

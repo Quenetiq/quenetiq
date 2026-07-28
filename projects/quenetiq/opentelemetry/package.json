@@ -1,0 +1,52 @@
+{
+  "name": "@quenetiq/opentelemetry",
+  "version": "1.0.6-beta",
+  "description": "W3C Trace Context propagation and OpenTelemetry-compatible tracing for Quenetiq — zero external dependencies",
+  "keywords": [
+    "graphql",
+    "opentelemetry",
+    "tracing",
+    "traceparent",
+    "distributed-tracing",
+    "observability",
+    "quenetiq"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "main": "./public-api.js",
+  "types": "./public-api.d.ts",
+  "exports": {
+    ".": {
+      "types": "./public-api.d.ts",
+      "import": "./public-api.js",
+      "default": "./public-api.js"
+    },
+    "./angular": {
+      "types": "./angular.d.ts",
+      "import": "./angular.js",
+      "default": "./angular.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false,
+  "peerDependencies": {
+    "@angular/core": "^22.0.0",
+    "@quenetiq/core": "^1.0.0",
+    "@quenetiq/client": "^1.0.0",
+    "rxjs": "~7.8.0"
+  },
+  "peerDependenciesMeta": {
+    "@angular/core": {
+      "optional": true
+    },
+    "@quenetiq/core": {
+      "optional": true
+    },
+    "@quenetiq/client": {
+      "optional": true
+    },
+    "rxjs": {
+      "optional": true
+    }
+  }
+}

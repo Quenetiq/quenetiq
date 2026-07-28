@@ -2,22 +2,22 @@ import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
 
 /**
- * Load dumbql config from various formats.
+ * Load quenetiq config from various formats.
  * Resolution order:
- *   1. dumbql.config.ts  (via dynamic import — needs Node >=22 --experimental-strip-types)
- *   2. dumbql.config.mjs
- *   3. dumbql.config.yaml / dumbql.config.yml
- *   4. dumbql.config.json
+ *   1. quenetiq.config.ts  (via dynamic import — needs Node >=22 --experimental-strip-types)
+ *   2. quenetiq.config.mjs
+ *   3. quenetiq.config.yaml / quenetiq.config.yml
+ *   4. quenetiq.config.json
  *
  * Returns the parsed config object and the resolved path.
  */
 export async function loadConfig(cwd = process.cwd()) {
 	const candidates = [
-		'dumbql.config.ts',
-		'dumbql.config.mjs',
-		'dumbql.config.yaml',
-		'dumbql.config.yml',
-		'dumbql.config.json',
+		'quenetiq.config.ts',
+		'quenetiq.config.mjs',
+		'quenetiq.config.yaml',
+		'quenetiq.config.yml',
+		'quenetiq.config.json',
 	];
 
 	for (const file of candidates) {
@@ -50,7 +50,7 @@ export async function loadConfig(cwd = process.cwd()) {
 	}
 
 	throw new Error(
-		'No dumbql config found. Create dumbql.config.ts, .mjs, .yaml, .yml, or .json in project root.',
+		'No quenetiq config found. Create quenetiq.config.ts, .mjs, .yaml, .yml, or .json in project root.',
 	);
 }
 

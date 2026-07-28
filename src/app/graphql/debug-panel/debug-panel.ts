@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { KeyValuePipe } from '@angular/common';
 import { TuiButton, TuiExpand } from '@taiga-ui/core';
 import { TuiTab, TuiTabs } from '@taiga-ui/kit';
@@ -8,7 +8,7 @@ import {
 	buildMutationChart,
 	normalizeData,
 	groupEntities,
-} from '@dumbql/debugging';
+} from '@quenetiq/debugging';
 
 @Component({
 	selector: 'app-graphql-debug-panel',
@@ -16,6 +16,7 @@ import {
 	imports: [KeyValuePipe, TuiButton, TuiExpand, TuiTab, TuiTabs],
 	templateUrl: './debug-panel.html',
 	styleUrl: './debug-panel.scss',
+	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GraphqlDebugPanel {
 	protected readonly service = inject(GraphqlDebugService);

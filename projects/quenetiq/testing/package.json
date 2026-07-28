@@ -1,0 +1,16 @@
+{
+  "name": "@quenetiq/testing",
+  "version": "1.0.6-beta",
+  "keywords": [
+    "graphql",
+    "testing",
+    "mock",
+    "quenetiq"
+  ],
+  "peerDependencies": {
+    "@angular/core": "^22.0.0",
+    "@quenetiq/core": "^0.0.3",
+    "rxjs": "~7.8.0"
+  },
+  "sideEffects": false
+}

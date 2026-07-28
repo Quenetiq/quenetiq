@@ -19,7 +19,7 @@ comment:
   require_head: true
 
 ignore:
-  - "projects/dumbql/*/node_modules/**"
+  - "projects/quenetiq/*/node_modules/**"
   - "**/*.d.ts"
   - "**/*.spec.ts"
   - "**/*.test.ts"

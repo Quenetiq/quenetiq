@@ -1,5 +1,5 @@
 {
-  "name": "@dumbql/demo-react",
+  "name": "@quenetiq/demo-react",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,8 +8,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@dumbql/client": "*",
-    "@dumbql/react": "*",
+    "@quenetiq/client": "*",
+    "@quenetiq/react": "*",
     "graphql": "^17.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

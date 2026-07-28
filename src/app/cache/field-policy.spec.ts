@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { NormalizedCache } from '@dumbql/cache';
+import { NormalizedCache } from '@quenetiq/cache';
 
 describe('NormalizedCache — FieldPolicy', () => {
 	describe('keyFields', () => {

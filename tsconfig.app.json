@@ -4,8 +4,8 @@
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
 		"outDir": "./out-tsc/app",
-		"types": []
+		"types": ["vite/client"]
 	},
-	"include": ["src/**/*.ts", "dumbql.config.ts"],
+	"include": ["src/**/*.ts", "quenetiq.config.ts"],
 	"exclude": ["src/**/*.spec.ts"]
 }

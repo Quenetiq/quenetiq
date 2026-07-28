@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, HostListener } from '@angular/core';
 import {
 	Router,
 	RouterLink,
@@ -8,6 +8,7 @@ import {
 	RouteConfigLoadStart,
 	RouteConfigLoadEnd,
 } from '@angular/router';
+import { filter } from 'rxjs';
 import { TuiButton, TuiRoot, TUI_DARK_MODE, TuiLink } from '@taiga-ui/core';
 import { TuiDropdown } from '@taiga-ui/core/portals/dropdown';
 import { TuiDataList } from '@taiga-ui/core/components/data-list';
@@ -18,7 +19,10 @@ import { Logo } from './shared/ui/logo/logo';
 import { VersionService } from './shared/services/version.service';
 import { SidebarService } from './shared/services/sidebar.service';
 import { TocService } from './shared/services/toc.service';
-import { NullOverlay } from '@dumbql/core';
+import { NullOverlay } from '@quenetiq/core';
+import { SearchDialog } from './shared/ui/search-dialog/search-dialog';
+import { SearchState } from './shared/services/search-state.service';
+import { SearchService } from './shared/services/search.service';
 
 @Component({
 	selector: 'app-root',
@@ -37,6 +41,7 @@ import { NullOverlay } from '@dumbql/core';
 		TuiActiveZone,
 		TuiObscured,
 		NullOverlay,
+		SearchDialog,
 	],
 	templateUrl: './app.html',
 	styleUrl: './app.scss',
@@ -44,34 +49,49 @@ import { NullOverlay } from '@dumbql/core';
 export class App {
 	private readonly darkMode = inject(TUI_DARK_MODE);
 	private readonly router = inject(Router);
+	private readonly searchState = inject(SearchState);
+	private readonly searchService = inject(SearchService);
 	protected readonly versionService = inject(VersionService);
 	protected readonly sidebar = inject(SidebarService);
 	protected readonly tocService = inject(TocService);
 
 	protected readonly isDarkMode = this.darkMode;
-	protected readonly showDocsMenu = signal(this.router.url.startsWith('/docs'));
+	protected readonly showDocsMenu = signal(false);
 	protected readonly loading = signal(true);
 	protected readonly open = signal(false);
+	protected readonly mobileMenuOpen = signal(false);
+	protected readonly mobileVersionOpen = signal(false);
 
 	constructor() {
-		let initialEnded = false;
-
-		this.router.events.subscribe((event) => {
-			if (event instanceof RouteConfigLoadStart) {
-				this.loading.set(true);
-			} else if (event instanceof RouteConfigLoadEnd) {
-				this.loading.set(false);
-			} else if (event instanceof NavigationEnd) {
-				if (!initialEnded) {
-					initialEnded = true;
-					this.loading.set(false);
-				}
-				this.showDocsMenu.set(event.url.startsWith('/docs'));
-			}
+		this.router.events.pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd)).subscribe((e) => {
+			this.loading.set(false);
+			this.showDocsMenu.set(e.url.startsWith('/docs'));
 		});
 	}
 
+	@HostListener('document:keydown', ['$event'])
+	protected onKeydown(e: KeyboardEvent): void {
+		if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'f')) {
+			if (!this.showDocsMenu()) return;
+			e.preventDefault();
+			if (this.searchState.open()) {
+				this.searchState.close();
+			} else {
+				this.searchState.openDialog();
+				this.searchService.buildIndex();
+			}
+		}
+		if (e.key === 'Escape' && this.searchState.open()) {
+			this.searchState.close();
+		}
+	}
+
 	protected toggleTheme(): void {
-		this.darkMode.set(!this.darkMode());
+		const next = !this.darkMode();
+		this.darkMode.set(next);
+		const themeValue = next ? 'dark' : 'light';
+		localStorage.setItem('themePreference', themeValue);
+		document.documentElement.className = next ? 'docs-dark-mode' : 'docs-light-mode';
+		document.documentElement.setAttribute('tuiTheme', themeValue);
 	}
 }

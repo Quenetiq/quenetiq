@@ -47,3 +47,6 @@ __screenshots__/
 .DS_Store
 Thumbs.db
 dumbql-*.tgz
+
+# Generated schema (from `npm run schema:download`)
+/public/schema/

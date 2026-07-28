@@ -1,0 +1,93 @@
+:host {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.quenetiq-progress {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+}
+
+.quenetiq-progress-track {
+	flex: 1;
+	border-radius: 999px;
+	overflow: hidden;
+	background: var(--quenetiq-progress-track, #e2e8f0);
+}
+
+.quenetiq-progress-fill {
+	height: 100%;
+	border-radius: 999px;
+	transition: width 0.3s ease;
+}
+
+.quenetiq-progress-label {
+	font-size: 12px;
+	min-width: 32px;
+	text-align: right;
+	opacity: 0.8;
+	font-variant-numeric: tabular-nums;
+}
+
+.quenetiq-progress-sm {
+	height: 4px;
+}
+
+.quenetiq-progress-sm .quenetiq-progress-label {
+	font-size: 10px;
+}
+
+.quenetiq-progress-md {
+	height: 8px;
+}
+
+.quenetiq-progress-lg {
+	height: 14px;
+}
+
+.quenetiq-progress-lg .quenetiq-progress-label {
+	min-width: 36px;
+}
+
+.quenetiq-progress-primary .quenetiq-progress-fill {
+	background: var(--quenetiq-primary, #3b82f6);
+}
+
+.quenetiq-progress-accent .quenetiq-progress-fill {
+	background: var(--quenetiq-accent, #8b5cf6);
+}
+
+.quenetiq-progress-warn .quenetiq-progress-fill {
+	background: var(--quenetiq-warn, #ef4444);
+}
+
+.quenetiq-progress-success .quenetiq-progress-fill {
+	background: var(--quenetiq-success, #22c55e);
+}
+
+.quenetiq-progress-inherit .quenetiq-progress-fill {
+	background: currentcolor;
+}
+
+.quenetiq-progress-fill-indeterminate {
+	width: 100% !important;
+	animation: quenetiq-indeterminate 1.8s ease-in-out infinite;
+	transform-origin: left;
+}
+
+@keyframes quenetiq-indeterminate {
+	0% {
+		transform: translateX(-100%) scaleX(0.3);
+	}
+
+	50% {
+		transform: translateX(30%) scaleX(0.6);
+	}
+
+	100% {
+		transform: translateX(100%) scaleX(0.3);
+	}
+}

@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { GraphqlService, provideGraphql, gql, query, mutate } from '@dumbql/core';
-import type { DocumentNode, GraphQLResult } from '@dumbql/core';
+import { GraphqlService, provideQuenetiq, gql, query, mutate } from '@quenetiq/core';
+import type { DocumentNode, GraphQLResult } from '@quenetiq/core';
 import { GET_CURRENT_USER, GET_NOTES } from './queries';
 
 const TEST_QUERY: DocumentNode = gql`
@@ -35,7 +35,7 @@ describe('GraphqlService', () => {
 
 	beforeEach(() => {
 		TestBed.configureTestingModule({
-			providers: [provideHttpClient(), provideHttpClientTesting(), provideGraphql({ endpoint: '/graphql' })],
+			providers: [provideHttpClient(), provideHttpClientTesting(), provideQuenetiq({ endpoint: '/graphql' })],
 		});
 
 		service = TestBed.inject(GraphqlService);
@@ -178,7 +178,7 @@ describe('GraphqlService with custom endpoint', () => {
 	beforeEach(() => {
 		TestBed.resetTestingModule();
 		TestBed.configureTestingModule({
-			providers: [provideHttpClient(), provideHttpClientTesting(), provideGraphql({ endpoint: '/api/graphql' })],
+			providers: [provideHttpClient(), provideHttpClientTesting(), provideQuenetiq({ endpoint: '/api/graphql' })],
 		});
 
 		httpMock = TestBed.inject(HttpTestingController);
@@ -188,7 +188,7 @@ describe('GraphqlService with custom endpoint', () => {
 		httpMock.verify();
 	});
 
-	it('uses custom endpoint from provideGraphql', () => {
+	it('uses custom endpoint from provideQuenetiq', () => {
 		const svc = TestBed.inject(GraphqlService);
 		let result: unknown;
 
@@ -210,7 +210,7 @@ describe('GraphqlService with default config', () => {
 	beforeEach(() => {
 		TestBed.resetTestingModule();
 		TestBed.configureTestingModule({
-			providers: [provideHttpClient(), provideHttpClientTesting(), provideGraphql({ endpoint: '/graphql' })],
+			providers: [provideHttpClient(), provideHttpClientTesting(), provideQuenetiq({ endpoint: '/graphql' })],
 		});
 
 		httpMock = TestBed.inject(HttpTestingController);
@@ -238,7 +238,7 @@ describe('standalone query() function', () => {
 	beforeEach(() => {
 		TestBed.resetTestingModule();
 		TestBed.configureTestingModule({
-			providers: [provideHttpClient(), provideHttpClientTesting(), provideGraphql({ endpoint: '/graphql' })],
+			providers: [provideHttpClient(), provideHttpClientTesting(), provideQuenetiq({ endpoint: '/graphql' })],
 		});
 
 		httpMock = TestBed.inject(HttpTestingController);
@@ -252,7 +252,7 @@ describe('standalone query() function', () => {
 		let result: unknown;
 
 		TestBed.runInInjectionContext(() => {
-			query<{ status: string }>(TEST_QUERY).result$.subscribe((r: unknown) => {
+			query(TEST_QUERY).result$.subscribe((r: unknown) => {
 				result = r;
 			});
 		});
@@ -273,7 +273,7 @@ describe('standalone mutate() function', () => {
 	beforeEach(() => {
 		TestBed.resetTestingModule();
 		TestBed.configureTestingModule({
-			providers: [provideHttpClient(), provideHttpClientTesting(), provideGraphql({ endpoint: '/graphql' })],
+			providers: [provideHttpClient(), provideHttpClientTesting(), provideQuenetiq({ endpoint: '/graphql' })],
 		});
 
 		httpMock = TestBed.inject(HttpTestingController);
@@ -287,7 +287,7 @@ describe('standalone mutate() function', () => {
 		let result: unknown;
 
 		TestBed.runInInjectionContext(() => {
-			mutate<{ status: string }>(TEST_QUERY).subscribe((r) => {
+			mutate(TEST_QUERY).subscribe((r) => {
 				result = r;
 			});
 		});
@@ -306,7 +306,7 @@ describe('Typed queries from barrel', () => {
 	beforeEach(() => {
 		TestBed.resetTestingModule();
 		TestBed.configureTestingModule({
-			providers: [provideHttpClient(), provideHttpClientTesting(), provideGraphql({ endpoint: '/graphql' })],
+			providers: [provideHttpClient(), provideHttpClientTesting(), provideQuenetiq({ endpoint: '/graphql' })],
 		});
 
 		service = TestBed.inject(GraphqlService);
@@ -464,7 +464,7 @@ describe('Plugins system', () => {
 			providers: [
 				provideHttpClient(),
 				provideHttpClientTesting(),
-				provideGraphql({
+				provideQuenetiq({
 					endpoint: '/graphql',
 					plugins: [testPlugin],
 				}),

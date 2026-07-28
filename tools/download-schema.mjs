@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { resolve } from 'node:path';
 import { loadConfig } from './load-config.mjs';
-import { downloadAndStoreSchema } from '../projects/dumbql/downloader/src/public-api.ts';
+import { downloadAndStoreSchema } from '../projects/quenetiq/downloader/src/public-api.ts';
 
 const args = process.argv.slice(2);
 
@@ -40,7 +40,7 @@ try {
 
 const codegen = config.codegen ?? config;
 const defaultEndpoint = codegen.schema?.endpoint ?? 'http://localhost:8080/graphql';
-const defaultOutput = codegen.schema?.dir ?? './schema';
+const defaultOutput = codegen.schema?.dir ?? './public/schema';
 const defaultFilename = codegen.schema?.filename ?? 'schema.json';
 const defaultHeaders = codegen.schema?.headers ?? {};
 

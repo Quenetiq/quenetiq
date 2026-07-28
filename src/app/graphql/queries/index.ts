@@ -1,4 +1,4 @@
-import { gql } from '@dumbql/core';
+import { gql } from '@quenetiq/core';
 
 export const GET_CURRENT_USER = gql`
 	query GetCurrentUser {

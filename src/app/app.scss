@@ -9,6 +9,13 @@
   position: sticky;
   top: 0;
   z-index: 100;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .docs-menu-btn {
@@ -25,11 +32,16 @@
   gap: 0.5rem;
   text-decoration: none;
   margin-right: auto;
+  min-width: 0;
+  flex-shrink: 1;
 
   .app-name {
     font-size: 1.125rem;
     font-weight: 700;
     color: var(--tui-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
@@ -104,9 +116,131 @@ tui-data-list-wrapper {
   font-size: 0.8125rem;
 }
 
+// ─── Mobile hamburger ─────────────────────────────────────────────────
+
+.mobile-hamburger {
+  display: none;
+}
+
+// ─── Mobile drawer ────────────────────────────────────────────────────
+
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 40%);
+  z-index: 200;
+  animation: mobile-overlay-in 0.2s ease;
+}
+
+@keyframes mobile-overlay-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 18rem;
+  max-width: 85vw;
+  z-index: 201;
+  background: var(--tui-background-base);
+  border-left: 1px solid var(--tui-border-normal);
+  box-shadow: var(--q-shadow-lg, -4px 0 15px -3px rgb(0 0 0 / 10%));
+  transform: translateX(100%);
+  animation: mobile-drawer-in 0.25s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes mobile-drawer-in {
+  to {
+    transform: translateX(0);
+  }
+}
+
+.mobile-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--tui-border-normal);
+}
+
+.mobile-drawer-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem;
+  flex: 1;
+  overflow-y: auto;
+
+  a {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    color: var(--tui-text-primary);
+    font-size: 1rem;
+    font-weight: 500;
+    min-height: 44px;
+    transition: background 0.15s;
+
+    &:hover {
+      background: var(--tui-background-neutral-1);
+    }
+
+    &.active {
+      color: var(--tui-background-accent-1);
+      background: var(--tui-background-accent-1-12);
+      font-weight: 600;
+    }
+  }
+}
+
+.mobile-drawer-footer {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--tui-border-normal);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mobile-drawer-version {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mobile-version-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--tui-text-tertiary);
+}
+
+.mobile-version-select {
+  width: 100%;
+  justify-content: center;
+}
+
+.mobile-theme-toggle {
+  width: 100%;
+  justify-content: center;
+}
+
 @media (width <= 1024px) {
+  .docs-menu-btn,
   .docs-toc-btn {
-    display: inline-flex;
+    display: none;
   }
 }
 
@@ -117,8 +251,11 @@ tui-data-list-wrapper {
     backdrop-filter: blur(12px);
   }
 
-  .docs-menu-btn {
+  .mobile-hamburger {
     display: inline-flex;
+    min-width: 44px;
+    min-height: 44px;
+    flex-shrink: 0;
   }
 
   .app-nav {
@@ -128,4 +265,18 @@ tui-data-list-wrapper {
   .version-select {
     display: none;
   }
+
+  .theme-toggle {
+    flex-shrink: 0;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .mobile-overlay {
+    display: block;
+  }
+}
+
+pre {
+  width: max-content;
 }

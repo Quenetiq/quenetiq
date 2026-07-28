@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { CachePersistence } from '@dumbql/cache';
+import { CachePersistence } from '@quenetiq/cache';
 
 describe('CachePersistence', () => {
 	let persist: CachePersistence;
@@ -171,7 +171,7 @@ describe('CachePersistence', () => {
 						removeItem: (k: string) => void;
 					};
 				}
-			).storage.setItem('__dumbql_cache', '{invalid json');
+			).storage.setItem('__quenetiq_cache', '{invalid json');
 			expect(memPersist.restore()).toBeNull();
 		});
 
@@ -185,7 +185,7 @@ describe('CachePersistence', () => {
 						removeItem: (k: string) => void;
 					};
 				}
-			).storage.setItem('__dumbql_cache', '');
+			).storage.setItem('__quenetiq_cache', '');
 			expect(memPersist.restore()).toBeNull();
 		});
 	});

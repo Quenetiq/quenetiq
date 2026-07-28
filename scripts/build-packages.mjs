@@ -3,8 +3,8 @@ import { existsSync, rmSync, symlinkSync, mkdirSync, cpSync, readFileSync, write
 import { join, resolve } from 'node:path';
 
 const ROOT = resolve(import.meta.dirname, '..');
-const DIST = join(ROOT, 'dist', 'dumbql');
-const NM = join(ROOT, 'node_modules', '@dumbql');
+const DIST = join(ROOT, 'dist', 'quenetiq');
+const NM = join(ROOT, 'node_modules', '@quenetiq');
 
 const BUILD_ORDER = [
   'errors',
@@ -40,7 +40,7 @@ function linkPackage(pkg, distOut) {
   if (existsSync(distOut)) {
     mkdirSync(NM, { recursive: true });
     symlinkSync(resolve(distOut), nmLink, 'dir');
-    console.log(`  🔗 Linked @dumbql/${pkg} → ${resolve(distOut)}`);
+    console.log(`  🔗 Linked @quenetiq/${pkg} → ${resolve(distOut)}`);
   }
 }
 
@@ -81,8 +81,8 @@ function fixDistPackageJson(distOut) {
 }
 
 function build(pkg) {
-  console.log(`\n📦 Building @dumbql/${pkg}...`);
-  const pkgDir = join(ROOT, 'projects', 'dumbql', pkg);
+  console.log(`\n📦 Building @quenetiq/${pkg}...`);
+  const pkgDir = join(ROOT, 'projects', 'quenetiq', pkg);
   const distOut = join(DIST, pkg);
 
   if (existsSync(join(pkgDir, 'ng-package.json'))) {
@@ -135,7 +135,7 @@ function build(pkg) {
   linkPackage(pkg, distOut);
 }
 
-console.log('🚀 Building all @dumbql packages in dependency order...\n');
+console.log('🚀 Building all @quenetiq packages in dependency order...\n');
 for (const pkg of BUILD_ORDER) {
   build(pkg);
 }

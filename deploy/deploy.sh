@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_URL="https://github.com/DumbGQL/dumbql.git"
-TEMP_DIR="/tmp/dumbql-deploy-$(date +%s)"
+REPO_URL="https://github.com/Quenetiq/quenetiq.git"
+TEMP_DIR="/tmp/quenetiq-deploy-$(date +%s)"
 
 # ── Ask for domain if not provided ────────────────────────────────────
 DOMAIN="${1:-}"
 while [[ -z "$DOMAIN" ]]; do
-  read -rp "Enter domain name (e.g. dumbql.dev): " DOMAIN
+  read -rp "Enter domain name (e.g. quenetiq.dev): " DOMAIN
 done
 
 NGINX_ROOT="/var/www/$DOMAIN"
 BUILD_DIR="$NGINX_ROOT/build"
 
 echo ""
-echo "=== Deploying DumbQL to $DOMAIN ==="
+echo "=== Deploying Quenetiq to $DOMAIN ==="
 echo ""
 
 # ── 1. Clone ──────────────────────────────────────────────────────────
@@ -27,7 +27,7 @@ echo "=== 2/6 Installing dependencies ==="
 npm ci
 
 # ── 3. Build packages ─────────────────────────────────────────────────
-echo "=== 3/6 Building @dumbql/* packages ==="
+echo "=== 3/6 Building @quenetiq/* packages ==="
 node scripts/build-packages.mjs
 
 # ── 4. Build Angular ──────────────────────────────────────────────────

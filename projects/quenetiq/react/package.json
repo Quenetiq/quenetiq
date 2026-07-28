@@ -1,0 +1,32 @@
+{
+  "name": "@quenetiq/react",
+  "version": "1.0.6-beta",
+  "description": "React bindings for @quenetiq/client — hooks for query, mutate, and subscriptions",
+  "keywords": [
+    "react",
+    "graphql",
+    "hooks",
+    "quenetiq",
+    "graphql-client",
+    "react-hooks"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "main": "./public-api.js",
+  "types": "./public-api.d.ts",
+  "exports": {
+    ".": {
+      "types": "./public-api.d.ts",
+      "import": "./public-api.js",
+      "default": "./public-api.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false,
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0",
+    "@quenetiq/client": "^0.0.3",
+    "graphql": "^17.0.0"
+  }
+}

@@ -30,6 +30,7 @@ function compareVersions(a: string, b: string): number {
 @Injectable({ providedIn: 'root' })
 export class VersionService {
 	readonly allVersions: readonly string[] = [
+		'1.0.6-beta',
 		'1.0.5',
 		'1.0.5-beta.4',
 		'1.0.5-beta.3',
@@ -58,28 +59,29 @@ export class VersionService {
 	// v0.0.3: errors, apollo-adapter, dev-server
 	// v1.0.5: epic-fetus, Val (createVal, useVal, VueVal, ReactVal, AngularVal), extension 1.0.1-beta.0, opentelemetry
 	private readonly packageSinceMap: Record<string, string> = {
-		'@dumbql/core': '0.0.1',
-		'@dumbql/client': '0.0.1',
-		'@dumbql/react': '0.0.1',
-		'@dumbql/vue': '0.0.1',
-		'@dumbql/cache': '0.0.1',
-		'@dumbql/subscriptions': '0.0.1',
-		'@dumbql/file-upload': '0.0.1',
-		'@dumbql/middlewares': '0.0.1',
-		'@dumbql/pagination': '0.0.1',
-		'@dumbql/persisted-queries': '0.0.1',
-		'@dumbql/fragments': '0.0.1',
-		'@dumbql/ssr': '0.0.1',
-		'@dumbql/debugging': '0.0.1',
-		'@dumbql/downloader': '0.0.1',
-		'@dumbql/testing': '0.0.1',
-		'@dumbql/codegen': '0.0.1',
-		'@dumbql/errors': '0.0.3',
-		'@dumbql/apollo-adapter': '0.0.3',
-		'@dumbql/dev-server': '0.0.3',
-		'@dumbql/opentelemetry': '1.0.5',
+		'@quenetiq/core': '0.0.1',
+		'@quenetiq/client': '0.0.1',
+		'@quenetiq/react': '0.0.1',
+		'@quenetiq/vue': '0.0.1',
+		'@quenetiq/cache': '0.0.1',
+		'@quenetiq/subscriptions': '0.0.1',
+		'@quenetiq/file-upload': '0.0.1',
+		'@quenetiq/middlewares': '0.0.1',
+		'@quenetiq/pagination': '0.0.1',
+		'@quenetiq/persisted-queries': '0.0.1',
+		'@quenetiq/fragments': '0.0.1',
+		'@quenetiq/ssr': '0.0.1',
+		'@quenetiq/debugging': '0.0.1',
+		'@quenetiq/downloader': '0.0.1',
+		'@quenetiq/testing': '0.0.1',
+		'@quenetiq/codegen': '0.0.1',
+		'@quenetiq/errors': '0.0.3',
+		'@quenetiq/apollo-adapter': '0.0.3',
+		'@quenetiq/dev-server': '0.0.3',
+		'@quenetiq/opentelemetry': '1.0.5',
+		'@quenetiq/observables': '1.0.6-beta',
 	};
-	private readonly storageKey = 'dumbql-docs-version';
+	private readonly storageKey = 'quenetiq-docs-version';
 
 	readonly currentVersion = signal(this.load());
 

@@ -1,0 +1,38 @@
+{
+	"name": "@quenetiq/observables",
+	"version": "1.0.0-beta",
+	"description": "RxJS operators for @quenetiq/cache — observe entity changes, build cache-first/ stale-while-revalidate streams, and reactively watch GraphQL queries",
+	"keywords": [
+		"graphql",
+		"cache",
+		"rxjs",
+		"operators",
+		"quenetiq",
+		"reactive"
+	],
+	"license": "MIT",
+	"type": "module",
+	"main": "./public-api.js",
+	"types": "./public-api.d.ts",
+	"exports": {
+		".": {
+			"types": "./public-api.d.ts",
+			"import": "./public-api.js",
+			"default": "./public-api.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"sideEffects": false,
+	"peerDependencies": {
+		"@quenetiq/cache": "^1.0.0",
+		"rxjs": "~7.8.0"
+	},
+	"peerDependenciesMeta": {
+		"@quenetiq/cache": {
+			"optional": false
+		},
+		"rxjs": {
+			"optional": false
+		}
+	}
+}

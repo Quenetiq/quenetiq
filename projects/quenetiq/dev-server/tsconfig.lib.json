@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "outDir": "../../../dist/quenetiq/dev-server",
+    "rootDir": "src",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "target": "ES2022",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "types": ["node"],
+    "paths": {}
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"]
+}

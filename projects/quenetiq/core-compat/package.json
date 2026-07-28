@@ -1,0 +1,9 @@
+{
+  "name": "@dumbql/core",
+  "version": "1.0.0-deprecated.0",
+  "description": "DEPRECATED — use @quenetiq/core instead",
+  "main": "public-api.js",
+  "peerDependencies": {
+    "@quenetiq/core": "*"
+  }
+}

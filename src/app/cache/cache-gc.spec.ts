@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { NormalizedCache, CacheGc } from '@dumbql/cache';
+import { NormalizedCache, CacheGc } from '@quenetiq/cache';
 
 describe('CacheGc', () => {
 	let cache: NormalizedCache;
