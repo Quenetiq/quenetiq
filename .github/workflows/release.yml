@@ -62,22 +62,28 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ inputs.branch || github.ref_name }}
           fetch-depth: 0
 
-      - name: Auto-detect latest pre-release branch
-        if: ${{ inputs.type == 'beta' || inputs.type == 'rc' || inputs.type == 'alpha' }}
+      - name: Auto-detect pre-release branch
+        id: detect-branch
         run: |
-          PREFIX="${{ inputs.type }}"
-          git fetch origin "${PREFIX}/*:refs/remotes/origin/${PREFIX}/*" 2>/dev/null || true
-          LATEST=$(git branch -r | grep "origin/${PREFIX}/" | sed 's|.*origin/||' | sort -V | tail -1)
-          if [ -z "$LATEST" ]; then
-            echo "No ${PREFIX}/* branches found, keeping original ref"
-          else
-            echo "Auto-detected latest ${PREFIX} branch: $LATEST"
-            git checkout "$LATEST"
-            echo "Using branch: $LATEST"
-          fi
+          BRANCH="${{ inputs.branch || github.ref_name }}"
+          case "$BRANCH" in
+            beta|rc|alpha)
+              LATEST=$(git branch -r | grep "origin/${BRANCH}/" | sed 's|.*origin/||' | sort -V | tail -1)
+              if [ -n "$LATEST" ]; then
+                echo "Auto-detected latest ${BRANCH} branch: $LATEST"
+                git checkout "$LATEST"
+                echo "branch=$LATEST" >> "$GITHUB_OUTPUT"
+              else
+                echo "No ${BRANCH}/* branches found, using $BRANCH"
+                echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+              fi
+              ;;
+            *)
+              echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
 
       - uses: actions/setup-node@v4
         with:
@@ -133,7 +139,7 @@ jobs:
             "
             echo "PACKAGES_CONFIG=packages-config.json" >> "$GITHUB_ENV"
           else
-            BRANCH="${{ github.ref_name }}"
+            BRANCH="${{ steps.detect-branch.outputs.branch || github.ref_name }}"
             # Extract base channel from branch: beta/v1.0.5 → beta
             CHANNEL="${BRANCH%%/*}"
             case "$CHANNEL" in
@@ -238,7 +244,8 @@ jobs:
 
       - name: Push version bump commit and tags
         run: |
-          git push origin "HEAD:${{ github.ref_name }}" --no-verify
+          BRANCH="${{ steps.detect-branch.outputs.branch || github.ref_name }}"
+          git push origin "HEAD:$BRANCH" --no-verify
           git push origin --tags --no-verify
 
       - name: Create GitHub Release
