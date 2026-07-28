@@ -21,10 +21,11 @@ export class MockGraphqlService {
 		error: 'No mock response configured',
 	});
 
-	when<T>(request: MockedRequest, result: GraphQLResult<T>): void {
+	when<T>(request: MockedRequest, result: GraphQLResult<T> & { delay?: number }): void {
 		const key = `${request.query}|${JSON.stringify(request.variables ?? {})}`;
 		const existing = this.responses.get(key) ?? [];
-		existing.push({ request, result } as MockedResponse);
+		const { delay, ...resultOnly } = result;
+		existing.push({ request, result: resultOnly as GraphQLResult<T>, delay });
 		this.responses.set(key, existing);
 	}
 

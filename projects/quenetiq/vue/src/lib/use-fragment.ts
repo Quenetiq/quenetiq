@@ -13,6 +13,7 @@ export interface UseFragmentResult<TData> {
 }
 
 function extractTopLevelFields(document: DocumentNode | TypedDocumentNode): string[] {
+	if (!document.definitions) return [];
 	const fields: string[] = [];
 	for (const def of document.definitions) {
 		if (def.kind === 'FragmentDefinition' || def.kind === 'OperationDefinition') {
@@ -73,7 +74,7 @@ export function useFragment<TData extends Record<string, unknown>>(
 		} else {
 			const entity = cache.query(idRef.__typename, idRef.id ?? '');
 			data.value = entity as TData | null;
-			complete.value = entity !== undefined;
+			complete.value = entity != null;
 		}
 	};
 
@@ -102,8 +103,8 @@ export function useFragment<TData extends Record<string, unknown>>(
 		});
 	};
 
+	readFragment();
 	onMounted(() => {
-		readFragment();
 		subscribe();
 	});
 

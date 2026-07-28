@@ -23,8 +23,8 @@ describe('useFragment (Vue)', () => {
 		});
 
 		expect(cache.query).toHaveBeenCalledWith('Book', '1');
-		expect(data).toEqual({ id: '1', title: 'Dune', __typename: 'Book' });
-		expect(complete).toBe(true);
+		expect(data.value).toEqual({ id: '1', title: 'Dune', __typename: 'Book' });
+		expect(complete.value).toBe(true);
 	});
 
 	it('returns complete: false when entity not in cache', () => {
@@ -34,15 +34,15 @@ describe('useFragment (Vue)', () => {
 
 		const { data, complete } = useFragment({} as never, { __typename: 'Book', id: 'missing' });
 
-		expect(data).toBeNull();
-		expect(complete).toBe(false);
+		expect(data.value).toBeNull();
+		expect(complete.value).toBe(false);
 	});
 
 	it('returns complete: false when identifier is null', () => {
 		const { data, complete } = useFragment({} as never, null);
 
-		expect(data).toBeNull();
-		expect(complete).toBe(false);
+		expect(data.value).toBeNull();
+		expect(complete.value).toBe(false);
 	});
 
 	it('returns complete: false when no cache service available', () => {
@@ -51,8 +51,8 @@ describe('useFragment (Vue)', () => {
 
 		const { data, complete } = useFragment({} as never, { __typename: 'Book', id: '1' });
 
-		expect(data).toBeNull();
-		expect(complete).toBe(false);
+		expect(data.value).toBeNull();
+		expect(complete.value).toBe(false);
 	});
 
 	it('passes empty string as id when identifier has no id', () => {
