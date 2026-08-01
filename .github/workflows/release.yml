@@ -71,7 +71,7 @@ jobs:
           BRANCH="${{ inputs.branch || github.ref_name }}"
           case "$BRANCH" in
             beta|rc|alpha)
-              LATEST=$(git branch -r | grep "origin/${BRANCH}/" | sed 's|.*origin/||' | sort -V | tail -1)
+              LATEST=$(git branch -r | grep -E "origin/${BRANCH}/[0-9]" | sed 's|.*origin/||' | sort -V | tail -1)
               if [ -n "$LATEST" ]; then
                 echo "Auto-detected latest ${BRANCH} branch: $LATEST"
                 git checkout "$LATEST"
