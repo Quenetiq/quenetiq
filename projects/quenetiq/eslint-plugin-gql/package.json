@@ -1,6 +1,6 @@
 {
 	"name": "@quenetiq/eslint-plugin-gql",
-	"version": "1.0.6-beta",
+	"version": "1.0.6",
 	"description": "ESLint plugin that parses GraphQL inside gql tagged templates and createTypedQuery() strings",
 	"keywords": [
 		"eslint",

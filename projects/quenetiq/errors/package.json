@@ -1,21 +1,21 @@
 {
-  "name": "@quenetiq/errors",
-  "version": "1.0.6-beta",
-  "description": "Typed error classes for quenetiq — graphql, network, cache, validation errors with error handler",
-  "keywords": [
-    "graphql",
-    "errors",
-    "error-handling",
-    "quenetiq",
-    "typed-errors"
-  ],
-  "license": "MIT",
-  "type": "module",
-  "main": "src/public-api.ts",
-  "types": "src/public-api.ts",
-  "exports": {
-    ".": "./src/public-api.ts",
-    "./package.json": "./package.json"
-  },
-  "sideEffects": false
+	"name": "@quenetiq/errors",
+	"version": "1.0.6",
+	"description": "Typed error classes for quenetiq — graphql, network, cache, validation errors with error handler",
+	"keywords": [
+		"graphql",
+		"errors",
+		"error-handling",
+		"quenetiq",
+		"typed-errors"
+	],
+	"license": "MIT",
+	"type": "module",
+	"main": "src/public-api.ts",
+	"types": "src/public-api.ts",
+	"exports": {
+		".": "./src/public-api.ts",
+		"./package.json": "./package.json"
+	},
+	"sideEffects": false
 }

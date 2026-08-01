@@ -1,6 +1,6 @@
 {
 	"name": "dumb-keystore",
-	"version": "1.0.6-beta",
+	"version": "1.0.6",
 	"scripts": {
 		"ng": "ng",
 		"start": "npm run mock & ng serve",

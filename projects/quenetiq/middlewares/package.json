@@ -1,33 +1,33 @@
 {
-  "name": "@quenetiq/middlewares",
-  "version": "1.0.6-beta",
-  "description": "Pre-built middleware functions for Quenetiq — auth refresh, retry, focus refetch, offline queue",
-  "keywords": [
-    "graphql",
-    "middleware",
-    "auth",
-    "retry",
-    "offline",
-    "quenetiq"
-  ],
-  "license": "MIT",
-  "type": "module",
-  "main": "src/public-api.ts",
-  "types": "src/public-api.ts",
-  "exports": {
-    ".": "./src/public-api.ts",
-    "./angular": "./src/angular.ts",
-    "./package.json": "./package.json"
-  },
-  "sideEffects": false,
-  "peerDependencies": {
-    "@angular/core": "^22.0.0",
-    "@quenetiq/core": "^1.0.0",
-    "rxjs": "~7.8.0"
-  },
-  "peerDependenciesMeta": {
-    "@angular/core": {
-      "optional": true
-    }
-  }
+	"name": "@quenetiq/middlewares",
+	"version": "1.0.6",
+	"description": "Pre-built middleware functions for Quenetiq — auth refresh, retry, focus refetch, offline queue",
+	"keywords": [
+		"graphql",
+		"middleware",
+		"auth",
+		"retry",
+		"offline",
+		"quenetiq"
+	],
+	"license": "MIT",
+	"type": "module",
+	"main": "src/public-api.ts",
+	"types": "src/public-api.ts",
+	"exports": {
+		".": "./src/public-api.ts",
+		"./angular": "./src/angular.ts",
+		"./package.json": "./package.json"
+	},
+	"sideEffects": false,
+	"peerDependencies": {
+		"@angular/core": "^22.0.0",
+		"@quenetiq/core": "^1.0.0",
+		"rxjs": "~7.8.0"
+	},
+	"peerDependenciesMeta": {
+		"@angular/core": {
+			"optional": true
+		}
+	}
 }

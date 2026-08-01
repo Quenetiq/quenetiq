@@ -1,20 +1,20 @@
 {
-  "name": "@quenetiq/codegen",
-  "version": "1.0.6-beta",
-  "type": "module",
-  "keywords": [
-    "graphql",
-    "codegen",
-    "code-generation",
-    "quenetiq",
-    "typescript"
-  ],
-  "main": "src/public-api.ts",
-  "bin": {
-    "quenetiq-codegen": "bin/quenetiq-codegen.mjs"
-  },
-  "dependencies": {
-    "graphql": "^17.0.0",
-    "glob": "^11.0.0"
-  }
+	"name": "@quenetiq/codegen",
+	"version": "1.0.6",
+	"type": "module",
+	"keywords": [
+		"graphql",
+		"codegen",
+		"code-generation",
+		"quenetiq",
+		"typescript"
+	],
+	"main": "src/public-api.ts",
+	"bin": {
+		"quenetiq-codegen": "bin/quenetiq-codegen.mjs"
+	},
+	"dependencies": {
+		"graphql": "^17.0.0",
+		"glob": "^11.0.0"
+	}
 }

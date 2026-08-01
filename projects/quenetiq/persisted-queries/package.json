@@ -1,16 +1,16 @@
 {
-  "name": "@quenetiq/persisted-queries",
-  "version": "1.0.6-beta",
-  "keywords": [
-    "graphql",
-    "persisted-queries",
-    "apq",
-    "quenetiq"
-  ],
-  "peerDependencies": {
-    "@angular/core": "^22.0.0",
-    "@quenetiq/core": "^1.0.0",
-    "rxjs": "~7.8.0"
-  },
-  "sideEffects": false
+	"name": "@quenetiq/persisted-queries",
+	"version": "1.0.6",
+	"keywords": [
+		"graphql",
+		"persisted-queries",
+		"apq",
+		"quenetiq"
+	],
+	"peerDependencies": {
+		"@angular/core": "^22.0.0",
+		"@quenetiq/core": "^1.0.0",
+		"rxjs": "~7.8.0"
+	},
+	"sideEffects": false
 }

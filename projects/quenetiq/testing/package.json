@@ -1,16 +1,16 @@
 {
-  "name": "@quenetiq/testing",
-  "version": "1.0.6-beta",
-  "keywords": [
-    "graphql",
-    "testing",
-    "mock",
-    "quenetiq"
-  ],
-  "peerDependencies": {
-    "@angular/core": "^22.0.0",
-    "@quenetiq/core": "^1.0.0",
-    "rxjs": "~7.8.0"
-  },
-  "sideEffects": false
+	"name": "@quenetiq/testing",
+	"version": "1.0.6",
+	"keywords": [
+		"graphql",
+		"testing",
+		"mock",
+		"quenetiq"
+	],
+	"peerDependencies": {
+		"@angular/core": "^22.0.0",
+		"@quenetiq/core": "^1.0.0",
+		"rxjs": "~7.8.0"
+	},
+	"sideEffects": false
 }

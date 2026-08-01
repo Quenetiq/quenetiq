@@ -1,17 +1,17 @@
 {
-  "name": "@quenetiq/debugging",
-  "version": "1.0.6-beta",
-  "keywords": [
-    "graphql",
-    "debugging",
-    "devtools",
-    "quenetiq"
-  ],
-  "peerDependencies": {
-    "@angular/common": "^22.0.0",
-    "@angular/core": "^22.0.0",
-    "@quenetiq/core": "^1.0.0",
-    "rxjs": "~7.8.0"
-  },
-  "sideEffects": false
+	"name": "@quenetiq/debugging",
+	"version": "1.0.6",
+	"keywords": [
+		"graphql",
+		"debugging",
+		"devtools",
+		"quenetiq"
+	],
+	"peerDependencies": {
+		"@angular/common": "^22.0.0",
+		"@angular/core": "^22.0.0",
+		"@quenetiq/core": "^1.0.0",
+		"rxjs": "~7.8.0"
+	},
+	"sideEffects": false
 }
