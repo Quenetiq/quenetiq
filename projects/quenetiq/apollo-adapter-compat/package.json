@@ -1,0 +1,9 @@
+{
+  "name": "@dumbql/apollo-adapter",
+  "version": "1.0.0-deprecated.0",
+  "description": "DEPRECATED — use @quenetiq/apollo-adapter instead",
+  "main": "public-api.js",
+  "peerDependencies": {
+    "@quenetiq/apollo-adapter": "*"
+  }
+}

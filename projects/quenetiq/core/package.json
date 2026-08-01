@@ -1,0 +1,29 @@
+{
+	"name": "@quenetiq/core",
+	"version": "1.0.6",
+	"description": "Angular GraphQL core — GraphqlService, middleware pipeline, gql tag, pipes, standalone helpers, reactive variables",
+	"keywords": [
+		"angular",
+		"graphql",
+		"core",
+		"quenetiq",
+		"graphql-client",
+		"signals"
+	],
+	"license": "MIT",
+	"schematics": "./schematics/collection.json",
+	"peerDependencies": {
+		"@angular/common": "^22.0.0",
+		"@angular/core": "^22.0.0",
+		"@angular/router": "^22.0.0",
+		"@quenetiq/cache": "^1.0.0",
+		"graphql": "^17.0.0",
+		"rxjs": "~7.8.0"
+	},
+	"peerDependenciesMeta": {
+		"@quenetiq/cache": {
+			"optional": true
+		}
+	},
+	"sideEffects": false
+}

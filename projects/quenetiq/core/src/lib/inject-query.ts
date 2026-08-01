@@ -1,0 +1,165 @@
+import { inject, Injector, signal, isSignal, type Signal, type WritableSignal } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { Subject, switchMap, NEVER, share, ReplaySubject, startWith, distinctUntilChanged, of, map as rxMap, takeUntil, type Observable } from 'rxjs';
+import { GraphqlService, type GraphQLResult, type ErrorPolicy } from './graphql.service';
+import { EndpointsService } from './endpoints.service';
+import { QuenetiqConfigService } from './config.service';
+import type { DocumentNode, TypedDocumentNode, TypedQueryString } from './gql';
+import type { InferResponse, InferVariables, InferEndpointNames } from './types';
+import type { EndpointsYaml } from './endpoints-config';
+import { toInjectOptions, type QuenetiqInjectOptions } from './inject-options';
+
+export type InjectQueryEndpointParam<Yaml extends EndpointsYaml | undefined = undefined> =
+	[Yaml] extends [EndpointsYaml]
+		? InferEndpointNames<Yaml>
+		: string | Signal<string>;
+
+export interface InjectQueryOptions extends QuenetiqInjectOptions {
+	/** Transform the data before storing in signals. */
+	readonly select?: (data: InferResponse<DocumentNode>) => unknown;
+	/** Placeholder data shown before first successful fetch. */
+	readonly placeholderData?: InferResponse<DocumentNode>;
+	/** Skip the initial fetch. */
+	readonly skip?: boolean;
+	/**
+	 * Auto-start streaming (`@defer`/`@stream`) for this query.
+	 * When `undefined`, falls back to `config.streaming.streamOn`.
+	 */
+	readonly streamOn?: boolean | undefined;
+	/** Error policy for this request. Defaults to `config.errorPolicy`. */
+	readonly errorPolicy?: ErrorPolicy;
+}
+
+export interface InjectQueryHandle<T> {
+	/** Stream of query results */
+	readonly result$: Observable<GraphQLResult<T>>;
+	/** Toggle query execution */
+	readonly enabled: WritableSignal<boolean>;
+	/** Force re-execution of the query */
+	readonly refetch: () => void;
+	/** Signal: current data value */
+	readonly data: Signal<T | undefined>;
+	/** Signal: current error message */
+	readonly error: Signal<string | undefined>;
+	/** Signal: whether a query is in flight */
+	readonly loading: Signal<boolean>;
+	/** Signal: current status of the query */
+	readonly status: Signal<'idle' | 'loading' | 'success' | 'error'>;
+}
+
+export function injectQuery<
+	TDocument extends TypedQueryString<unknown, Record<string, unknown>>
+		| DocumentNode
+		| TypedDocumentNode<unknown, Record<string, unknown>>,
+	TResponse = InferResponse<TDocument>,
+	TVariables extends Record<string, unknown> = InferVariables<TDocument> extends Record<string, unknown>
+		? InferVariables<TDocument>
+		: Record<string, unknown>,
+>(
+	document: TDocument,
+	endpoint?: InjectQueryEndpointParam,
+	variables?: TVariables,
+	options?: InjectQueryOptions,
+): InjectQueryHandle<TResponse> {
+	const diOptions = toInjectOptions(options);
+	const graphql = inject(GraphqlService, diOptions);
+	if (!graphql) {
+		throw new Error(
+			'Quenetiq: GraphqlService not found in the current injector. ' +
+				'Add provideQuenetiq() to your providers or loosen the DI options passed to injectQuery().',
+		);
+	}
+	const injector = inject(Injector, diOptions);
+	if (!injector) {
+		throw new Error('Quenetiq: Injector not available in the current injection context.');
+	}
+	const endpoints = inject(EndpointsService, { optional: true, ...diOptions });
+	const config = inject(QuenetiqConfigService, { optional: true, ...diOptions });
+	const enabled = signal(!options?.skip);
+	const refetch$ = new Subject<void>();
+	const destroy$ = new Subject<void>();
+
+	const streamOn = options?.streamOn ?? config?.streaming?.streamOn ?? false;
+	const streamingEnabled = config?.streaming?.enabled ?? true;
+	const useStream = streamOn && streamingEnabled;
+
+	let resolvedName: string | undefined;
+	if (endpoints) {
+		const name = isSignal(endpoint) ? endpoint() : (typeof endpoint === 'string' ? endpoint : undefined);
+		resolvedName = endpoints.throwIfMultiEndpointMissing(name);
+	}
+
+	let endpoint$: Observable<string | undefined>;
+	if (isSignal(endpoint)) {
+		endpoint$ = toObservable(endpoint, { injector }).pipe(
+			distinctUntilChanged(),
+			rxMap((name) => {
+				if (name && endpoints) return endpoints.getRoute(name)?.url;
+				return undefined;
+			}),
+		);
+	} else if (typeof endpoint === 'string') {
+		const url = endpoints?.getRoute(endpoint)?.url;
+		endpoint$ = of(url);
+	} else if (resolvedName) {
+		const url = endpoints?.getRoute(resolvedName)?.url;
+		endpoint$ = of(url);
+	} else {
+		endpoint$ = of(undefined);
+	}
+
+	const result$ = toObservable(enabled, { injector }).pipe(
+		distinctUntilChanged(),
+		switchMap((isEnabled) => {
+			if (!isEnabled) return NEVER;
+			return refetch$.pipe(
+				startWith(undefined),
+				switchMap(() => endpoint$.pipe(
+					switchMap((url) => {
+						const doc = document as TypedDocumentNode<TResponse, Record<string, unknown>>;
+						const request$ = useStream
+							? graphql.queryDefer<TResponse>(doc, variables, url)
+							: graphql.query<TResponse>(doc, variables, url, { errorPolicy: options?.errorPolicy });
+						return request$.pipe(takeUntil(destroy$));
+					}),
+				)),
+			);
+		}),
+		share({ connector: () => new ReplaySubject(1) }),
+	);
+
+	const statusSignal = signal<'idle' | 'loading' | 'success' | 'error'>('idle');
+	const dataSignal = signal<TResponse | undefined>(undefined);
+	const errorSignal = signal<string | undefined>(undefined);
+	const loadingSignal = signal(false);
+
+	result$.subscribe({
+		next: (result) => {
+			loadingSignal.set(false);
+			if (result.status === 'success') {
+				statusSignal.set('success');
+				dataSignal.set(result.data);
+				errorSignal.set(undefined);
+			} else {
+				statusSignal.set('error');
+				dataSignal.set(undefined);
+				errorSignal.set(result.error);
+			}
+		},
+		error: () => {
+			loadingSignal.set(false);
+			statusSignal.set('error');
+			errorSignal.set('Query subscription error');
+		},
+	});
+
+	return {
+		result$,
+		enabled,
+		refetch: () => refetch$.next(),
+		data: dataSignal.asReadonly(),
+		error: errorSignal.asReadonly(),
+		loading: loadingSignal.asReadonly(),
+		status: statusSignal.asReadonly(),
+	};
+}

@@ -1,4 +1,4 @@
-import { Component, input, signal, afterRenderEffect, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
+import { Component, input, signal, effect, ChangeDetectionStrategy, DestroyRef, inject, afterNextRender, afterEveryRender } from '@angular/core';
 
 export interface TocSection {
 	id: string;
@@ -13,22 +13,56 @@ export interface TocSection {
 	templateUrl: './docs-toc.html',
 	styleUrl: './docs-toc.scss',
 })
-export class DocsToc implements OnInit, OnDestroy {
+export class DocsToc {
 	readonly sections = input.required<TocSection[]>();
 
 	protected activeId = signal('');
 
-	private readonly headerOffset = 100;
+	private readonly destroyRef = inject(DestroyRef);
 	private rafId = 0;
 	private scrollCleanup: (() => void) | null = null;
+	private initialized = false;
 
 	constructor() {
-		afterRenderEffect(() => this.updateActiveSection());
+		this.destroyRef.onDestroy(() => {
+			this.detachScrollListener();
+			cancelAnimationFrame(this.rafId);
+		});
+
+		effect(() => {
+			void this.sections();
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					this.updateActiveSection();
+				});
+			});
+		});
+
+		afterNextRender(() => {
+			this.attachScrollListener();
+			this.updateActiveSection();
+		});
+
+		afterEveryRender(() => {
+			if (!this.initialized && this.flattenSections().length) {
+				this.initialized = true;
+				requestAnimationFrame(() => this.updateActiveSection());
+			}
+		});
 	}
 
-	ngOnInit(): void {
-		const el = document.querySelector('.docs-content') ?? document.documentElement;
-		const onScroll = () => {
+	protected scrollTo(id: string): void {
+		const el = document.getElementById(id);
+		if (!el) return;
+
+		history.pushState(null, '', `#${id}`);
+		el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+	}
+
+	private attachScrollListener(): void {
+		this.detachScrollListener();
+		const el = this.findScrollContainer();
+		const onScroll = (): void => {
 			cancelAnimationFrame(this.rafId);
 			this.rafId = requestAnimationFrame(() => this.updateActiveSection());
 		};
@@ -36,28 +70,34 @@ export class DocsToc implements OnInit, OnDestroy {
 		this.scrollCleanup = () => el.removeEventListener('scroll', onScroll);
 	}
 
-	ngOnDestroy(): void {
+	private detachScrollListener(): void {
 		this.scrollCleanup?.();
-		cancelAnimationFrame(this.rafId);
+		this.scrollCleanup = null;
 	}
 
-	protected scrollTo(id: string): void {
-		const el = document.getElementById(id);
-		if (el) {
-			history.replaceState(null, '', `#${id}`);
-			el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-		}
+	private findScrollContainer(): Element {
+		return document.querySelector('.docs-main > .docs-content') ?? document.documentElement;
+	}
+
+	private getActiveThreshold(): number {
+		const container = this.findScrollContainer();
+		const containerRect = container.getBoundingClientRect();
+		const scrollPaddingTop = parseFloat(getComputedStyle(container).scrollPaddingTop) || 0;
+		return containerRect.top + scrollPaddingTop;
 	}
 
 	private updateActiveSection(): void {
 		const ids = this.flattenSections();
+		if (!ids.length) return;
+
+		const threshold = this.getActiveThreshold();
 		let active = ids[0] ?? '';
 
 		for (const id of ids) {
 			const el = document.getElementById(id);
 			if (!el) continue;
 			const rect = el.getBoundingClientRect();
-			if (rect.top <= this.headerOffset + 1) {
+			if (rect.top <= threshold) {
 				active = id;
 			} else {
 				break;
@@ -69,7 +109,7 @@ export class DocsToc implements OnInit, OnDestroy {
 
 	private flattenSections(): string[] {
 		const result: string[] = [];
-		const walk = (list: TocSection[]) => {
+		const walk = (list: TocSection[]): void => {
 			for (const s of list) {
 				result.push(s.id);
 				if (s.children) walk(s.children);

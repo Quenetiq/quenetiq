@@ -1,0 +1,12 @@
+<div
+	class="quenetiq-dots quenetiq-dots-{{ size() }} quenetiq-dots-{{ color() }}"
+	role="status"
+	[attr.aria-label]="ariaLabel()"
+>
+	<span class="quenetiq-dots-dot"></span>
+	<span class="quenetiq-dots-dot"></span>
+	<span class="quenetiq-dots-dot"></span>
+	@if (showLabel()) {
+		<span class="quenetiq-dots-label">{{ label() }}</span>
+	}
+</div>

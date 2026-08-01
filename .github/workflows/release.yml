@@ -47,9 +47,10 @@ on:
           Tag: latest|rc|beta|alpha|skip (skip = don't publish)
           Version: exact version override (optional)
           Examples:
-            @dumbql/cache:rc
-            @dumbql/opentelemetry:skip
-            @dumbql/core:latest:1.0.6
+            @quenetiq/cache:rc
+            @quenetiq/opentelemetry:skip
+            @quenetiq/core:latest:1.0.6
+            @quenetiq/eslint-plugin-gql:skip
         required: false
         default: ''
         type: string
@@ -60,10 +61,30 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
-          ref: ${{ inputs.branch || github.ref_name }}
           fetch-depth: 0
+
+      - name: Auto-detect pre-release branch
+        id: detect-branch
+        run: |
+          BRANCH="${{ inputs.branch || github.ref_name }}"
+          case "$BRANCH" in
+            beta|rc|alpha)
+              LATEST=$(git branch -r | grep -E "origin/${BRANCH}/[0-9]" | sed 's|.*origin/||' | sort -V | tail -1)
+              if [ -n "$LATEST" ]; then
+                echo "Auto-detected latest ${BRANCH} branch: $LATEST"
+                git checkout "$LATEST"
+                echo "branch=$LATEST" >> "$GITHUB_OUTPUT"
+              else
+                echo "No ${BRANCH}/* branches found, using $BRANCH"
+                echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+              fi
+              ;;
+            *)
+              echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
 
       - uses: actions/setup-node@v4
         with:
@@ -71,6 +92,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           cache: npm
 
+      - run: corepack enable
       - run: npm ci
 
       - name: Test + coverage
@@ -118,7 +140,7 @@ jobs:
             "
             echo "PACKAGES_CONFIG=packages-config.json" >> "$GITHUB_ENV"
           else
-            BRANCH="${{ github.ref_name }}"
+            BRANCH="${{ steps.detect-branch.outputs.branch || github.ref_name }}"
             # Extract base channel from branch: beta/v1.0.5 → beta
             CHANNEL="${BRANCH%%/*}"
             case "$CHANNEL" in
@@ -146,9 +168,9 @@ jobs:
               const config = JSON.parse(require('fs').readFileSync('packages-config.json', 'utf-8'));
               const fs = require('fs');
               const path = require('path');
-              const dirs = fs.readdirSync('projects/dumbql');
+              const dirs = fs.readdirSync('projects/quenetiq');
               for (const dir of dirs) {
-                const pkgPath = path.join('projects/dumbql', dir, 'package.json');
+                const pkgPath = path.join('projects/quenetiq', dir, 'package.json');
                 if (!fs.existsSync(pkgPath)) continue;
                 const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
                 const cfg = config[pkg.name];
@@ -178,7 +200,7 @@ jobs:
       - name: Verify version in dist
         run: |
           echo "Publish version:"
-          for pkg in dist/dumbql/*/; do
+          for pkg in dist/quenetiq/*/; do
             [ -f "${pkg}package.json" ] && node -p "require('./${pkg}package.json').name + ' @ ' + require('./${pkg}package.json').version"
           done
 
@@ -192,7 +214,7 @@ jobs:
             exit 0
           fi
 
-          for pkg in dist/dumbql/*/; do
+          for pkg in dist/quenetiq/*/; do
             if [ -f "${pkg}package.json" ]; then
               name=$(node -p "require('./${pkg}package.json').name")
 
@@ -223,7 +245,8 @@ jobs:
 
       - name: Push version bump commit and tags
         run: |
-          git push origin "HEAD:${{ github.ref_name }}" --no-verify
+          BRANCH="${{ steps.detect-branch.outputs.branch || github.ref_name }}"
+          git push origin "HEAD:$BRANCH" --no-verify
           git push origin --tags --no-verify
 
       - name: Create GitHub Release

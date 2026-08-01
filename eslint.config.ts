@@ -1,6 +1,52 @@
 import tseslint from 'typescript-eslint';
 import angular from 'angular-eslint';
 import unusedImports from 'eslint-plugin-unused-imports';
+import { quenetiqPlugin } from '@quenetiq/eslint-plugin-gql';
+
+const quenetiqRules = {
+  '@typescript-eslint/consistent-type-imports': [
+    'error',
+    {
+      prefer: 'type-imports',
+      fixStyle: 'inline-type-imports',
+      disallowTypeAnnotations: false,
+    },
+  ],
+  '@typescript-eslint/explicit-function-return-type': [
+    'warn',
+    {
+      allowExpressions: true,
+      allowTypedFunctionExpressions: true,
+      allowHigherOrderFunctions: true,
+      allowDirectConstAssertionInArrowFunctions: true,
+      allowConciseArrowFunctionExpressionsStartingWithVoid: true,
+    },
+  ],
+  '@typescript-eslint/prefer-readonly': 'warn',
+  '@typescript-eslint/prefer-nullish-coalescing': 'error',
+  '@typescript-eslint/prefer-optional-chain': 'error',
+  '@typescript-eslint/no-unnecessary-condition': 'warn',
+  '@typescript-eslint/no-unnecessary-boolean-literal-compare': 'error',
+  '@typescript-eslint/no-for-in-array': 'error',
+  '@typescript-eslint/no-require-imports': 'error',
+  '@typescript-eslint/consistent-type-assertions': [
+    'error',
+    { assertionStyle: 'as', objectLiteralTypeAssertions: 'allow-as-parameter' },
+  ],
+  '@typescript-eslint/switch-exhaustiveness-check': 'error',
+  'default-case': 'off',
+  'eqeqeq': ['error', 'always'],
+  'no-implicit-coercion': 'error',
+  'no-throw-literal': 'error',
+  'prefer-template': 'warn',
+  'object-shorthand': ['error', 'always'],
+  'no-return-await': 'error',
+  'require-await': 'warn',
+  'yoda': 'error',
+  'quenetiq/gql-parse': 'error',
+  'quenetiq/gql-named-operations': 'error',
+};
+
 
 export default tseslint.config(
   {
@@ -12,6 +58,7 @@ export default tseslint.config(
     ],
     plugins: {
       'unused-imports': unusedImports,
+      'quenetiq': quenetiqPlugin,
     },
     languageOptions: {
       parserOptions: {
@@ -19,28 +66,30 @@ export default tseslint.config(
            './tsconfig.json',
            './tsconfig.app.json',
            './tsconfig.spec.json',
-           './projects/dumbql/core/tsconfig.lib.json',
-           './projects/dumbql/downloader/tsconfig.lib.json',
-           './projects/dumbql/subscriptions/tsconfig.lib.json',
-           './projects/dumbql/file-upload/tsconfig.lib.json',
-           './projects/dumbql/debugging/tsconfig.lib.json',
-           './projects/dumbql/cache/tsconfig.lib.json',
-           './projects/dumbql/fragments/tsconfig.lib.json',
-           './projects/dumbql/pagination/tsconfig.lib.json',
-           './projects/dumbql/ssr/tsconfig.lib.json',
-           './projects/dumbql/testing/tsconfig.lib.json',
-           './projects/dumbql/persisted-queries/tsconfig.lib.json',
-            './projects/dumbql/middlewares/tsconfig.lib.json',
-             './projects/dumbql/codegen/tsconfig.lib.json',
-              './projects/dumbql/dev-server/tsconfig.lib.json',
-              './projects/dumbql/apollo-adapter/tsconfig.lib.json',
-              './projects/dumbql/client/tsconfig.lib.json',
-              './projects/dumbql/errors/tsconfig.lib.json',
-              './projects/dumbql/opentelemetry/tsconfig.lib.json',
-              './projects/dumbql/react/tsconfig.lib.json',
-              './projects/dumbql/vue/tsconfig.lib.json',
-              './tsconfig.spec.json',
-           ],
+           './projects/quenetiq/core/tsconfig.lib.json',
+           './projects/quenetiq/downloader/tsconfig.lib.json',
+           './projects/quenetiq/subscriptions/tsconfig.lib.json',
+           './projects/quenetiq/file-upload/tsconfig.lib.json',
+           './projects/quenetiq/debugging/tsconfig.lib.json',
+           './projects/quenetiq/cache/tsconfig.lib.json',
+           './projects/quenetiq/fragments/tsconfig.lib.json',
+           './projects/quenetiq/pagination/tsconfig.lib.json',
+           './projects/quenetiq/ssr/tsconfig.lib.json',
+           './projects/quenetiq/testing/tsconfig.lib.json',
+           './projects/quenetiq/persisted-queries/tsconfig.lib.json',
+            './projects/quenetiq/middlewares/tsconfig.lib.json',
+             './projects/quenetiq/codegen/tsconfig.lib.json',
+              './projects/quenetiq/dev-server/tsconfig.lib.json',
+              './projects/quenetiq/apollo-adapter/tsconfig.lib.json',
+              './projects/quenetiq/client/tsconfig.lib.json',
+               './projects/quenetiq/errors/tsconfig.lib.json',
+               './projects/quenetiq/observables/tsconfig.lib.json',
+              './projects/quenetiq/opentelemetry/tsconfig.lib.json',
+              './projects/quenetiq/react/tsconfig.lib.json',
+               './projects/quenetiq/vue/tsconfig.lib.json',
+               './projects/quenetiq/eslint-plugin-gql/tsconfig.lib.json',
+               './tsconfig.spec.json',
+            ],
       },
     },
     rules: {
@@ -79,6 +128,8 @@ export default tseslint.config(
           argsIgnorePattern: '^_',
         },
       ],
+
+      ...quenetiqRules,
     },
   },
   {
@@ -91,14 +142,27 @@ export default tseslint.config(
   },
   {
     files: ['**/*.spec.ts', '**/*.spec.tsx'],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.lint.json'],
+      },
+    },
+  },
+  {
+    files: ['**/*.spec.ts', '**/*.spec.tsx'],
     rules: {
       '@typescript-eslint/no-empty-function': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/prefer-readonly': 'off',
+      '@typescript-eslint/no-unnecessary-condition': 'off',
+      '@typescript-eslint/consistent-type-assertions': 'off',
       'unused-imports/no-unused-vars': 'off',
       'no-console': 'off',
       'max-len': 'off',
+      'require-await': 'off',
     },
   },
   {
@@ -114,22 +178,28 @@ export default tseslint.config(
     },
   },
   {
-    files: ['projects/dumbql/**/*.ts'],
+    files: ['projects/quenetiq/**/*.ts'],
     rules: {
       '@angular-eslint/directive-selector': [
         'error',
-        { type: 'attribute', prefix: 'dumbql', style: 'camelCase' },
+        { type: 'attribute', prefix: 'qtq', style: 'camelCase' },
       ],
       '@angular-eslint/component-selector': [
         'error',
-        { type: 'element', prefix: 'dumbql', style: 'kebab-case' },
+        { type: 'element', prefix: 'qtq', style: 'kebab-case' },
       ],
     },
   },
   {
+    files: ['projects/quenetiq/core/src/lib/endpoints-config.ts'],
+    rules: {
+      'require-await': 'off',
+    },
+  },
+  {
     files: [
-      'projects/dumbql/core/src/lib/null-overlay.ts',
-      'projects/dumbql/debugging/src/lib/devtools-panel/devtools-panel.component.ts',
+      'projects/quenetiq/core/src/lib/null-overlay.ts',
+      'projects/quenetiq/debugging/src/lib/devtools-panel/devtools-panel.component.ts',
       'src/app/shared/ui/docs-stackblitz-starter/docs-stackblitz-starter.component.ts',
     ],
     rules: {
@@ -137,26 +207,35 @@ export default tseslint.config(
     },
   },
   {
-    files: ['projects/dumbql/opentelemetry/src/tracer.ts'],
+    files: ['projects/quenetiq/opentelemetry/src/tracer.ts'],
     rules: {
       '@typescript-eslint/no-this-alias': 'off',
     },
   },
   {
-    files: ['projects/dumbql/dev-server/**/*.ts'],
+    files: ['projects/quenetiq/dev-server/**/*.ts'],
     rules: {
       'no-console': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
   {
+    files: ['projects/quenetiq/**/public-api.ts'],
+    rules: {
+      '@typescript-eslint/explicit-function-return-type': 'off',
+    },
+  },
+  {
     ignores: [
       '**/jest.config.ts',
+      '**/*-compat/**',
       '*.json',
       'tsconfig.*.json',
       'node_modules',
       'tslint.json',
       'src/test.ts',
+      // Generated .d.ts emitted inline into library sources by ng-packagr/tsc
+      'projects/quenetiq/**/src/**/*.d.ts',
       '*.js',
       '*.md',
       'src/assets/**/*.js',

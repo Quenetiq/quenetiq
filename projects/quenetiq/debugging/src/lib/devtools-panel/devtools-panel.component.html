@@ -1,0 +1,176 @@
+@if (visible$ | async) {
+	<div class="dt-header">
+		<span class="dt-title">
+			⚡ Quenetiq
+			<small>devtools</small>
+		</span>
+		<button class="dt-close" (click)="close()">&times;</button>
+	</div>
+
+	<div class="dt-tabs">
+		<button class="dt-tab" [class.dt-tab--active]="(activeTab$ | async) === 'queries'" (click)="setTab('queries')">
+			Queries
+			<span class="dt-badge">{{ queryCount }}</span>
+		</button>
+		<button class="dt-tab" [class.dt-tab--active]="(activeTab$ | async) === 'cache'" (click)="setTab('cache')">
+			Cache
+			<span class="dt-badge">{{ cacheEntries }}</span>
+		</button>
+		<button class="dt-tab" [class.dt-tab--active]="(activeTab$ | async) === 'errors'" (click)="setTab('errors')">
+			Errors
+			<span class="dt-badge">{{ errorCount }}</span>
+		</button>
+		<button class="dt-tab" [class.dt-tab--active]="(activeTab$ | async) === 'metrics'" (click)="setTab('metrics')">
+			Metrics
+		</button>
+	</div>
+
+	<div class="dt-body">
+		@if ((activeTab$ | async) === 'queries') {
+			@if (entries.length === 0) {
+				<div class="dt-empty">No queries yet</div>
+			}
+			@for (entry of entries; track entry.timestamp) {
+				<div class="dt-entry">
+					<div class="dt-entry__header">
+						<span
+							class="dt-entry__type"
+							[class.dt-entry__type--query]="entry.type === 'query'"
+							[class.dt-entry__type--mutate]="entry.type === 'mutate'"
+							>{{ entry.type }}</span
+						>
+						<span
+							class="dt-entry__status"
+							[class.dt-entry__status--success]="entry.result.status === 'success'"
+							[class.dt-entry__status--error]="entry.result.status === 'error'"
+							>{{ entry.result.status }}</span
+						>
+						<span class="dt-entry__opname">{{ entry.operationName || 'anonymous' }}</span>
+						<span class="dt-entry__duration">{{ entry.duration.toFixed(1) }}ms</span>
+					</div>
+					@if (entry.fields && entry.fields.length) {
+						<div class="dt-entry__fields">{{ entry.fields.join(', ') }}</div>
+					}
+					@if (entry.result.status === 'error') {
+						<div class="dt-entry__error">{{ entry.result.error }}</div>
+						<div class="dt-entry__code">{{ entry.result.errorCode }}</div>
+					}
+					<div class="dt-entry__code">{{ entry.timestamp | date: 'HH:mm:ss' }}</div>
+				</div>
+			}
+		}
+
+		@if ((activeTab$ | async) === 'cache') {
+			@if ((cacheSnapshot$ | async)?.length === 0) {
+				<div class="dt-empty">Cache is empty</div>
+			}
+			@for (item of cacheSnapshot$ | async; track item.typename + ':' + item.id) {
+				<div class="dt-cache-item">
+					<div class="dt-cache-item__header">
+						<span class="dt-cache-item__typename">{{ item.typename }}</span>
+						<span class="dt-cache-item__id">:{{ item.id }}</span>
+						@if (item.staleness) {
+							<span
+								class="dt-cache-item__staleness"
+								[class.dt-cache-item__staleness--fresh]="item.staleness === 'fresh'"
+								[class.dt-cache-item__staleness--stale]="item.staleness === 'stale'"
+								>{{ item.staleness }}</span
+							>
+						}
+					</div>
+					@if (item.source || item.mergeCount !== undefined) {
+						<div class="dt-cache-item__meta">
+							@if (item.source) {
+								<span class="dt-cache-item__source">src: {{ item.source }}</span>
+							}
+							@if (item.mergeCount !== undefined) {
+								<span class="dt-cache-item__merges">merges: {{ item.mergeCount }}</span>
+							}
+						</div>
+					}
+					<div class="dt-cache-item__fields">
+						<pre>{{ item.fields | json }}</pre>
+					</div>
+				</div>
+			}
+		}
+
+		@if ((activeTab$ | async) === 'errors') {
+			@if (errorEntries.length === 0) {
+				<div class="dt-empty">No errors</div>
+			}
+			@for (entry of errorEntries; track entry.timestamp) {
+				<div class="dt-error-item">
+					<div class="dt-error-item__msg">{{ entry.result.status === 'error' ? entry.result.error : '' }}</div>
+					<div class="dt-error-item__meta">
+						{{ entry.operationName || 'anonymous' }} — {{ entry.type }} ({{ entry.timestamp | date: 'HH:mm:ss' }})
+					</div>
+				</div>
+			}
+		}
+
+		@if ((activeTab$ | async) === 'metrics') {
+			@let metrics = cacheMetrics$ | async;
+			@if (!metrics) {
+				<div class="dt-empty">Loading metrics...</div>
+			} @else {
+				<div class="dt-metrics">
+					<div class="dt-metrics__section">
+						<h4 class="dt-metrics__title">Hit Rate</h4>
+						<div class="dt-metrics__value dt-metrics__value--large">
+							{{ (metrics.hitRate * 100).toFixed(1) }}%
+						</div>
+						<div class="dt-metrics__bar">
+							<div class="dt-metrics__bar-fill" [style.width.%]="metrics.hitRate * 100"></div>
+						</div>
+					</div>
+
+					<div class="dt-metrics__grid">
+						<div class="dt-metrics__cell">
+							<span class="dt-metrics__label">Reads</span>
+							<span class="dt-metrics__value">{{ metrics.totalReads }}</span>
+						</div>
+						<div class="dt-metrics__cell">
+							<span class="dt-metrics__label">Writes</span>
+							<span class="dt-metrics__value">{{ metrics.totalWrites }}</span>
+						</div>
+						<div class="dt-metrics__cell">
+							<span class="dt-metrics__label">Merges</span>
+							<span class="dt-metrics__value">{{ metrics.totalMerges }}</span>
+						</div>
+						<div class="dt-metrics__cell">
+							<span class="dt-metrics__label">Evictions</span>
+							<span class="dt-metrics__value">{{ metrics.totalEvictions }}</span>
+						</div>
+						<div class="dt-metrics__cell">
+							<span class="dt-metrics__label">GC Runs</span>
+							<span class="dt-metrics__value">{{ metrics.totalGcRuns }}</span>
+						</div>
+						<div class="dt-metrics__cell">
+							<span class="dt-metrics__label">Errors</span>
+							<span class="dt-metrics__value">{{ metrics.totalErrors }}</span>
+						</div>
+						<div class="dt-metrics__cell">
+							<span class="dt-metrics__label">Entities</span>
+							<span class="dt-metrics__value">{{ metrics.currentEntityCount }}</span>
+						</div>
+						<div class="dt-metrics__cell">
+							<span class="dt-metrics__label">Local State</span>
+							<span class="dt-metrics__value">{{ metrics.localStateCount }}</span>
+						</div>
+						<div class="dt-metrics__cell">
+							<span class="dt-metrics__label">Avg Read</span>
+							<span class="dt-metrics__value">{{ metrics.totalReads > 0 ? formatMs(metrics.totalReadTimeMs / metrics.totalReads) : '-' }}</span>
+						</div>
+						<div class="dt-metrics__cell">
+							<span class="dt-metrics__label">Avg Merge</span>
+							<span class="dt-metrics__value">{{ metrics.totalMerges > 0 ? formatMs(metrics.totalMergeTimeMs / metrics.totalMerges) : '-' }}</span>
+						</div>
+					</div>
+				</div>
+			}
+		}
+	</div>
+
+	<div class="dt-shortcut">Ctrl+Shift+D to toggle</div>
+}

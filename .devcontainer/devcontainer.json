@@ -1,5 +1,5 @@
 {
-  "name": "DumbQL Monorepo",
+  "name": "Quenetiq Monorepo",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
   "postCreateCommand": "npm ci && node scripts/build-packages.mjs",
   "postStartCommand": "node mock/server.mjs & npm start -- --host 0.0.0.0",

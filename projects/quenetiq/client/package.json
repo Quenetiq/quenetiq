@@ -1,0 +1,33 @@
+{
+	"name": "@quenetiq/client",
+	"version": "1.0.6",
+	"description": "Framework-agnostic GraphQL client — fetch-based core for React, Vue, or any JS app",
+	"keywords": [
+		"graphql",
+		"client",
+		"fetch",
+		"quenetiq",
+		"framework-agnostic",
+		"typescript",
+		"graphql-client"
+	],
+	"license": "MIT",
+	"type": "module",
+	"main": "./src/public-api.ts",
+	"types": "./src/public-api.ts",
+	"exports": {
+		".": {
+			"types": "./src/public-api.ts",
+			"import": "./src/public-api.ts",
+			"default": "./src/public-api.ts"
+		},
+		"./package.json": "./package.json"
+	},
+	"sideEffects": false,
+	"dependencies": {
+		"graphql": "^17.0.0"
+	},
+	"peerDependencies": {
+		"@quenetiq/cache": "^1.0.0"
+	}
+}

@@ -1,0 +1,163 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "Quenetiq Config",
+	"description": "Configuration schema for Quenetiq GraphQL toolkit",
+	"type": "object",
+	"properties": {
+		"endpoint": {
+			"type": "string",
+			"description": "GraphQL endpoint URL for queries/mutations"
+		},
+		"headers": {
+			"type": "object",
+			"description": "Static or dynamic HTTP headers",
+			"additionalProperties": true
+		},
+		"errorPolicy": {
+			"type": "string",
+			"enum": ["none", "all", "ignore"],
+			"description": "How to handle GraphQL errors"
+		},
+		"retryCount": {
+			"type": "integer",
+			"minimum": 0,
+			"description": "Number of retry attempts on failure"
+		},
+		"retryDelay": {
+			"type": "integer",
+			"minimum": 0,
+			"description": "Base delay in ms for exponential backoff"
+		},
+		"dedup": {
+			"type": "boolean",
+			"description": "Deduplicate concurrent identical queries"
+		},
+		"batchWindow": {
+			"type": "integer",
+			"minimum": 0,
+			"description": "Batch window in ms for query batching"
+		},
+		"devAuth": {
+			"type": "object",
+			"description": "Development auth middleware settings",
+			"properties": {
+				"enabled": { "type": "boolean" },
+				"token": { "type": "string" }
+			}
+		},
+		"subscriptions": {
+			"type": "object",
+			"description": "WebSocket subscription settings",
+			"properties": {
+				"wsEndpoint": { "type": "string" },
+				"reconnect": { "type": "boolean" },
+				"reconnectInterval": { "type": "integer" },
+				"lazy": { "type": "boolean" }
+			}
+		},
+		"cache": {
+			"type": "object",
+			"description": "Normalized cache settings",
+			"properties": {
+				"enabled": { "type": "boolean" },
+				"maxAge": { "type": "integer" },
+				"serialize": { "type": "boolean" },
+				"typePolicies": {
+					"type": "object",
+					"additionalProperties": {
+						"type": "object",
+						"properties": {
+							"keyFields": { "type": "array", "items": { "type": "string" } },
+							"merge": { "type": "boolean" }
+						}
+					}
+				}
+			}
+		},
+		"persistedQueries": {
+			"type": "object",
+			"description": "Persisted queries settings",
+			"properties": {
+				"enabled": { "type": "boolean" },
+				"hash": { "type": "string", "enum": ["sha256", "simple"] },
+				"autoPersist": { "type": "boolean" }
+			}
+		},
+		"upload": {
+			"type": "object",
+			"description": "File upload settings",
+			"properties": {
+				"maxFiles": { "type": "integer" },
+				"maxFileSize": { "type": "integer" }
+			}
+		},
+		"debug": {
+			"oneOf": [
+				{ "type": "boolean" },
+				{
+					"type": "object",
+					"properties": {
+						"logOperations": { "type": "boolean" },
+						"logTiming": { "type": "boolean" },
+						"logCache": { "type": "boolean" }
+					}
+				}
+			],
+			"description": "Debug logging settings"
+		},
+		"pagination": {
+			"type": "object",
+			"description": "Pagination defaults",
+			"properties": {
+				"defaultLimit": { "type": "integer" },
+				"debounceMs": { "type": "integer" }
+			}
+		},
+		"ssr": {
+			"type": "object",
+			"description": "SSR cache transfer settings",
+			"properties": {
+				"transferState": { "type": "boolean" },
+				"cacheTtl": { "type": "integer" }
+			}
+		},
+		"codegen": {
+			"type": "object",
+			"description": "TypeScript codegen settings (CLI only)",
+			"properties": {
+				"schema": {
+					"type": "object",
+					"description": "Schema introspection settings",
+					"properties": {
+						"endpoint": { "type": "string" },
+						"dir": { "type": "string" },
+						"headers": {
+							"type": "object",
+							"additionalProperties": { "type": "string" }
+						}
+					},
+					"required": ["endpoint"]
+				},
+				"types": {
+					"type": "object",
+					"description": "Type generation settings",
+					"properties": {
+						"dir": { "type": "string" },
+						"scalars": {
+							"type": "object",
+							"additionalProperties": { "type": "string" }
+						},
+						"enumsAsTypes": { "type": "boolean" },
+						"maybeValue": { "type": "string" },
+						"strictNullability": { "type": "boolean" },
+						"operationResultPrefix": { "type": "string" },
+						"operationResultSuffix": { "type": "string" }
+					},
+					"required": ["dir"]
+				}
+			},
+			"required": ["schema", "types"]
+		}
+	},
+	"required": ["endpoint"]
+}

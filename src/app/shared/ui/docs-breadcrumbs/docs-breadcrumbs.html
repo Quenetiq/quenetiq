@@ -1,0 +1,10 @@
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+	@for (crumb of crumbs(); track crumb.slug; let last = $last) {
+		@if (last) {
+			<span class="breadcrumb-item current">{{ crumb.title }}</span>
+		} @else {
+			<a [routerLink]="['/docs', crumb.slug]" class="breadcrumb-item">{{ crumb.title }}</a>
+			<tui-icon icon="@tui.chevron-right" class="breadcrumb-sep" />
+		}
+	}
+</nav>

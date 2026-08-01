@@ -1,0 +1,9 @@
+{
+  "name": "@dumbql/persisted-queries",
+  "version": "1.0.0-deprecated.0",
+  "description": "DEPRECATED — use @quenetiq/persisted-queries instead",
+  "main": "public-api.js",
+  "peerDependencies": {
+    "@quenetiq/persisted-queries": "*"
+  }
+}

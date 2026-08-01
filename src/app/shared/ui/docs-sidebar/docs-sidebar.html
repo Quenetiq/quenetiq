@@ -1,0 +1,83 @@
+<div class="sidebar-header">
+	<div class="sidebar-title">Documentation</div>
+	<button
+		tuiButton
+		appearance="flat"
+		iconStart="@tui.x"
+		class="sidebar-close"
+		(click)="sidebar.close()"
+		aria-label="Close sidebar"
+	></button>
+</div>
+
+<nav class="sidebar-nav">
+	@for (group of groups(); track group.label) {
+		<div class="nav-group">
+			<button
+				class="nav-group-header"
+				(click)="toggleGroup(group.label)"
+				[attr.aria-expanded]="!isGroupCollapsed(group.label)"
+			>
+				<span class="nav-group-label">{{ group.label }}</span>
+				<tui-icon
+					icon="@tui.chevron-right"
+					class="nav-group-chevron"
+					[class.collapsed]="isGroupCollapsed(group.label)"
+				/>
+			</button>
+			@if (!isGroupCollapsed(group.label)) {
+				<div class="nav-group-items">
+					@for (item of group.items; track item.slug) {
+						@if (item.children !== undefined) {
+							<div class="nav-item-group">
+								<button
+									class="nav-item-header"
+									(click)="toggleItem(item.slug)"
+									[attr.aria-expanded]="!isItemCollapsed(item.slug)"
+								>
+									<span class="nav-item-label">{{ item.title }}</span>
+									<tui-icon
+										icon="@tui.chevron-right"
+										class="nav-item-chevron"
+										[class.collapsed]="isItemCollapsed(item.slug)"
+									/>
+								</button>
+								@if (!isItemCollapsed(item.slug)) {
+									<div class="nav-item-children">
+										<a
+											[routerLink]="['/docs', item.slug]"
+											routerLinkActive="active"
+											class="nav-link nav-link-child"
+											(click)="sidebar.close()"
+										>
+											Overview
+										</a>
+										@for (child of item.children; track child.slug) {
+											<a
+												[routerLink]="['/docs', child.slug]"
+												routerLinkActive="active"
+												class="nav-link nav-link-child"
+												(click)="sidebar.close()"
+											>
+												{{ child.title }}
+											</a>
+										}
+									</div>
+								}
+							</div>
+						} @else {
+							<a
+								[routerLink]="['/docs', item.slug]"
+								routerLinkActive="active"
+								class="nav-link"
+								(click)="sidebar.close()"
+							>
+								{{ item.title }}
+							</a>
+						}
+					}
+				</div>
+			}
+		</div>
+	}
+</nav>

@@ -1,0 +1,9 @@
+{
+  "name": "@dumbql/debugging",
+  "version": "1.0.0-deprecated.0",
+  "description": "DEPRECATED — use @quenetiq/debugging instead",
+  "main": "public-api.js",
+  "peerDependencies": {
+    "@quenetiq/debugging": "*"
+  }
+}

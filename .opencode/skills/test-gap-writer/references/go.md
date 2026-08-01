@@ -37,7 +37,7 @@ func TestValidateToken(t *testing.T) {
 - For goroutine leaks, consider `go.uber.org/goleak` if it's already a dependency; otherwise don't add it just for this.
 - Test channel-based code for both the "receiver never reads" and "sender closes early" cases where relevant.
 
-## gqlgen / GraphQL resolvers (relevant for this user's DumbQL / Strix.dev work)
+## gqlgen / GraphQL resolvers (relevant for this user's Quenetiq / Strix.dev work)
 
 - Don't test generated resolver boilerplate itself. Test the hand-written business logic the resolver calls into.
 - For resolvers that touch pgx/PostgreSQL, prefer testing the underlying repository/service function with a real or dockerized test DB (or `pgxmock`) rather than mocking pgx at a low level — pgx mocks tend to hide real query bugs.

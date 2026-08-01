@@ -1,0 +1,9 @@
+{
+  "name": "@dumbql/fragments",
+  "version": "1.0.0-deprecated.0",
+  "description": "DEPRECATED — use @quenetiq/fragments instead",
+  "main": "public-api.js",
+  "peerDependencies": {
+    "@quenetiq/fragments": "*"
+  }
+}

@@ -1,7 +1,7 @@
 import {
 	Component,
 	viewChild,
-	ElementRef,
+	type ElementRef,
 	afterNextRender,
 	DestroyRef,
 	inject,
@@ -38,18 +38,8 @@ interface TextParticle {
 	selector: 'app-hero-particles',
 	standalone: true,
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	template: '<canvas #canvas></canvas>',
-	styles: [
-		`
-			canvas {
-				position: fixed;
-				inset: 0;
-				z-index: 0;
-				pointer-events: none;
-				display: block;
-			}
-		`,
-	],
+	templateUrl: './hero-particles.component.html',
+	styleUrl: './hero-particles.component.scss',
 })
 export class HeroParticles {
 	private readonly canvasRef = viewChild<ElementRef<HTMLCanvasElement>>('canvas');
@@ -73,7 +63,7 @@ export class HeroParticles {
 		const ctx = canvas.getContext('2d');
 		if (!ctx) return;
 
-		const resize = () => {
+		const resize = (): void => {
 			canvas.width = window.innerWidth;
 			canvas.height = window.innerHeight;
 		};
@@ -97,7 +87,7 @@ export class HeroParticles {
 			this.moveTimer = 0;
 		});
 
-		const animate = () => {
+		const animate = (): void => {
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
 
 			const cx = canvas.width / 2;

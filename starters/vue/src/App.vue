@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useQuery, gql } from '@dumbql/vue';
+import { useQuery, gql } from '@quenetiq/vue';
 
 interface Note {
   id: string;

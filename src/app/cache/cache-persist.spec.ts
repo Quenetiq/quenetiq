@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { CachePersistence } from '@dumbql/cache';
+import { CachePersistence } from '@quenetiq/cache';
 
 describe('CachePersistence', () => {
 	let persist: CachePersistence;
@@ -14,20 +14,20 @@ describe('CachePersistence', () => {
 	];
 
 	describe('persist / restore', () => {
-		it('persists data and restores it', () => {
-			persist.persist(sampleData);
-			const restored = persist.restore();
+		it('persists data and restores it', async () => {
+			await persist.persist(sampleData);
+			const restored = await persist.restore();
 			expect(restored).toEqual(sampleData);
 		});
 
-		it('returns null when no data stored', () => {
-			expect(persist.restore()).toBeNull();
+		it('returns null when no data stored', async () => {
+			expect(await persist.restore()).toBeNull();
 		});
 
-		it('returns null after clear', () => {
-			persist.persist(sampleData);
-			persist.clear();
-			expect(persist.restore()).toBeNull();
+		it('returns null after clear', async () => {
+			await persist.persist(sampleData);
+			await persist.clear();
+			expect(await persist.restore()).toBeNull();
 		});
 	});
 
@@ -51,55 +51,55 @@ describe('CachePersistence', () => {
 			Object.defineProperty(globalThis, 'localStorage', { value: ls, configurable: true, writable: true });
 		});
 
-		it('restores data when version matches', () => {
+		it('restores data when version matches', async () => {
 			const v1a = new CachePersistence({ version: 'v1', storageKey: 'cache_test' });
-			v1a.persist(sampleData);
+			await v1a.persist(sampleData);
 
 			const v1b = new CachePersistence({ version: 'v1', storageKey: 'cache_test' });
-			expect(v1b.restore()).toEqual(sampleData);
+			expect(await v1b.restore()).toEqual(sampleData);
 		});
 
-		it('returns null and clears storage when version mismatches', () => {
+		it('returns null and clears storage when version mismatches', async () => {
 			const v1 = new CachePersistence({ version: 'v1', storageKey: 'cache_test' });
-			v1.persist(sampleData);
+			await v1.persist(sampleData);
 
 			const v2 = new CachePersistence({ version: 'v2', storageKey: 'cache_test' });
-			expect(v2.restore()).toBeNull();
+			expect(await v2.restore()).toBeNull();
 
 			const v1again = new CachePersistence({ version: 'v1', storageKey: 'cache_test' });
-			expect(v1again.restore()).toBeNull();
+			expect(await v1again.restore()).toBeNull();
 		});
 
-		it('handles undefined version correctly', () => {
+		it('handles undefined version correctly', async () => {
 			const noVer = new CachePersistence({ storageKey: 'cache_test' });
-			noVer.persist(sampleData);
+			await noVer.persist(sampleData);
 
 			const noVer2 = new CachePersistence({ storageKey: 'cache_test' });
-			expect(noVer2.restore()).toEqual(sampleData);
+			expect(await noVer2.restore()).toEqual(sampleData);
 		});
 	});
 
 	describe('maxAge', () => {
-		it('returns data within maxAge', () => {
+		it('returns data within maxAge', async () => {
 			const agePersist = new CachePersistence({ storage: 'memory', maxAge: 60_000, storageKey: 'age_test' });
-			agePersist.persist(sampleData);
-			expect(agePersist.restore()).toEqual(sampleData);
+			await agePersist.persist(sampleData);
+			expect(await agePersist.restore()).toEqual(sampleData);
 		});
 
-		it('returns null and clears when data exceeds maxAge', () => {
+		it('returns null and clears when data exceeds maxAge', async () => {
 			const agePersist = new CachePersistence({ storage: 'memory', maxAge: -1, storageKey: 'age_test' });
-			agePersist.persist(sampleData);
-			expect(agePersist.restore()).toBeNull();
+			await agePersist.persist(sampleData);
+			expect(await agePersist.restore()).toBeNull();
 		});
 	});
 
 	describe('persistThrottled', () => {
 		it('writes data after delay', async () => {
 			persist.persistThrottled(sampleData, 10);
-			expect(persist.restore()).toBeNull();
+			expect(await persist.restore()).toBeNull();
 
 			await new Promise((r) => setTimeout(r, 50));
-			expect(persist.restore()).toEqual(sampleData);
+			expect(await persist.restore()).toEqual(sampleData);
 		});
 
 		it('debounces multiple calls', async () => {
@@ -107,7 +107,7 @@ describe('CachePersistence', () => {
 			persist.persistThrottled([['B:1', {}]], 10);
 
 			await new Promise((r) => setTimeout(r, 50));
-			const restored = persist.restore();
+			const restored = await persist.restore();
 			expect(restored).toEqual([['B:1', {}]]);
 			expect(restored).toHaveLength(1);
 		});
@@ -117,7 +117,7 @@ describe('CachePersistence', () => {
 			persist.persistThrottled([['A:1', { val: 'new' }]], 10);
 
 			await new Promise((r) => setTimeout(r, 60));
-			const restored = persist.restore();
+			const restored = await persist.restore();
 			expect(restored![0][1]).toEqual({ val: 'new' });
 		});
 	});
@@ -142,26 +142,26 @@ describe('CachePersistence', () => {
 			Object.defineProperty(globalThis, 'localStorage', { value: ls, configurable: true, writable: true });
 		});
 
-		it('uses default key when not specified', () => {
+		it('uses default key when not specified', async () => {
 			const defaultPersist = new CachePersistence();
-			defaultPersist.persist(sampleData);
-			expect(defaultPersist.restore()).toEqual(sampleData);
+			await defaultPersist.persist(sampleData);
+			expect(await defaultPersist.restore()).toEqual(sampleData);
 		});
 
-		it('uses custom key when specified', () => {
+		it('uses custom key when specified', async () => {
 			const custom = new CachePersistence({ storageKey: 'my_custom_key' });
-			custom.persist(sampleData);
+			await custom.persist(sampleData);
 
 			const sameKey = new CachePersistence({ storageKey: 'my_custom_key' });
-			expect(sameKey.restore()).toEqual(sampleData);
+			expect(await sameKey.restore()).toEqual(sampleData);
 
 			const differentKey = new CachePersistence({ storageKey: 'different_key' });
-			expect(differentKey.restore()).toBeNull();
+			expect(await differentKey.restore()).toBeNull();
 		});
 	});
 
 	describe('malformed data', () => {
-		it('handles corrupted stored data gracefully', () => {
+		it('handles corrupted stored data gracefully', async () => {
 			const memPersist = new CachePersistence({ storage: 'memory' });
 			(
 				memPersist as unknown as {
@@ -171,11 +171,11 @@ describe('CachePersistence', () => {
 						removeItem: (k: string) => void;
 					};
 				}
-			).storage.setItem('__dumbql_cache', '{invalid json');
-			expect(memPersist.restore()).toBeNull();
+			).storage.setItem('__quenetiq_cache', '{invalid json');
+			expect(await memPersist.restore()).toBeNull();
 		});
 
-		it('handles empty stored data gracefully', () => {
+		it('handles empty stored data gracefully', async () => {
 			const memPersist = new CachePersistence({ storage: 'memory' });
 			(
 				memPersist as unknown as {
@@ -185,13 +185,13 @@ describe('CachePersistence', () => {
 						removeItem: (k: string) => void;
 					};
 				}
-			).storage.setItem('__dumbql_cache', '');
-			expect(memPersist.restore()).toBeNull();
+			).storage.setItem('__quenetiq_cache', '');
+			expect(await memPersist.restore()).toBeNull();
 		});
 	});
 
 	describe('localStorage fallback', () => {
-		it('falls back to memory when localStorage is unavailable', () => {
+		it('falls back to memory when localStorage is unavailable', async () => {
 			const orig = globalThis.localStorage;
 			Object.defineProperty(globalThis, 'localStorage', {
 				configurable: true,
@@ -202,8 +202,8 @@ describe('CachePersistence', () => {
 			});
 
 			const fallbackPersist = new CachePersistence({ storageKey: 'fallback_test' });
-			fallbackPersist.persist(sampleData);
-			const restored = fallbackPersist.restore();
+			await fallbackPersist.persist(sampleData);
+			const restored = await fallbackPersist.restore();
 			expect(restored).toEqual(sampleData);
 
 			Object.defineProperty(globalThis, 'localStorage', {

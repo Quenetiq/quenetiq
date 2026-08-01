@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { NormalizedCache, CacheGc } from '@dumbql/cache';
+import { NormalizedCache, CacheGc } from '@quenetiq/cache';
 
 describe('CacheGc', () => {
 	let cache: NormalizedCache;
@@ -38,7 +38,7 @@ describe('CacheGc', () => {
 			gc.track([user1]);
 			// Should no longer be dangling — sweep should not evict
 			const evicted = gc.sweep();
-			expect(evicted).toBe(0);
+			expect(evicted.count).toBe(0);
 		});
 
 		it('handles empty array', () => {
@@ -80,7 +80,7 @@ describe('CacheGc', () => {
 			localGc.release([user1]);
 
 			const evicted = localGc.sweep();
-			expect(evicted).toBe(1);
+			expect(evicted.count).toBe(1);
 			expect(cache.get('User', '1')).toBeUndefined();
 		});
 
@@ -92,7 +92,7 @@ describe('CacheGc', () => {
 			longGc.release([user1]);
 
 			const evicted = longGc.sweep();
-			expect(evicted).toBe(0);
+			expect(evicted.count).toBe(0);
 			expect(cache.get('User', '1')).toBeDefined();
 		});
 
@@ -101,7 +101,7 @@ describe('CacheGc', () => {
 			gc.track([user1]);
 			// Not releasing — still referenced
 			const evicted = gc.sweep();
-			expect(evicted).toBe(0);
+			expect(evicted.count).toBe(0);
 			expect(cache.get('User', '1')).toBeDefined();
 		});
 
@@ -113,7 +113,7 @@ describe('CacheGc', () => {
 			localGc.release([user1, user2]);
 
 			const evicted = localGc.sweep();
-			expect(evicted).toBe(2);
+			expect(evicted.count).toBe(2);
 		});
 	});
 
@@ -153,12 +153,12 @@ describe('CacheGc', () => {
 			// user1 is now dangling
 			gc.track([user1]); // re-tracked
 			const evicted = gc.sweep();
-			expect(evicted).toBe(0); // should not evict because re-tracked
+			expect(evicted.count).toBe(0); // should not evict because re-tracked
 		});
 
 		it('sweep with no dangling entities returns 0', () => {
 			const evicted = gc.sweep();
-			expect(evicted).toBe(0);
+			expect(evicted.count).toBe(0);
 		});
 
 		it('sweep does not evict entities still in cache when release not called', () => {
@@ -166,7 +166,7 @@ describe('CacheGc', () => {
 			gc.track([user1]);
 			// never released — still referenced
 			const evicted = gc.sweep();
-			expect(evicted).toBe(0);
+			expect(evicted.count).toBe(0);
 			expect(cache.get('User', '1')).toBeDefined();
 		});
 	});

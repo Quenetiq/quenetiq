@@ -1,7 +1,7 @@
 import { createServer } from 'http';
 
 const notes = [
-  { id: '1', title: 'Hello DumbQL', content: 'Your first GraphQL query works!' },
+  { id: '1', title: 'Hello Quenetiq', content: 'Your first GraphQL query works!' },
   { id: '2', title: 'Tip', content: 'Try changing this mock data' },
 ];
 

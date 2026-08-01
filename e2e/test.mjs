@@ -245,11 +245,11 @@ server.listen(PORT, async () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: 'mutation CreateTodo($title: String!) { createTodo(title: $title) { id title completed } }',
-          variables: { title: 'Test DumbQL' },
+          variables: { title: 'Test Quenetiq' },
         }),
       });
       const json = await res.json();
-      check('create todo mutation', json.data?.createTodo?.title === 'Test DumbQL' && json.data?.createTodo?.completed === false);
+      check('create todo mutation', json.data?.createTodo?.title === 'Test Quenetiq' && json.data?.createTodo?.completed === false);
     }
 
     // ── Test 7: APQ — first request registers hash ─────────────────────────

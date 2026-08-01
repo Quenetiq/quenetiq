@@ -1,0 +1,12 @@
+<div
+	class="quenetiq-spinner quenetiq-spinner-{{ size() }} quenetiq-spinner-{{ color() }}"
+	[attr.aria-label]="ariaLabel()"
+	role="status"
+>
+	<svg viewBox="0 0 50 50" class="quenetiq-spinner-svg">
+		<circle class="quenetiq-spinner-circle" cx="25" cy="25" r="20" fill="none" stroke-width="4" />
+	</svg>
+	@if (showLabel()) {
+		<span class="quenetiq-spinner-label">{{ label() }}</span>
+	}
+</div>

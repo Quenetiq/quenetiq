@@ -1,0 +1,14 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"types": ["node", "vitest/globals", "@testing-library/jest-dom"]
+	},
+	"include": [
+		"src/**/*.spec.ts",
+		"src/**/*.spec.tsx",
+		"src/**/*.d.ts",
+		"projects/quenetiq/**/*.spec.ts",
+		"projects/quenetiq/**/*.spec.tsx"
+	],
+	"exclude": ["node_modules", "dist"]
+}

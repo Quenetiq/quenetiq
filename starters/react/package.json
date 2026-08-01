@@ -1,5 +1,5 @@
 {
-	"name": "@dumbql/starter-react",
+	"name": "@quenetiq/starter-react",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -7,9 +7,9 @@
 		"build": "vite build"
 	},
 	"dependencies": {
-		"@dumbql/client": "^1.0.5",
-		"@dumbql/react": "^1.0.5",
-		"@dumbql/cache": "^1.0.5",
+		"@quenetiq/client": "^1.0.6-beta",
+		"@quenetiq/react": "^1.0.6-beta",
+		"@quenetiq/cache": "^1.0.6-beta",
 		"graphql": "^17.0.0",
 		"react": "^18.2.0",
 		"react-dom": "^18.2.0"

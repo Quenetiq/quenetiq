@@ -1,15 +1,15 @@
 {
 	"name": "dumb-keystore",
-	"version": "1.0.5",
+	"version": "1.0.6",
 	"scripts": {
 		"ng": "ng",
 		"start": "npm run mock & ng serve",
 		"build": "ng build",
 		"watch": "ng build --watch --configuration development",
 		"test": "ng test",
-		"lint": "eslint \"{src,projects/dumbql}/**/*.{ts,html}\"",
+		"lint": "eslint \"{src,projects/quenetiq}/**/*.{ts,html}\"",
 		"lint:styles": "stylelint \"src/**/*.scss\"",
-		"lint:fix": "eslint \"{src,projects/dumbql}/**/*.{ts,html}\" --fix",
+		"lint:fix": "eslint \"{src,projects/quenetiq}/**/*.{ts,html}\" --fix",
 		"prepare": "husky",
 		"postinstall": "node scripts/fix-symlinks.mjs",
 		"schema:download": "node tools/download-schema.mjs",
@@ -19,9 +19,9 @@
 		"ext:build": "npm run ext:build:chrome && npm run ext:build:firefox",
 		"codegen": "node tools/generate-types.mjs",
 		"codegen:config": "node tools/generate-types.mjs",
-		"build:packages": "for p in projects/dumbql/*/; do (cd \"$p\" && npx ng-packagr -p ng-package.json); done",
-		"build:package:core": "npx ng-packagr -p projects/dumbql/core/ng-package.json",
-		"build:package:cache": "npx ng-packagr -p projects/dumbql/cache/ng-package.json",
+		"build:packages": "for p in projects/quenetiq/*/; do (cd \"$p\" && npx ng-packagr -p ng-package.json); done",
+		"build:package:core": "npx ng-packagr -p projects/quenetiq/core/ng-package.json",
+		"build:package:cache": "npx ng-packagr -p projects/quenetiq/cache/ng-package.json",
 		"test:react": "vitest run --config vitest.react.config.ts",
 		"test:react:watch": "vitest --config vitest.react.config.ts",
 		"mock": "node mock/server.mjs",
@@ -36,14 +36,14 @@
 		"version:major": "node scripts/version.mjs major"
 	},
 	"lint-staged": {
-		"{src,projects/dumbql}/**/*.ts": [
+		"{src,projects/quenetiq}/**/*.ts": [
 			"eslint --fix"
 		],
-		"{src,projects/dumbql}/**/*.html": [
+		"{src,projects/quenetiq}/**/*.html": [
 			"eslint --fix",
 			"prettier --write"
 		],
-		"{src,projects/dumbql}/**/*.scss": [
+		"{src,projects/quenetiq}/**/*.scss": [
 			"stylelint --fix",
 			"prettier --write"
 		],
@@ -53,7 +53,8 @@
 	},
 	"private": true,
 	"workspaces": [
-		"projects/dumbql/*",
+		"projects/quenetiq/*",
+		"projects/quenetiq/*-compat",
 		"demos/angular",
 		"demos/react",
 		"demos/vue",
@@ -70,6 +71,15 @@
 		"@angular/forms": "^22.0.0",
 		"@angular/platform-browser": "^22.0.0",
 		"@angular/router": "^22.0.0",
+		"@codemirror/autocomplete": "^6.20.3",
+		"@codemirror/commands": "^6.10.4",
+		"@codemirror/lang-javascript": "^6.2.5",
+		"@codemirror/lang-json": "^6.0.2",
+		"@codemirror/language": "^6.12.4",
+		"@codemirror/search": "^6.7.1",
+		"@codemirror/state": "^6.7.1",
+		"@codemirror/theme-one-dark": "^6.1.3",
+		"@codemirror/view": "^6.43.6",
 		"@maskito/angular": "^5.3.1",
 		"@maskito/core": "^5.3.1",
 		"@maskito/kit": "^5.3.1",
@@ -90,7 +100,8 @@
 		"@taiga-ui/icons": "^5.12.0",
 		"@taiga-ui/kit": "^5.12.0",
 		"@taiga-ui/polymorpheus": "^5.0.1",
-		"@taiga-ui/styles": "^5.12.0",
+		"@taiga-ui/styles": "^5.17.0",
+		"codemirror": "^6.0.2",
 		"graphql": "^17.0.1",
 		"highlight.js": "^11.11.1",
 		"less": "^4.6.7",
@@ -112,7 +123,9 @@
 		"@types/react": "^19.2.17",
 		"@types/react-dom": "^19.2.3",
 		"@types/ws": "^8.18.1",
+		"@vitest/coverage-istanbul": "^4.1.9",
 		"@vitest/coverage-v8": "^4.1.9",
+		"@vue/test-utils": "^2.4.11",
 		"angular-eslint": "^22.0.0",
 		"eslint": "^10.6.0",
 		"eslint-plugin-unused-imports": "^4.4.1",

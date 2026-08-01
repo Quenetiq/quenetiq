@@ -1,0 +1,19 @@
+<div
+	class="quenetiq-progress quenetiq-progress-{{ size() }} quenetiq-progress-{{ color() }}"
+	[style.width]="width()"
+	role="progressbar"
+	[attr.aria-valuenow]="value()"
+	[attr.aria-valuemin]="0"
+	[attr.aria-valuemax]="100"
+>
+	<div class="quenetiq-progress-track">
+		<div
+			class="quenetiq-progress-fill"
+			[style.width.%]="value()"
+			[class.quenetiq-progress-fill-indeterminate]="indeterminate()"
+		></div>
+	</div>
+	@if (showLabel()) {
+		<span class="quenetiq-progress-label">{{ value() }}%</span>
+	}
+</div>

@@ -1,100 +1,398 @@
-<div class="playground">
-	<h1>GraphQL Playground</h1>
-
-	<div class="layout">
-		<div class="editor-panel">
-			<div class="field">
-				<label for="query">Query</label>
-				<textarea
-					id="query"
-					class="code-editor"
-					[ngModel]="query()"
-					(ngModelChange)="query.set($event)"
-					rows="12"
-					spellcheck="false"
-				></textarea>
-			</div>
-
-			<div class="field-row">
-				<div class="field">
-					<label for="variables">Variables (JSON)</label>
-					<textarea
-						id="variables"
-						class="code-editor"
-						[ngModel]="variables()"
-						(ngModelChange)="variables.set($event)"
-						rows="6"
-						spellcheck="false"
-					></textarea>
-				</div>
-
-				<div class="field">
-					<label for="headers">Headers (JSON)</label>
-					<textarea
-						id="headers"
-						class="code-editor"
-						[ngModel]="headers()"
-						(ngModelChange)="headers.set($event)"
-						rows="6"
-						spellcheck="false"
-					></textarea>
+<div class="pg" tabindex="0" (keydown)="onQueryKeydown($event)">
+	<!-- History sidebar -->
+	@if (historyOpen()) {
+		<aside class="pg__sidebar">
+			<div class="pg__sidebar-header">
+				<span class="pg__sidebar-title">
+					<tui-icon icon="@tui.clock" />
+					History
+				</span>
+				<div class="pg__sidebar-actions">
+					@if (history().length > 0) {
+						<button tuiButton size="xs" appearance="flat" iconStart="@tui.trash" (click)="clearHistory()">
+							Clear
+						</button>
+					}
 				</div>
 			</div>
-
-			<div class="actions">
-				<button tuiButton size="m" (click)="execute()" [disabled]="loading()">
-					{{ loading() ? 'Executing…' : 'Execute' }}
-				</button>
-			</div>
-
-			@if (error()) {
-				<div class="error-notification">{{ error() }}</div>
-			}
-		</div>
-
-		<div class="response-panel">
-			<h2>Response</h2>
-			@if (loading()) {
-				<div class="loading">Loading...</div>
-			} @else if (result(); as r) {
-				<div class="result">
-					<div class="status-badge" [class.success]="r.status === 'success'" [class.error]="r.status === 'error'">
-						{{ r.status === 'success' ? 'Success' : 'Error' }}
-					</div>
-					<pre class="response-json">{{ formatJson(r) }}</pre>
-				</div>
-			} @else {
-				<div class="placeholder">Execute a query to see the response</div>
-			}
-		</div>
-	</div>
-
-	@if (history().length > 0) {
-		<div class="history">
-			<div class="history-header">
-				<h2>History</h2>
-				<button tuiButton size="s" appearance="secondary" (click)="clearHistory()">Clear</button>
-			</div>
-			<div class="history-list">
+			<div class="pg__sidebar-list">
 				@for (entry of history(); track entry.timestamp) {
-					<div
-						class="history-item"
+					<button
+						type="button"
+						class="pg__history-item"
 						(click)="restore(entry)"
 						(keydown.enter)="restore(entry)"
-						tabindex="0"
-						role="button"
 					>
-						<code>{{ entry.query.slice(0, 80) }}{{ entry.query.length > 80 ? '…' : '' }}</code>
-						<span
-							class="history-status"
-							[class.success]="entry.result?.status === 'success'"
-							[class.error]="entry.result?.status === 'error'"
-						>
-							{{ entry.result?.status === 'success' ? '✓' : '✗' }}
-						</span>
+						<div class="pg__history-item-row">
+							<span
+								tuiBadge
+								size="s"
+								[appearance]="entry.result?.status === 'success' ? 'primary' : 'error'"
+							>
+								{{ entry.result?.status === 'success' ? 'OK' : 'ERR' }}
+							</span>
+							<span class="pg__history-time">{{ formatTime(entry.timestamp) }}</span>
+						</div>
+						<div class="pg__history-query">
+							{{ entry.query.slice(0, 100) }}{{ entry.query.length > 100 ? '...' : '' }}
+						</div>
+						<div class="pg__history-meta">
+							{{ formatDuration(entry.durationMs) }}
+						</div>
+					</button>
+				}
+				@if (history().length === 0) {
+					<div class="pg__sidebar-empty">No queries yet</div>
+				}
+			</div>
+		</aside>
+	}
+
+	<!-- Main area -->
+	<div class="pg__main">
+		<!-- Header -->
+		<header class="pg__header">
+			<div class="pg__header-left">
+				<button
+					tuiButton
+					size="s"
+					appearance="flat"
+					iconStart="@tui.panel-left"
+					class="pg__history-toggle"
+					(click)="toggleHistory()"
+				>
+					Toggle history
+				</button>
+				<span tuiBadge appearance="accent" size="s">GraphQL Playground</span>
+				@if (schema(); as s) {
+					<span tuiBadge appearance="success" size="s">
+						<tui-icon icon="@tui.check" />
+						Schema loaded
+					</span>
+				}
+			</div>
+			<div class="pg__header-center">
+				<tui-tabs [(activeItemIndex)]="activeTab" class="pg__bottom-tabs">
+					<button tuiTab>Query</button>
+					<button tuiTab>Variables</button>
+					<button tuiTab [disabled]="!schema()">Schema</button>
+				</tui-tabs>
+			</div>
+			<div class="pg__header-right">
+				<label class="pg__file-btn" tuiButton size="s" appearance="flat" iconStart="@tui.paperclip">
+					Load file
+					<input
+						type="file"
+						accept=".graphql,.gql,.ts,.js"
+						multiple
+						class="pg__file-input"
+						(change)="onFileInputChange($event)"
+					/>
+				</label>
+				<button
+					tuiButton
+					size="s"
+					appearance="flat"
+					iconStart="@tui.download"
+					[disabled]="schemaLoading()"
+					(click)="fetchSchema()"
+				>
+					@if (schemaLoading()) {
+						Fetching...
+					} @else {
+						Fetch Schema
+					}
+				</button>
+				@if (schema()) {
+					<button
+						tuiButton
+						size="s"
+						appearance="flat"
+						iconStart="@tui trash"
+						(click)="clearSchema()"
+					>
+						Clear
+					</button>
+				}
+				@if (elapsedTime() > 0 && !loading()) {
+					<span class="pg__elapsed">{{ formatDuration(elapsedTime()) }}</span>
+				}
+				<button
+					tuiButton
+					size="m"
+					appearance="accent"
+					iconStart="@tui.play"
+					[disabled]="loading()"
+					(click)="execute()"
+				>
+					@if (loading()) {
+						Running...
+					} @else {
+						Execute
+					}
+				</button>
+			</div>
+		</header>
+
+		<!-- Editor + Response split -->
+		<div class="pg__split">
+			<!-- Left: editors -->
+			<div
+				class="pg__editor-pane"
+				[class.pg__editor-pane_dragover]="fileDropActive()"
+				(drop)="onFileDrop($event)"
+				(dragover)="onFileDragOver($event)"
+				(dragleave)="onFileDragLeave($event)"
+			>
+				<!-- File drop overlay -->
+				@if (fileDropActive()) {
+					<div class="pg__drop-overlay">
+						<tui-icon icon="@tui.upload" class="pg__drop-icon" />
+						<span>Drop .graphql, .gql, .ts, .js files</span>
+					</div>
+				}
+
+				<!-- Parsed files dropdown -->
+				@if (fileDropdownOpen() && parsedFiles(); as pf) {
+					<div class="pg__files-panel">
+						<div class="pg__files-header">
+							<span class="pg__files-title">Loaded files</span>
+							<button tuiButton size="xs" appearance="flat" (click)="fileDropdownOpen.set(false)">Close</button>
+						</div>
+						<div class="pg__files-list">
+							@for (file of pf.files; track file.name) {
+								<div class="pg__file-group">
+									<div class="pg__file-name">{{ file.name }}</div>
+									@for (op of file.operations; track $index) {
+										<button
+											type="button"
+											class="pg__file-op"
+											(click)="selectParsedFile(file)"
+										>
+											<span class="pg__file-op-type">{{ op.operation }}</span>
+											{{ op.name?.value ?? '(anonymous)' }}
+										</button>
+									}
+									@for (frag of file.fragments; track $index) {
+										<button
+											type="button"
+											class="pg__file-op"
+											(click)="selectParsedFile(file)"
+										>
+											<span class="pg__file-op-type pg__file-op-type_frag">fragment</span>
+											{{ frag.name.value }}
+										</button>
+									}
+								</div>
+							}
+							@if (pf.errors.length > 0) {
+								<div class="pg__file-errors">
+									@for (err of pf.errors; track $index) {
+										<div class="pg__file-error">{{ err }}</div>
+									}
+								</div>
+							}
+						</div>
+					</div>
+				}
+
+				<!-- Query editor toolbar -->
+				<div class="pg__toolbar">
+					<span class="pg__toolbar-label">Query</span>
+					<div class="pg__toolbar-actions">
+						<button tuiButton size="xs" appearance="flat" (click)="prettifyQuery()">Prettify</button>
+						<button tuiButton size="xs" appearance="flat" (click)="clearQuery()">Clear</button>
+					</div>
+				</div>
+				<div class="pg__editor-wrap" [class.pg__editor-wrap_hidden]="activeTab() !== 0">
+					<div id="query-editor-host" class="pg__editor"></div>
+				</div>
+				<!-- Variables editor -->
+				<div class="pg__editor-wrap pg__editor-wrap_bottom" [class.pg__editor-wrap_hidden]="activeTab() !== 1">
+					<div class="pg__toolbar">
+						<span class="pg__toolbar-label">Variables</span>
+						<div class="pg__toolbar-actions">
+							<button tuiButton size="xs" appearance="flat" (click)="prettifyVariables()">Prettify</button>
+							<button tuiButton size="xs" appearance="flat" (click)="clearVariables()">Clear</button>
+						</div>
+					</div>
+					<div id="variables-editor-host" class="pg__editor"></div>
+				</div>
+
+				<!-- Schema explorer -->
+				@if (activeTab() === 2 && schema(); as s) {
+					<div class="pg__schema">
+						<div class="pg__schema-types">
+							<div class="pg__schema-section">
+								<div class="pg__schema-section-title">Root Types</div>
+								@if (s.getQueryType(); as qt) {
+									<button
+										type="button"
+										class="pg__schema-type"
+										(click)="selectSchemaType(qt.name)"
+									>
+										<span class="pg__schema-type-kind">query</span> {{ qt.name }}
+									</button>
+								}
+								@if (s.getMutationType(); as mt) {
+									<button
+										type="button"
+										class="pg__schema-type"
+										(click)="selectSchemaType(mt.name)"
+									>
+										<span class="pg__schema-type-kind">mutation</span> {{ mt.name }}
+									</button>
+								}
+								@if (s.getSubscriptionType(); as st) {
+									<button
+										type="button"
+										class="pg__schema-type"
+										(click)="selectSchemaType(st.name)"
+									>
+										<span class="pg__schema-type-kind">subscription</span> {{ st.name }}
+									</button>
+								}
+							</div>
+							<div class="pg__schema-section">
+								<div class="pg__schema-section-title">Types</div>
+								@for (typeName of schemaTypeNames; track typeName) {
+									<button
+										type="button"
+										class="pg__schema-type"
+										(click)="selectSchemaType(typeName)"
+									>
+										{{ typeName }}
+									</button>
+								}
+							</div>
+						</div>
+						<div class="pg__schema-detail">
+							@if (selectedSchemaType(); as typeName) {
+								@if (getSchemaType(typeName); as t) {
+									<div class="pg__schema-detail-header">
+										<span class="pg__schema-detail-kind">{{ t.kind }}</span>
+										<span class="pg__schema-detail-name">{{ t.name }}</span>
+										@if (t.description) {
+											<div class="pg__schema-detail-desc">{{ t.description }}</div>
+										}
+									</div>
+									@if (t.fields; as fields) {
+										<div class="pg__schema-section">
+											<div class="pg__schema-section-title">Fields</div>
+											@for (field of fields; track field.name) {
+												<div class="pg__schema-field">
+													<span class="pg__schema-field-name">{{ field.name }}</span>
+													@if (field.args && field.args.length > 0) {
+														<span class="pg__schema-field-args">(
+															@for (arg of field.args; track arg.name; let last = $last) {
+																<span class="pg__schema-arg">{{ arg.name }}: {{ arg.typeStr }}</span>{{ !last ? ', ' : '' }}
+															}
+														)</span>
+													}
+													<span class="pg__schema-field-type">{{ field.typeStr }}</span>
+													@if (field.description) {
+														<div class="pg__schema-field-desc">{{ field.description }}</div>
+													}
+												</div>
+											}
+										</div>
+									}
+									@if (t.enumValues && t.enumValues.length > 0) {
+										<div class="pg__schema-section">
+											<div class="pg__schema-section-title">Enum Values</div>
+											@for (ev of t.enumValues; track ev.name) {
+												<div class="pg__schema-enum">{{ ev.name }}</div>
+											}
+										</div>
+									}
+									@if (t.inputFields && t.inputFields.length > 0) {
+										<div class="pg__schema-section">
+											<div class="pg__schema-section-title">Input Fields</div>
+											@for (field of t.inputFields; track field.name) {
+												<div class="pg__schema-field">
+													<span class="pg__schema-field-name">{{ field.name }}</span>
+													<span class="pg__schema-field-type">{{ field.typeStr }}</span>
+												</div>
+											}
+										</div>
+									}
+									@if (t.possibleTypes && t.possibleTypes.length > 0) {
+										<div class="pg__schema-section">
+											<div class="pg__schema-section-title">Possible Types</div>
+											@for (pt of t.possibleTypes; track pt.name) {
+												<button
+													type="button"
+													class="pg__schema-type"
+													(click)="selectSchemaType(pt.name)"
+												>
+													{{ pt.name }}
+												</button>
+											}
+										</div>
+									}
+									@if (t.directives && t.directives.length > 0) {
+										<div class="pg__schema-section">
+											<div class="pg__schema-section-title">Directives</div>
+											@for (d of t.directives; track d.name) {
+												<div class="pg__schema-directive">
+													<span class="pg__schema-directive-name">@{{ d.name }}</span>
+													<span class="pg__schema-directive-locs">{{ d.locations.join(', ') }}</span>
+												</div>
+											}
+										</div>
+									}
+								}
+							} @else {
+								<div class="pg__schema-empty">
+									<tui-icon icon="@tui.book-open" class="pg__schema-empty-icon" />
+									<span>Select a type to view details</span>
+								</div>
+							}
+						</div>
 					</div>
 				}
 			</div>
+
+			<!-- Resize handle (visual only) -->
+			<div class="pg__divider"></div>
+
+			<!-- Right: response -->
+			<div class="pg__response-pane">
+				<div class="pg__toolbar">
+					<span class="pg__toolbar-label">Response</span>
+					@if (result(); as r) {
+						<span
+							tuiBadge
+							size="s"
+							[appearance]="r.status === 'success' ? 'primary' : 'error'"
+						>
+							{{ r.status === 'success' ? '200 OK' : 'Error' }}
+						</span>
+					}
+				</div>
+				<div class="pg__response-body">
+					@if (loading()) {
+						<div class="pg__loading">
+							<div class="pg__loading-spinner"></div>
+							Executing query...
+						</div>
+					} @else if (error()) {
+						<div class="pg__error">
+							<tui-icon icon="@tui.circle-alert" class="pg__error-icon" />
+							<pre class="pg__error-text">{{ error() }}</pre>
+						</div>
+					} @else if (result(); as r) {
+						<pre class="pg__response-json">{{ formatJson(r) }}</pre>
+					} @else {
+						<div class="pg__placeholder">
+							<tui-icon icon="@tui.play-circle" class="pg__placeholder-icon" />
+							<span>Execute a query to see the response</span>
+							<span class="pg__placeholder-hint">Ctrl+Enter to run</span>
+							<span class="pg__placeholder-hint">Drop .graphql files to load queries</span>
+						</div>
+					}
+				</div>
+			</div>
 		</div>
-	}
+	</div>
 </div>

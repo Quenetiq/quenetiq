@@ -1,0 +1,38 @@
+:host{
+  display: block;
+  margin-top: 1rem;
+}
+
+.breadcrumbs {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	font-size: 0.8125rem;
+	color: var(--q-text-tertiary, #888);
+	margin-bottom: 1rem;
+}
+
+.breadcrumb-item {
+	text-decoration: none;
+	color: var(--q-text-tertiary, #888);
+	transition: color 0.15s ease;
+
+	&:hover {
+		color: var(--q-text-primary, #1a1a2e);
+	}
+
+	&.current {
+		color: var(--q-text-secondary, #555);
+		font-weight: 500;
+	}
+
+  @media (max-width: 400px) {
+    font-size: 0.5rem
+  }
+}
+
+.breadcrumb-sep {
+	width: 0.75rem;
+	height: 0.75rem;
+	color: var(--q-text-tertiary, #888);
+}

@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "DumbQL GraphQL Debugger",
+  "name": "Quenetiq GraphQL Debugger",
   "version": "1.0.1",
   "description": "Capture, inspect, and debug GraphQL queries, mutations, and subscriptions from your app. View request/response details, timing, schema browser, cache snapshots, and field projection analysis.",
   "browser_specific_settings": {
@@ -31,7 +31,7 @@
   "devtools_page": "devtools.html",
   "action": {
     "default_popup": "popup.html",
-    "default_title": "DumbQL GraphQL Debugger",
+    "default_title": "Quenetiq GraphQL Debugger",
     "default_icon": {
       "16": "icons/icon-16.svg",
       "48": "icons/icon-48.svg",

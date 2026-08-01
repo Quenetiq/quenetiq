@@ -1,0 +1,77 @@
+:host {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.quenetiq-dots {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.quenetiq-dots-dot {
+	border-radius: 50%;
+	animation: quenetiq-bounce 1.4s infinite ease-in-out both;
+}
+
+.quenetiq-dots-dot:nth-child(1) {
+	animation-delay: -0.32s;
+}
+
+.quenetiq-dots-dot:nth-child(2) {
+	animation-delay: -0.16s;
+}
+
+.quenetiq-dots-dot:nth-child(3) {
+	animation-delay: 0s;
+}
+
+.quenetiq-dots-label {
+	margin-left: 8px;
+	font-size: 12px;
+	opacity: 0.7;
+}
+
+.quenetiq-dots-sm .quenetiq-dots-dot {
+	width: 6px;
+	height: 6px;
+}
+
+.quenetiq-dots-md .quenetiq-dots-dot {
+	width: 10px;
+	height: 10px;
+}
+
+.quenetiq-dots-lg .quenetiq-dots-dot {
+	width: 14px;
+	height: 14px;
+}
+
+.quenetiq-dots-primary .quenetiq-dots-dot {
+	background: var(--quenetiq-primary, #3b82f6);
+}
+
+.quenetiq-dots-accent .quenetiq-dots-dot {
+	background: var(--quenetiq-accent, #8b5cf6);
+}
+
+.quenetiq-dots-warn .quenetiq-dots-dot {
+	background: var(--quenetiq-warn, #ef4444);
+}
+
+.quenetiq-dots-inherit .quenetiq-dots-dot {
+	background: currentcolor;
+}
+
+@keyframes quenetiq-bounce {
+	0%,
+	80%,
+	100% {
+		transform: scale(0);
+	}
+
+	40% {
+		transform: scale(1);
+	}
+}

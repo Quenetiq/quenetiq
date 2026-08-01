@@ -1,0 +1,34 @@
+{
+	"name": "@quenetiq/eslint-plugin-gql",
+	"version": "1.0.6",
+	"description": "ESLint plugin that parses GraphQL inside gql tagged templates and createTypedQuery() strings",
+	"keywords": [
+		"eslint",
+		"eslint-plugin",
+		"graphql",
+		"gql",
+		"lint",
+		"quenetiq",
+		"typescript"
+	],
+	"license": "MIT",
+	"type": "module",
+	"main": "./src/public-api.ts",
+	"types": "./src/public-api.ts",
+	"exports": {
+		".": {
+			"types": "./src/public-api.ts",
+			"import": "./src/public-api.ts",
+			"default": "./src/public-api.ts"
+		},
+		"./package.json": "./package.json"
+	},
+	"sideEffects": false,
+	"dependencies": {
+		"graphql": "^17.0.0"
+	},
+	"peerDependencies": {
+		"@typescript-eslint/utils": ">=8.0.0",
+		"eslint": ">=9.0.0"
+	}
+}

@@ -1,6 +1,6 @@
 import { createApp } from 'vue';
-import { createClient } from '@dumbql/client';
-import { createDumbqlPlugin } from '@dumbql/vue';
+import { createClient } from '@quenetiq/client';
+import { createQuenetiqPlugin } from '@quenetiq/vue';
 import App from './App.vue';
 
 const client = createClient({
@@ -8,5 +8,5 @@ const client = createClient({
 });
 
 createApp(App)
-  .use(createDumbqlPlugin(client))
+  .use(createQuenetiqPlugin(client))
   .mount('#app');

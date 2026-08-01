@@ -1,5 +1,5 @@
 {
-  "name": "DumbQL + React Sandbox",
+  "name": "Quenetiq + React Sandbox",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
   "postCreateCommand": "npm ci && node scripts/build-packages.mjs",
   "postStartCommand": "node mock/server.mjs & npm --prefix demos/react run dev -- --host 0.0.0.0",

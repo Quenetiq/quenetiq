@@ -1,0 +1,9 @@
+{
+  "name": "@dumbql/pagination",
+  "version": "1.0.0-deprecated.0",
+  "description": "DEPRECATED — use @quenetiq/pagination instead",
+  "main": "public-api.js",
+  "peerDependencies": {
+    "@quenetiq/pagination": "*"
+  }
+}

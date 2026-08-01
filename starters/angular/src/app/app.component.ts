@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
-import { gql } from '@dumbql/client';
-import { DumbqlQueryDirective } from '@dumbql/core';
+import { gql } from '@quenetiq/client';
+import { QuenetiqQueryDirective } from '@quenetiq/core';
 
 const GET_NOTES = gql`
   query {
@@ -21,11 +21,11 @@ interface Note {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [DumbqlQueryDirective],
+  imports: [QuenetiqQueryDirective],
   template: `
-    <h1>DumbQL + Angular</h1>
+    <h1>Quenetiq + Angular</h1>
 
-    <ng-template dumbqlQuery [query]="GET_NOTES" let-data let-loading="loading" let-error="error">
+    <ng-template quenetiqQuery [query]="GET_NOTES" let-data let-loading="loading" let-error="error">
       @if (loading) { <p>Loading...</p> }
       @if (error)  { <p>Error: {{ error }}</p> }
       @if (data) {

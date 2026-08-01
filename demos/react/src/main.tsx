@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { createClient } from '@dumbql/client';
-import { DumbqlProvider } from '@dumbql/react';
+import { createClient } from '@quenetiq/client';
+import { QuenetiqProvider } from '@quenetiq/react';
 import { App } from './App';
 
 const client = createClient({
@@ -10,8 +10,8 @@ const client = createClient({
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <DumbqlProvider client={client}>
+    <QuenetiqProvider client={client}>
       <App />
-    </DumbqlProvider>
+    </QuenetiqProvider>
   </StrictMode>,
 );

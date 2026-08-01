@@ -1,0 +1,38 @@
+<div class="playground-container">
+	<div class="playground-header">
+		<span tuiBadge appearance="primary" size="s">Playground</span>
+		<button
+			tuiButton
+			size="s"
+			appearance="accent"
+			iconStart="@tui.play"
+			[disabled]="running()"
+			(click)="runCode()"
+		>
+			@if (running()) {
+				Running...
+			} @else {
+				Run
+			}
+		</button>
+	</div>
+	<div class="playground-editor" #editorHost></div>
+	@if (outputContent()) {
+		<div class="playground-output">
+			<div class="playground-output-header">
+				<tui-icon icon="@tui.check-circle" class="playground-output-icon" />
+				Output
+			</div>
+			<pre class="playground-output-content">{{ outputContent() }}</pre>
+		</div>
+	}
+	@if (errorContent()) {
+		<div class="playground-error">
+			<div class="playground-error-header">
+				<tui-icon icon="@tui.circle-alert" class="playground-error-icon" />
+				Error
+			</div>
+			<pre class="playground-error-content">{{ errorContent() }}</pre>
+		</div>
+	}
+</div>

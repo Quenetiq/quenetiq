@@ -1,5 +1,84 @@
 # Changelog
 
+## [1.0.6-beta] — 2026-08-01
+
+### Migration: `@dumbql/*` → `@quenetiq/*`
+
+- All packages renamed: `@dumbql/client` → `@quenetiq/client`, `@dumbql/core` → `@quenetiq/core`, `@dumbql/cache` → `@quenetiq/cache`, `@dumbql/react` → `@quenetiq/react`, `@dumbql/vue` → `@quenetiq/vue`, `@dumbql/subscriptions` → `@quenetiq/subscriptions`, `@dumbql/observables` → `@quenetiq/observables`, `@dumbql/opentelemetry` → `@quenetiq/opentelemetry`, `@dumbql/dev-server` → `@quenetiq/dev-server`, `@dumbql/codegen` → `@quenetiq/codegen`
+- New package **`@quenetiq/eslint-plugin-gql`** with `gql-parse` and `gql-named-operations` rules
+- Build system reworked: unified `scripts/build-packages.mjs` (ng-packagr / tsc / plain-copy pipelines), `tsconfig.lint.json`, `scripts/tsconfig.ngpackagr.json`
+- Generated inline `.js`/`.d.ts` artifacts purged after every package build; `.vue` SFCs and ambient shims copied into dist
+
+### Added
+
+- **Multi-endpoint** (`@quenetiq/core`):
+  - `endpoints-config` — declarative multi-endpoint registry with per-endpoint middleware, policies and templates
+  - `endpoint`, `endpoint-discovery`, `endpoint-mock`, `endpoints-providers`, `endpoints-resolver`, `endpoints-parser`, `endpoints-template`, `endpoints-validator`, `endpoints-config.types`
+- **Reactive composables & loading components** (`@quenetiq/core`, `@quenetiq/vue`):
+  - `abort-query` — imperative query abort helper
+  - Unified `inject*` signatures with DI options (`inject-query`, `inject-mutation`, etc.)
+  - Loading components: `spinner`, `skeleton`, `progress`, `dots` (Angular + Vue)
+- **Cache** (`@quenetiq/cache`):
+  - `watchQuery` — reactive cache updates
+  - `normalizeResult()` — automatic entity extraction from query results
+  - `readQuery` / `writeQuery` / `readFragment` / `writeFragment` helpers
+  - `NormalizedCache.explain(typename, id)` — returns `EntityExplain` with full entity context: entity data, cache key, metadata (createdAt, updatedAt, source, mergeCount), ageMs, staleness, sizeBytes
+  - `NormalizedCache.mergeDry(entity)` — dry-run merge that returns `DryMergeResult` (changedFields, previousValues, result) without applying changes
+  - `CacheStore.graph()` — exports the bidirectional dependency graph: `{ forward: { queryHash → entityKeys[] }, reverse: { entityKey → queryHash[] } }`
+  - `CacheStore.sizeEstimate()` — returns serialized cache size in bytes
+  - `CacheStore.debug(enabled?)` — toggle structured debug logging via `CacheEvents.setLogging()`, returns unsubscribe function
+  - `CrossTabSync` — BroadcastChannel-based sync between browser tabs
+  - `CacheStoreConfig.crossTabSync` — enable via `{ crossTabSync: true }` or with config
+  - `CacheStore.clear()` — clears cache + localState + persistence + emits `'clear'` event
+  - Auto-invalidation: `write()`/`merge()`/`evict()` call `invalidateEntity()` — cached query results depending on the changed entity are cleared, triggering refetch on next read
+  - `LocalEntityStorage` — per-entity localStorage with LRU eviction, metadata tracking, prefix isolation
+  - `SmartPersistence` — auto-creates from `TypePolicy.ttl`, persists by entity key
+- **Client** (`@quenetiq/client`):
+  - `fetchPolicy` support (`cache-first`, `cache-and-network`, `network-only`, `no-cache`)
+  - Type inference (`InferData`/`InferVars`), abort controller integration, middleware generics
+  - `resetStore` / `clearStore`
+  - Optimistic responses, `@defer`/`@stream` incremental delivery, APQ (`persisted-queries`), DevTools
+  - `createSchemaMock(schema, typeMocks?)` — builds GraphQL schema from SDL, generates realistic mock data per type
+  - `createSchemaFromIntrospection()` — converts introspection JSON to SDL
+- **React** (`@quenetiq/react`):
+  - SSR support via `getDataFromTree`
+  - `useLazyQuery` hook
+  - `useInfiniteQuery` with `getNextPageParam` / `mergePages`
+  - Schema-aware `<MockedProvider>` (`mocks`, `schema`, `typeMocks`, `strict`, `addTypename`) with `createSchemaMock()` fallback
+  - Fragment masking: `useFragment` subscribes to cache events and masks data to fragment fields
+- **Vue** (`@quenetiq/vue`):
+  - `useInfiniteQuery` with `getNextPageParam` / `mergePages`
+  - Schema-aware `<MockedProvider>` + fragment masking (as in React)
+- **Subscriptions** (`@quenetiq/subscriptions`):
+  - `WsClient` connection manager with `reconnect` / `maxReconnect`
+- **Mutation** (`@quenetiq/core`):
+  - `refetchQueries` option for `mutate` / `injectMutation`
+- **Observables** (`@quenetiq/observables`) — 6+ RxJS operators:
+  - `observeEntity(store, typename, id)` — emits entity on cache changes
+  - `observeQuery(store, queryHash)` — emits cached query result when any of its entity dependencies change
+  - `cacheFirst(store, queryHash, fetch)` — emit cached data if available, then fetch fresh
+  - `staleWhileRevalidate(store, queryHash, fetch)` — emit stale data immediately, fetch in background, swallow fetch errors when cache exists
+  - `invalidateOn(store, typename, id)` — re-subscribes source Observable when watched entity changes
+  - `watchQuery(store, { queryHash, fetch })` — fetch + observe cached query + re-emit on entity change
+  - Debug operators: `lastValueFromCache(store, queryHash)` (Promise), `asCache(store, queryHash)` (Observable), `readHash(store, typename, id?)` (entity reader), `watchEntity(store, typename, id)` (entity observer)
+- **UI**: search dialog animations, heading anchor notification, home page guard
+- **Docs**: new pages — cache helpers, cross-tab sync, endpoints, pagination, subscriptions, apollo-adapter and more
+
+### Changed
+
+- Unified `inject*` signatures and DI options (breaking for pre-1.0.6 consumers)
+- `require()` eliminated — all dynamic requires replaced with proper ESM imports (`CrossTabSync`, `SmartPersistence`)
+- `TypePolicy` now supports optional `ttl` number for automatic TTL-based expiry
+
+### Fixed
+
+- **Cross-tab sync echo-loop (OOM)** — infinite message loop between browser tabs; fixed with a sync guard, bounded dedup ring and incoming-message validation
+- Lint: **0 errors** — fixed 44 `explicit-function-return-type` and 12 `require-await` warnings
+- `useFragment` tests, mock-graphql `done()` deprecation, delay extraction
+- CI/release: Node 24 + `checkout@v5` compat, `corepack enable`, npm 11 workspace resolution, regenerated lockfile
+- Release action auto-detects the latest `beta/*` / `rc/*` / `alpha/*` branch; per-package version/tag/skip configuration
+- Deploy script fetches branches and offers interactive selection
+
 ## [1.0.5] — 2026-07-06
 
 ### Added
@@ -19,7 +98,7 @@
 - **Vue directives** (`v-dql-mutate`, `v-dql-loading`):
   - `v-dql-mutate` triggers mutation on click — accepts `{ mutation, variables, options }` value
   - `v-dql-loading` adds/removes CSS class based on loading state — usage: `v-dql-loading="'my-loading-class'"`
-  - Registered via `registerDirectives(app, client)` in `createDumbqlPlugin.install()`
+  - Registered via `registerDirectives(app, client)` in `createQuenetiqPlugin.install()`
   - 6 unit tests
 - **Vue `useFragment`** — cache-backed fragment reading:
   - `useFragment(fragmentDoc, typename, id)` — reads from cache by `__typename` + `id`
@@ -40,7 +119,7 @@
   - Updated tests for new `QueryRef` API
 - **Angular `injectLiveQuery`**:
   - Standalone function returning `Observable<T>`
-  - Uses `GraphqlLiveQuery` (from `@dumbql/subscriptions/angular`) — initial HTTP fetch + WebSocket subscribe
+  - Uses `GraphqlLiveQuery` (from `@quenetiq/subscriptions/angular`) — initial HTTP fetch + WebSocket subscribe
   - Deferred injection via `defer()` — safe to call outside injection context
   - Cleans up subscription on `Observable` unsubscribe
 - **Angular `injectQuery` / `injectMutation`**:
@@ -57,7 +136,7 @@
   - Renamed from `useSmthRef` — reactive value container with null-handling utilities
   - API: `nullify()`, `isNull()`, `isEmpty()`, `reset()`, `tap(fn)`, `swap(v)`, `orElse(fallback)`, `match(onSome, onNone)`, `toJSON()`
   - React: wraps `useRef` + `useState`
-  - Vue: wraps `ref()` + `Val` class from `@dumbql/client`
+  - Vue: wraps `ref()` + `Val` class from `@quenetiq/client`
 - **Client tests** — new test files:
   - `client.spec.ts` — 34 tests: construction, query, mutation, middleware pipeline, error handling, retry, cache integration, polling, WebSocket subscription
   - `middleware.spec.ts` — 21 tests: middleware registration, execution order, error propagation, retry middleware, auto-mock
@@ -89,10 +168,10 @@
 - `npm_tag: auto` now derives dist-tag from version bump type (`rc`/`beta`/`alpha` → that tag, `patch`/`minor`/`major` → `latest`).
 - **Build order**: `errors → cache → client → core → ...` — `cache` and `client` built before `core` to resolve ng-packagr dependency chain.
 - **Circular dependency resolution**:
-  - `GRAPHQL_CACHE` token moved from `@dumbql/core` → `@dumbql/cache` (new `tokens.ts`)
-  - `Val`, `walkObject`, `extractOpName` inlined into `@dumbql/core` (removed `core → @dumbql/client` import)
-  - `@dumbql/core` re-exports `{ GRAPHQL_CACHE, GraphqlCacheLike }` from `@dumbql/cache`
-  - Peer deps: `@dumbql/cache` removed `@dumbql/core` peer dep; `@dumbql/core` added `@dumbql/cache` (optional) peer dep
+  - `GRAPHQL_CACHE` token moved from `@quenetiq/core` → `@quenetiq/cache` (new `tokens.ts`)
+  - `Val`, `walkObject`, `extractOpName` inlined into `@quenetiq/core` (removed `core → @quenetiq/client` import)
+  - `@quenetiq/core` re-exports `{ GRAPHQL_CACHE, GraphqlCacheLike }` from `@quenetiq/cache`
+  - Peer deps: `@quenetiq/cache` removed `@quenetiq/core` peer dep; `@quenetiq/core` added `@quenetiq/cache` (optional) peer dep
 - **CI/CD publishing**:
   - Release workflow triggers on `push` to `rc`, `beta`, `alpha` branches (in addition to `workflow_dispatch`)
   - Single `npm_tag` input replaces 19 per-package `tag_*` dropdowns — options: `auto`, `latest`, `rc`, `beta`, `alpha`, `skip`
@@ -104,7 +183,7 @@
 - **Build pipeline** — all 19 packages now build successfully:
   - `cache`, `client`, `core`, `dev-server`, `fragments`, `downloader`, `codegen`, `ssr`, `subscriptions`, `middlewares`, `pagination`, `persisted-queries`, `file-upload`, `debugging`, `testing`, `apollo-adapter`, `opentelemetry`, `react`, `vue`
   - Build order `cache → client → core` ensures cross-package symlinks exist before compilation
-- **`@dumbql/client` package.json** — reverted `main`/`types`/`exports` from `./public-api.js` back to `./src/public-api.ts` so that workspace symlink resolution works correctly in CI (no dist directory).
+- **`@quenetiq/client` package.json** — reverted `main`/`types`/`exports` from `./public-api.js` back to `./src/public-api.ts` so that workspace symlink resolution works correctly in CI (no dist directory).
 - **Build script** — new `fixDistPackageJson()` transforms source paths (`./src/X.ts` → `./X.js`/`.d.ts`) when copying `package.json` to dist, so published packages have correct compiled output paths.
 - **`react/null-overlay.tsx`** — TS4111: bracket notation (`styles[key]`) for index-signature `Record` access
 - **`react/use-query.ts`** — TS7006: explicit `GraphQLResult<TData>` type annotation for `res` parameter
@@ -116,21 +195,21 @@
 
 ### Added
 
-- **`@dumbql/dev-server` `--static` flag** — serve pre-built static files instead of proxying to a dev server.
-  - Usage: `dumbql-dev --port 4200 --static dist/browser`
+- **`@quenetiq/dev-server` `--static` flag** — serve pre-built static files instead of proxying to a dev server.
+  - Usage: `quenetiq-dev --port 4200 --static dist/browser`
   - All PNA/CORS headers are applied to static responses
 
 ### Changed
 
-- **StackBlitz starters** — `dumbql-dev` starts immediately, loads loading page while `ng build` / `vite build` runs in background via `spawn.cmd` config. When build completes, static files are served automatically.
-  - `package.json` start: just `dumbql-dev --port 4200`
-  - `dumbql.config.json`: `{ spawn: { cmd: "ng build" }, staticDir: "dist/browser" }`
+- **StackBlitz starters** — `quenetiq-dev` starts immediately, loads loading page while `ng build` / `vite build` runs in background via `spawn.cmd` config. When build completes, static files are served automatically.
+  - `package.json` start: just `quenetiq-dev --port 4200`
+  - `quenetiq.config.json`: `{ spawn: { cmd: "ng build" }, staticDir: "dist/browser" }`
   - No dev server (ng serve/vite) involved — prevents the "port answers before build ready" race condition
   - No hardcoded localhost URLs — all traffic through StackBlitz public HTTPS URL, no PNA block
 
 ### Fixed
 
-- **StackBlitz preview white page** — credentialless iframe blocks all `localhost:*` requests at the browser level (PNA). Build + static approach keeps all traffic on a single container port through StackBlitz's HTTPS proxy. dumbql-dev starts immediately so the port is always open, serving loading page until build finishes.
+- **StackBlitz preview white page** — credentialless iframe blocks all `localhost:*` requests at the browser level (PNA). Build + static approach keeps all traffic on a single container port through StackBlitz's HTTPS proxy. quenetiq-dev starts immediately so the port is always open, serving loading page until build finishes.
 
 ## [1.1.7] — 2026-07-01
 
@@ -148,34 +227,34 @@
 
 ### Added
 
-- **`@dumbql/dev-server` `--static` flag** — initial implementation.
+- **`@quenetiq/dev-server` `--static` flag** — initial implementation.
 
 ## [1.1.3] — 2026-07-01
 
 ### Added
 
-- **`@dumbql/dev-server`** — unified development server with mock GraphQL backend + proxy to any frontend dev server:
-  - CLI — `npx dumbql-dev --proxy http://localhost:4200`
-  - Configuration via `dumbql.config.json` with inline schema support
+- **`@quenetiq/dev-server`** — unified development server with mock GraphQL backend + proxy to any frontend dev server:
+  - CLI — `npx quenetiq-dev --proxy http://localhost:4200`
+  - Configuration via `quenetiq.config.json` with inline schema support
   - `createDevServer()` / `startDevServer()` programmatic API
   - `--rewrite` flag for URL rewriting in StackBlitz/Codespaces/WebContainers (PNA fix)
   - Auto-detection of StackBlitz, Codespaces, and local environments via `env-analyzer.ts`
-- **`@dumbql/dev-server` docs page** — `/docs/dev-server` with CLI options, config example, and API reference
+- **`@quenetiq/dev-server` docs page** — `/docs/dev-server` with CLI options, config example, and API reference
 - **Per-package "since" badge** — each package page now shows the version it was introduced (e.g., `since v0.0.1` or `since v1.1.0`)
 - **Zoneless Angular starter** — switched from `provideZoneChangeDetection` to `provideZonelessChangeDetection()`, removed `zone.js` dependency
-- **Improved starters** — `start` command simplified to just `dumbql-dev` (spawn.cmd handles frontend server), version ranges bumped to latest
+- **Improved starters** — `start` command simplified to just `quenetiq-dev` (spawn.cmd handles frontend server), version ranges bumped to latest
 
 ### Changed
 
-- File-based starters (angular/react/vue) now use `dumbql-dev` as the sole start command instead of separate terminals
+- File-based starters (angular/react/vue) now use `quenetiq-dev` as the sole start command instead of separate terminals
 - Version dropdown migrated to `tuiComboBox` with read-only input, docs-themed styling
 - Non-existent versions removed from version selector (0.0.9, 0.0.11, 0.0.12, 0.0.2-rc.1, 0.0.2-rc.2)
-- `@dumbql/dev-server` version bumped `^1.0.0` → `^1.1.3` in all starters
+- `@quenetiq/dev-server` version bumped `^1.0.0` → `^1.1.3` in all starters
 
 ### Fixed
 
-- **CI `package-lock.json`** — regenerated lock file to remove stale workspace symlink entries that caused `npm ci` to fail with "Missing: @dumbql/cache@1.0.3 from lock file"
-- **StackBlitz preview fix** — all three StackBlitz starters (Angular, React, Vue) now start with just `dumbql-dev` and spawn the frontend dev server internally via `spawn.cmd`. StackBlitz auto-detects port 4000 first, so the preview opens through the proxy with URL rewriting enabled (`proxy.rewrite: true`), avoiding PNA/CORS blocks from `credentialless` iframes
+- **CI `package-lock.json`** — regenerated lock file to remove stale workspace symlink entries that caused `npm ci` to fail with "Missing: @quenetiq/cache@1.0.3 from lock file"
+- **StackBlitz preview fix** — all three StackBlitz starters (Angular, React, Vue) now start with just `quenetiq-dev` and spawn the frontend dev server internally via `spawn.cmd`. StackBlitz auto-detects port 4000 first, so the preview opens through the proxy with URL rewriting enabled (`proxy.rewrite: true`), avoiding PNA/CORS blocks from `credentialless` iframes
 - **URL rewriting** — proxy now uses `ProxyConfig.target` dynamically instead of hardcoded `localhost:4200`, works for any frontend framework (React/Vue/Angular)
 - **Version service** — `allVersions` list updated to include `1.1.x` releases
 
@@ -183,21 +262,21 @@
 
 ### Added
 
-- **FieldPolicy (typePolicies) support** in `@dumbql/cache`:
+- **FieldPolicy (typePolicies) support** in `@quenetiq/cache`:
   - `TypePolicy` interface with `keyFields` (composite keys via dot-separated values) and custom `merge` functions
   - `NormalizedCache.setTypePolicies()` — configure policies at runtime
   - `CacheStore.setTypePolicies()` / `CacheService.setTypePolicies()` — wired through the stack
-  - Angular `cacheMiddleware` wires `typePolicies` from `DumbqlConfig.cache.typePolicies` on first request (guarded by `WeakSet<Injector>`)
+  - Angular `cacheMiddleware` wires `typePolicies` from `QuenetiqConfig.cache.typePolicies` on first request (guarded by `WeakSet<Injector>`)
   - Client `cacheMiddleware` wires `typePolicies` from `CacheConfig.typePolicies` eagerly
   - 8 FieldPolicy tests in `src/app/cache/field-policy.spec.ts`
-- **`@dumbql/codegen` CLI** — `npx dumbql-codegen` with flags:
+- **`@quenetiq/codegen` CLI** — `npx quenetiq-codegen` with flags:
   - `--watch` / `-w` — watches `schema.json` and `.graphql` files, regenerates on change with 300ms debounce
   - `--schema-only` — only generate schema types from `schema.json`
   - `--documents-only` — only generate typed documents from `.graphql` files
   - `--config, -c <path>` / `--output, -o <dir>` / `--help`
 - **Typed documents from `.graphql` files** — `findGraphqlFiles()`, `parseGraphqlFile()`, `generateTypedDocumentsCode()`, `generateIndexCode()` API
 - **`generateTypedDocumentsCode`** now accepts `string` (full TS source, auto-extracts type names) in addition to `string[]`
-- **`tools/generate-types.mjs`** refactored to use `@dumbql/codegen` library instead of duplicating schema generation / merge logic; now generates typed documents from `.graphql` files
+- **`tools/generate-types.mjs`** refactored to use `@quenetiq/codegen` library instead of duplicating schema generation / merge logic; now generates typed documents from `.graphql` files
 
 ### Changed
 
@@ -214,43 +293,43 @@
   - `useMutation`: `called`, `update` callback (writes to cache after mutation), `errorCode`
   - `useSubscription`: `onNext`, `onComplete` callbacks, `errorCode`
 - **`useLiveQuery`** — new hook for React and Vue that executes an initial HTTP query then opens a WebSocket subscription for real-time updates. Accepts `onCompleted`/`onError` callbacks, `wsEndpoint`, `shouldSubscribe` options.
-- **`GraphqlLiveQuery`** — framework-agnostic class in `@dumbql/subscriptions` that does initial fetch + WebSocket subscription for live queries
-- **DevTools Panel** — in-app overlay for debugging (`@dumbql/debugging`):
+- **`GraphqlLiveQuery`** — framework-agnostic class in `@quenetiq/subscriptions` that does initial fetch + WebSocket subscription for live queries
+- **DevTools Panel** — in-app overlay for debugging (`@quenetiq/debugging`):
   - Toggle with `Ctrl+Shift+D`
   - **Queries tab** — history with timing, type, status, fields, operation name
   - **Cache tab** — normalized cache snapshot with typename, id, fields
   - **Errors tab** — filtered error entries
-  - `provideDevToolsPanel()` provider, `<dumbql-devtools-panel>` component
-- **`getCacheService()`** — public method on `DumbqlClient` to access the underlying `CacheStore` (needed for mutation `update` callbacks)
-- **`@dumbql/apollo-adapter`** — migration helper package:
+  - `provideDevToolsPanel()` provider, `<quenetiq-devtools-panel>` component
+- **`getCacheService()`** — public method on `QuenetiqClient` to access the underlying `CacheStore` (needed for mutation `update` callbacks)
+- **`@quenetiq/apollo-adapter`** — migration helper package:
   - `fromApolloCache()` — wraps Apollo InMemoryCache into a CacheStore-compatible interface
-  - `createMigrationGuide()` — returns a map of Apollo→DumbQL API equivalents
+  - `createMigrationGuide()` — returns a map of Apollo→Quenetiq API equivalents
 - **Apollo adapter** added to build order in `scripts/build-packages.mjs`
 
 ### Changed
 
-- **Backward-incompatible**: `useQuery`, `useMutation`, `useSubscription` in `@dumbql/react` and `@dumbql/vue` now accept an options object as second argument instead of positional `variables`. Update: `useQuery(doc, { variables })` instead of `useQuery(doc, variables)`.
+- **Backward-incompatible**: `useQuery`, `useMutation`, `useSubscription` in `@quenetiq/react` and `@quenetiq/vue` now accept an options object as second argument instead of positional `variables`. Update: `useQuery(doc, { variables })` instead of `useQuery(doc, variables)`.
 - Version bumped from `0.0.2-rc.2` → `0.0.2-rc.4` across all 19 packages
 
 ## [0.0.2-alpha.1] — 2026-06-29
 
 ### Added
 
-- **`@dumbql/errors`** — typed error classes for GraphQL, network, cache, validation errors with `ErrorHandler` (#542e556)
-  - `DumbqlError` — base class with `code`, `timestamp`, `context`, `toJSON()`
+- **`@quenetiq/errors`** — typed error classes for GraphQL, network, cache, validation errors with `ErrorHandler` (#542e556)
+  - `QuenetiqError` — base class with `code`, `timestamp`, `context`, `toJSON()`
   - `GraphQLError` — server-side GraphQL errors (locations, path, extensions)
   - `NetworkError` — network failures (timeout, offline, HTTP, DNS, abort)
   - `CacheError` — cache issues (miss, serialization, GC, persistence)
   - `ValidationError` — client validation (missing variables, invalid query, type mismatch)
   - `ErrorHandler` — middleware-style handler: `on(code, fn)` with async `handle(error)`
 - **`errorCode` on results** — `GraphQLResult` error variant now has `errorCode?: ErrorCode` field (`'NO_DATA' | 'GRAPHQL_ERROR' | 'NETWORK_ERROR' | 'VALIDATION_ERROR' | 'UNKNOWN'`) for easy switching on error type (#542e556)
-- **`errorHandler` config option** — `errorHandler?: { handle(error: unknown): boolean | Promise<boolean> }` in both `@dumbql/core` (`GraphqlCoreConfig`) and `@dumbql/client` (`ClientConfig`), called before `onError` callback (#542e556)
-- **`errorHandlerMiddleware()`** — new middleware in `@dumbql/middlewares` that catches pipeline errors and routes through custom handler (#542e556)
+- **`errorHandler` config option** — `errorHandler?: { handle(error: unknown): boolean | Promise<boolean> }` in both `@quenetiq/core` (`GraphqlCoreConfig`) and `@quenetiq/client` (`ClientConfig`), called before `onError` callback (#542e556)
+- **`errorHandlerMiddleware()`** — new middleware in `@quenetiq/middlewares` that catches pipeline errors and routes through custom handler (#542e556)
 
 ### Fixed
 
 - **CI release workflow** — two bugs fixed (#a10da8d):
-  - `scripts/build-packages.mjs`: `linkPackage()` now creates `node_modules/@dumbql/` parent directory before symlink (crashed on fresh CI)
+  - `scripts/build-packages.mjs`: `linkPackage()` now creates `node_modules/@quenetiq/` parent directory before symlink (crashed on fresh CI)
   - `.github/workflows/release.yml`: `require()` paths prefixed with `./` — without it Node.js resolves them as module names, not relative paths
 - **`scripts/version.mjs`** — dry-run no longer writes files (previous behavior wrote to dist even with `--dry-run`)
 - **GraphQLResult type** — error variant no longer includes nullable `data` field when server returns `{"data": null, "errors": [...]}` (already worked correctly, confirmed by review)
@@ -262,16 +341,16 @@
 
 ### Starters
 
-- **React StackBlitz starter** at `starters/react/` — Vite + React 18 + `@dumbql/react` + mock backend
-- **Vue StackBlitz starter** at `starters/vue/` — Vite + Vue 3 + `@dumbql/vue` + mock backend
+- **React StackBlitz starter** at `starters/react/` — Vite + React 18 + `@quenetiq/react` + mock backend
+- **Vue StackBlitz starter** at `starters/vue/` — Vite + Vue 3 + `@quenetiq/vue` + mock backend
 - Docs getting-started replaced "coming soon" placeholders with live StackBlitz links
 
 ## [0.0.2-rc.2] — 2026-06-29
 
 ### Added
 
-- **Auto-mock middleware** — `autoMockMiddleware(config)` in `@dumbql/middlewares` — schema-driven or heuristic mock data generation with custom resolvers, simulated delay, and passthrough mode
-- **Prefetch resolver** — `prefetchedRoute(route, prefetch)` and `fromPrefeched(route, key)` in `@dumbql/core` — Angular Router `ResolveFn` that executes queries before route activation, resolves data into `ActivatedRoute.data`
+- **Auto-mock middleware** — `autoMockMiddleware(config)` in `@quenetiq/middlewares` — schema-driven or heuristic mock data generation with custom resolvers, simulated delay, and passthrough mode
+- **Prefetch resolver** — `prefetchedRoute(route, prefetch)` and `fromPrefeched(route, key)` in `@quenetiq/core` — Angular Router `ResolveFn` that executes queries before route activation, resolves data into `ActivatedRoute.data`
 - **GraphQL Playground** at `/playground` — standalone component with query/variables/headers editors, execute button, JSON response viewer, execution history
 - NPM_TOKEN added to GitHub repo secrets
 
@@ -284,9 +363,9 @@
 ### Added
 
 - Initial public release candidate
-- `@dumbql/cache` — normalized in-memory entity cache with GC, persistence, optimistic updates
-- `@dumbql/core` — Angular GraphQL service with middleware pipeline, directives, pipes
-- `@dumbql/client` — framework-agnostic GraphQL client
-- `@dumbql/react` — React bindings
-- `@dumbql/vue` — Vue bindings
+- `@quenetiq/cache` — normalized in-memory entity cache with GC, persistence, optimistic updates
+- `@quenetiq/core` — Angular GraphQL service with middleware pipeline, directives, pipes
+- `@quenetiq/client` — framework-agnostic GraphQL client
+- `@quenetiq/react` — React bindings
+- `@quenetiq/vue` — Vue bindings
 - 12 additional packages: codegen, debugging, downloader, file-upload, fragments, middlewares, pagination, persisted-queries, ssr, subscriptions, testing

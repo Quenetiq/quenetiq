@@ -1,0 +1,60 @@
+<div
+	class="quenetiq-skeleton quenetiq-skeleton-{{ variant() }} quenetiq-skeleton-{{ animation() }}"
+	[style.width]="width()"
+	[style.height]="height()"
+	[attr.aria-label]="ariaLabel()"
+	role="status"
+>
+	@switch (variant()) {
+		@case ('text') {
+			<div class="quenetiq-skeleton-line" [style.width]="textWidth()"></div>
+		}
+		@case ('circle') {
+			<div class="quenetiq-skeleton-circle"></div>
+		}
+		@case ('rect') {
+			<div class="quenetiq-skeleton-rect"></div>
+		}
+		@case ('card') {
+			<div class="quenetiq-skeleton-card">
+				<div class="quenetiq-skeleton-card-img"></div>
+				<div class="quenetiq-skeleton-card-body">
+					<div class="quenetiq-skeleton-line quenetiq-skeleton-line-title"></div>
+					<div class="quenetiq-skeleton-line"></div>
+					<div class="quenetiq-skeleton-line quenetiq-skeleton-line-short"></div>
+				</div>
+			</div>
+		}
+		@case ('table') {
+			<div class="quenetiq-skeleton-table">
+				@for (row of tableRowsArr(); track row) {
+					<div class="quenetiq-skeleton-table-row">
+						<div class="quenetiq-skeleton-table-cell"></div>
+						<div class="quenetiq-skeleton-table-cell"></div>
+						<div class="quenetiq-skeleton-table-cell"></div>
+					</div>
+				}
+			</div>
+		}
+		@case ('list') {
+			<div class="quenetiq-skeleton-list">
+				@for (item of listItemsArr(); track item) {
+					<div class="quenetiq-skeleton-list-item">
+						<div class="quenetiq-skeleton-circle quenetiq-skeleton-circle-sm"></div>
+						<div class="quenetiq-skeleton-list-text">
+							<div class="quenetiq-skeleton-line quenetiq-skeleton-line-title"></div>
+							<div class="quenetiq-skeleton-line quenetiq-skeleton-line-short"></div>
+						</div>
+					</div>
+				}
+			</div>
+		}
+		@case ('paragraph') {
+			<div class="quenetiq-skeleton-paragraph">
+				@for (line of paragraphLinesArr(); track line) {
+					<div class="quenetiq-skeleton-line" [style.width]="line === paragraphLinesArr().length - 1 ? '60%' : '100%'"></div>
+				}
+			</div>
+		}
+	}
+</div>
