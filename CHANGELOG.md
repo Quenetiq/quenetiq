@@ -1,32 +1,59 @@
 # Changelog
 
-## [1.0.6-beta] — 2026-07-26
+## [1.0.6-beta] — 2026-08-01
+
+### Migration: `@dumbql/*` → `@quenetiq/*`
+
+- All packages renamed: `@dumbql/client` → `@quenetiq/client`, `@dumbql/core` → `@quenetiq/core`, `@dumbql/cache` → `@quenetiq/cache`, `@dumbql/react` → `@quenetiq/react`, `@dumbql/vue` → `@quenetiq/vue`, `@dumbql/subscriptions` → `@quenetiq/subscriptions`, `@dumbql/observables` → `@quenetiq/observables`, `@dumbql/opentelemetry` → `@quenetiq/opentelemetry`, `@dumbql/dev-server` → `@quenetiq/dev-server`, `@dumbql/codegen` → `@quenetiq/codegen`
+- New package **`@quenetiq/eslint-plugin-gql`** with `gql-parse` and `gql-named-operations` rules
+- Build system reworked: unified `scripts/build-packages.mjs` (ng-packagr / tsc / plain-copy pipelines), `tsconfig.lint.json`, `scripts/tsconfig.ngpackagr.json`
+- Generated inline `.js`/`.d.ts` artifacts purged after every package build; `.vue` SFCs and ambient shims copied into dist
 
 ### Added
 
-- **Cache transparency features** (`@quenetiq/cache`):
+- **Multi-endpoint** (`@quenetiq/core`):
+  - `endpoints-config` — declarative multi-endpoint registry with per-endpoint middleware, policies and templates
+  - `endpoint`, `endpoint-discovery`, `endpoint-mock`, `endpoints-providers`, `endpoints-resolver`, `endpoints-parser`, `endpoints-template`, `endpoints-validator`, `endpoints-config.types`
+- **Reactive composables & loading components** (`@quenetiq/core`, `@quenetiq/vue`):
+  - `abort-query` — imperative query abort helper
+  - Unified `inject*` signatures with DI options (`inject-query`, `inject-mutation`, etc.)
+  - Loading components: `spinner`, `skeleton`, `progress`, `dots` (Angular + Vue)
+- **Cache** (`@quenetiq/cache`):
+  - `watchQuery` — reactive cache updates
+  - `normalizeResult()` — automatic entity extraction from query results
+  - `readQuery` / `writeQuery` / `readFragment` / `writeFragment` helpers
   - `NormalizedCache.explain(typename, id)` — returns `EntityExplain` with full entity context: entity data, cache key, metadata (createdAt, updatedAt, source, mergeCount), ageMs, staleness, sizeBytes
   - `NormalizedCache.mergeDry(entity)` — dry-run merge that returns `DryMergeResult` (changedFields, previousValues, result) without applying changes
   - `CacheStore.graph()` — exports the bidirectional dependency graph: `{ forward: { queryHash → entityKeys[] }, reverse: { entityKey → queryHash[] } }`
   - `CacheStore.sizeEstimate()` — returns serialized cache size in bytes
   - `CacheStore.debug(enabled?)` — toggle structured debug logging via `CacheEvents.setLogging()`, returns unsubscribe function
-  - New exported types: `EntityExplain`, `DryMergeResult`
-- **Cache documentation** (`cache-helpers` page):
-  - New standalone docs page for all helper functions (cache-keys, cache-meta, cache-snapshot, cache-optimistic, isCacheEntity)
-  - Added CacheEvents, CacheMetrics, and all event types to API Reference
-  - Added EntityExplain, DryMergeResult, EntityMeta, CacheSnapshot, CacheMetricsSnapshot, GraphqlCacheLike, CacheAwareResult to Interfaces section
-  - Added NormalizedCache.explain(), mergeDry() to API tables
-  - Added CacheStore.graph(), sizeEstimate(), debug() to API tables
-- **Cross-tab synchronization** (`@quenetiq/cache`):
   - `CrossTabSync` — BroadcastChannel-based sync between browser tabs
   - `CacheStoreConfig.crossTabSync` — enable via `{ crossTabSync: true }` or with config
   - `CacheStore.clear()` — clears cache + localState + persistence + emits `'clear'` event
   - Auto-invalidation: `write()`/`merge()`/`evict()` call `invalidateEntity()` — cached query results depending on the changed entity are cleared, triggering refetch on next read
-- **Entity-level persistence** (`@quenetiq/cache`):
   - `LocalEntityStorage` — per-entity localStorage with LRU eviction, metadata tracking, prefix isolation
   - `SmartPersistence` — auto-creates from `TypePolicy.ttl`, persists by entity key
-  - TTL via `TypePolicy.ttl` — zero-config: add `ttl` to type policy, `SmartPersistence` auto-created
-- **`@quenetiq/observables`** package (6+ RxJS operators):
+- **Client** (`@quenetiq/client`):
+  - `fetchPolicy` support (`cache-first`, `cache-and-network`, `network-only`, `no-cache`)
+  - Type inference (`InferData`/`InferVars`), abort controller integration, middleware generics
+  - `resetStore` / `clearStore`
+  - Optimistic responses, `@defer`/`@stream` incremental delivery, APQ (`persisted-queries`), DevTools
+  - `createSchemaMock(schema, typeMocks?)` — builds GraphQL schema from SDL, generates realistic mock data per type
+  - `createSchemaFromIntrospection()` — converts introspection JSON to SDL
+- **React** (`@quenetiq/react`):
+  - SSR support via `getDataFromTree`
+  - `useLazyQuery` hook
+  - `useInfiniteQuery` with `getNextPageParam` / `mergePages`
+  - Schema-aware `<MockedProvider>` (`mocks`, `schema`, `typeMocks`, `strict`, `addTypename`) with `createSchemaMock()` fallback
+  - Fragment masking: `useFragment` subscribes to cache events and masks data to fragment fields
+- **Vue** (`@quenetiq/vue`):
+  - `useInfiniteQuery` with `getNextPageParam` / `mergePages`
+  - Schema-aware `<MockedProvider>` + fragment masking (as in React)
+- **Subscriptions** (`@quenetiq/subscriptions`):
+  - `WsClient` connection manager with `reconnect` / `maxReconnect`
+- **Mutation** (`@quenetiq/core`):
+  - `refetchQueries` option for `mutate` / `injectMutation`
+- **Observables** (`@quenetiq/observables`) — 6+ RxJS operators:
   - `observeEntity(store, typename, id)` — emits entity on cache changes
   - `observeQuery(store, queryHash)` — emits cached query result when any of its entity dependencies change
   - `cacheFirst(store, queryHash, fetch)` — emit cached data if available, then fetch fresh
@@ -34,17 +61,23 @@
   - `invalidateOn(store, typename, id)` — re-subscribes source Observable when watched entity changes
   - `watchQuery(store, { queryHash, fetch })` — fetch + observe cached query + re-emit on entity change
   - Debug operators: `lastValueFromCache(store, queryHash)` (Promise), `asCache(store, queryHash)` (Observable), `readHash(store, typename, id?)` (entity reader), `watchEntity(store, typename, id)` (entity observer)
-- **Schema-aware MockProvider** (`@quenetiq/react`, `@quenetiq/vue`):
-  - `<MockedProvider>` accepts `mocks`, `schema` (SDL string), `typeMocks`, `strict`, `addTypename`
-  - Schema-aware fallback: auto-generates mock data for unmatched queries via `createSchemaMock()`
-  - `createSchemaMock(schema, typeMocks?)` in `@quenetiq/client` — builds GraphQL schema from SDL, generates realistic mock data per type
-  - `createSchemaFromIntrospection()` — converts introspection JSON to SDL
-- **Fragment masking** (`@quenetiq/react`, `@quenetiq/vue`):
-  - `useFragment(fragmentDoc, identifier)` now subscribes to cache events (write/merge/evict)
-  - Masks returned data to only fields declared in the fragment `DocumentNode`
-  - Falls back to full entity for unfragmented use
-- **`require()` eliminated** — all dynamic requires replaced with proper ESM imports (`CrossTabSync`, `SmartPersistence`)
-- **Type policy TTL** — `TypePolicy` interface now supports optional `ttl` number for automatic TTL-based expiry
+- **UI**: search dialog animations, heading anchor notification, home page guard
+- **Docs**: new pages — cache helpers, cross-tab sync, endpoints, pagination, subscriptions, apollo-adapter and more
+
+### Changed
+
+- Unified `inject*` signatures and DI options (breaking for pre-1.0.6 consumers)
+- `require()` eliminated — all dynamic requires replaced with proper ESM imports (`CrossTabSync`, `SmartPersistence`)
+- `TypePolicy` now supports optional `ttl` number for automatic TTL-based expiry
+
+### Fixed
+
+- **Cross-tab sync echo-loop (OOM)** — infinite message loop between browser tabs; fixed with a sync guard, bounded dedup ring and incoming-message validation
+- Lint: **0 errors** — fixed 44 `explicit-function-return-type` and 12 `require-await` warnings
+- `useFragment` tests, mock-graphql `done()` deprecation, delay extraction
+- CI/release: Node 24 + `checkout@v5` compat, `corepack enable`, npm 11 workspace resolution, regenerated lockfile
+- Release action auto-detects the latest `beta/*` / `rc/*` / `alpha/*` branch; per-package version/tag/skip configuration
+- Deploy script fetches branches and offers interactive selection
 
 ## [1.0.5] — 2026-07-06
 
