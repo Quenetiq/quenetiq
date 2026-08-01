@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { applyPatch, applyStreamItems, parseMultipartResponse } from './streaming';
-import { lastValueFrom, toArray } from 'rxjs';
+import { describe, it, expect, vi } from 'vitest';
+import { applyPatch, applyStreamItems, parseMultipartResponse, parseMultipartContentType, streamingMiddleware } from './streaming';
+import { lastValueFrom, toArray, of, Observable } from 'rxjs';
 
 describe('applyPatch', () => {
 	it('replaces a value at a shallow path', () => {
@@ -47,7 +47,7 @@ describe('applyStreamItems', () => {
 	it('creates an empty array when path is undefined', () => {
 		const data = {} as Record<string, unknown>;
 		const result = applyStreamItems(data, ['list'], [{ id: 1 }]);
-		expect(result.list).toHaveLength(1);
+		expect(result['list']).toHaveLength(1);
 	});
 
 	it('returns new object without mutating', () => {
@@ -91,5 +91,122 @@ describe('parseMultipartResponse', () => {
 		const observable = parseMultipartResponse(body, 'b');
 		const results = await lastValueFrom(observable.pipe(toArray()));
 		expect(results).toHaveLength(1);
+	});
+});
+
+describe('parseMultipartContentType', () => {
+	it('extracts boundary from content type', () => {
+		expect(parseMultipartContentType('multipart/mixed; boundary=test')).toBe('test');
+	});
+
+	it('extracts quoted boundary', () => {
+		expect(parseMultipartContentType('multipart/mixed; boundary="test"')).toBe('test');
+	});
+
+	it('returns null when no boundary found', () => {
+		expect(parseMultipartContentType('application/json')).toBeNull();
+	});
+
+	it('returns null for empty string', () => {
+		expect(parseMultipartContentType('')).toBeNull();
+	});
+});
+
+describe('streamingMiddleware', () => {
+	function mockNext(result: unknown) {
+		return vi.fn().mockReturnValue(of(result));
+	}
+
+	const defaultCtx = {
+		query: 'query { user }',
+		variables: {},
+		headers: {},
+		type: 'query' as const,
+	};
+
+	it('passes through non-success results', async () => {
+		const errorResult = { status: 'error', error: 'fail' };
+		const mw = streamingMiddleware();
+		const result$ = mw(defaultCtx, mockNext(errorResult));
+		const output = await lastValueFrom(result$);
+		expect(output).toEqual(errorResult);
+	});
+
+	it('passes through success result without incremental', async () => {
+		const result = { status: 'success', data: { user: { name: 'Alice' } } };
+		const mw = streamingMiddleware();
+		const result$ = mw(defaultCtx, mockNext(result));
+		const output = await lastValueFrom(result$);
+		expect(output).toEqual(result);
+	});
+
+	it('applies incremental patches to base data', async () => {
+		const result = {
+			status: 'success',
+			data: {
+				data: { user: { name: 'Alice' } },
+				incremental: [{ path: ['user', 'age'], data: 30 }],
+			},
+		};
+		const mw = streamingMiddleware();
+		const result$ = mw(defaultCtx, mockNext(result));
+		const output = await lastValueFrom(result$) as { data: { user: { name: string; age: number } } };
+		expect(output.data.user.name).toBe('Alice');
+		expect(output.data.user.age).toBe(30);
+	});
+
+	it('accumulates multiple incremental patches', async () => {
+		const firstPatch = {
+			status: 'success',
+			data: {
+				data: { hero: { name: 'Luke' } },
+				incremental: [{ path: ['hero', 'age'], data: 23 }],
+				hasNext: true,
+			},
+		};
+		const secondPatch = {
+			status: 'success',
+			data: {
+				incremental: [{ path: ['hero', 'homeworld'], data: 'Tatooine' }],
+				hasNext: false,
+			},
+		};
+		const next = vi.fn()
+			.mockReturnValueOnce(of(firstPatch))
+			.mockReturnValueOnce(of(secondPatch));
+
+		const mw = streamingMiddleware();
+		const result$ = mw(defaultCtx, next);
+		const output = await lastValueFrom(result$) as { data: { hero: { name: string; age: number; homeworld: string } } };
+		expect(output.data.hero.name).toBe('Luke');
+	});
+
+	it('handles @stream items', async () => {
+		const result = {
+			status: 'success',
+			data: {
+				data: { list: [{ id: 1 }] },
+				incremental: [{ path: ['list'], items: [{ id: 2 }, { id: 3 }] }],
+			},
+		};
+		const mw = streamingMiddleware();
+		const result$ = mw(defaultCtx, mockNext(result));
+		const output = await lastValueFrom(result$) as { data: { list: { id: number }[] } };
+		expect(output.data.list).toHaveLength(3);
+	});
+
+	it('forwards errors from upstream', async () => {
+		const next = vi.fn().mockReturnValue(new Observable((sub) => sub.error(new Error('network error'))));
+		const mw = streamingMiddleware();
+		const outputs: unknown[] = [];
+		await expect(new Promise<void>((resolve, reject) => {
+			mw(defaultCtx, next).subscribe({
+				next: (v) => outputs.push(v),
+				error: (e) => { outputs.push(e); resolve(); },
+				complete: () => resolve(),
+			});
+		})).resolves.toBeUndefined();
+		expect(outputs).toHaveLength(1);
+		expect((outputs[0] as Error).message).toBe('network error');
 	});
 });

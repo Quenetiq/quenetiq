@@ -14,3 +14,21 @@ export interface QuenetiqInjectOptions {
 	/** If true, cross the host boundary. */
 	readonly host?: AngularInjectOptions['host'];
 }
+
+/**
+ * Extract the Angular DI flags from inject* options.
+ *
+ * The inject* options objects extend `QuenetiqInjectOptions` with feature
+ * options (document, variables, skip, streamOn, ...) that must NOT be passed
+ * into `inject()`. This helper picks only the DI-related keys so every
+ * internal `inject()` call honors the same resolution flags.
+ */
+export function toInjectOptions(options?: QuenetiqInjectOptions): AngularInjectOptions {
+	if (!options) return {};
+	return {
+		optional: options.optional,
+		self: options.self,
+		skipSelf: options.skipSelf,
+		host: options.host,
+	};
+}

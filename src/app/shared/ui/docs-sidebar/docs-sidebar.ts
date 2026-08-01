@@ -35,6 +35,7 @@ export class DocsSidebar {
 	);
 
 	readonly collapsedGroups = signal<Set<string>>(new Set());
+	readonly collapsedItems = signal<Set<string>>(new Set());
 
 	toggleGroup(label: string): void {
 		this.collapsedGroups.update((set) => {
@@ -50,5 +51,21 @@ export class DocsSidebar {
 
 	isGroupCollapsed(label: string): boolean {
 		return this.collapsedGroups().has(label);
+	}
+
+	toggleItem(slug: string): void {
+		this.collapsedItems.update((set) => {
+			const next = new Set(set);
+			if (next.has(slug)) {
+				next.delete(slug);
+			} else {
+				next.add(slug);
+			}
+			return next;
+		});
+	}
+
+	isItemCollapsed(slug: string): boolean {
+		return this.collapsedItems().has(slug);
 	}
 }

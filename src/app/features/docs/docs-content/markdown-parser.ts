@@ -148,19 +148,11 @@ export function parseMarkdown(body: string): MdBlock[] {
 		}
 
 		if (line.startsWith('|') && i + 1 < lines.length && /^\|[\s-:|]+\|/.test(lines[i + 1])) {
-			const headers = line
-				.split('|')
-				.slice(1, -1)
-				.map((c) => parseInline(c.trim()));
+			const headers = splitTableRow(line).map((c) => parseInline(c));
 			i += 2;
 			const rows: MdInline[][][] = [];
 			while (i < lines.length && lines[i].startsWith('|')) {
-				rows.push(
-					lines[i]
-						.split('|')
-						.slice(1, -1)
-						.map((c) => parseInline(c.trim())),
-				);
+				rows.push(splitTableRow(lines[i]).map((c) => parseInline(c)));
 				i++;
 			}
 			blocks.push({ type: 'table', headers, rows });
@@ -197,10 +189,61 @@ export function parseMarkdown(body: string): MdBlock[] {
 		}
 		if (paraLines.length) {
 			blocks.push({ type: 'paragraph', children: parseInline(paraLines.join(' ')) });
+		} else {
+			// Unrecognized line (e.g. a `|`-line that is not a table, or a
+			// malformed `:::` directive). Consume it as text so parsing always
+			// terminates instead of looping forever.
+			blocks.push({ type: 'paragraph', children: parseInline(lines[i]) });
+			i++;
 		}
 	}
 
 	return blocks;
+}
+
+/**
+ * Split a markdown table row into cells.
+ *
+ * Pipes only act as cell delimiters when they are outside inline code spans
+ * and not backslash-escaped, so `` `CacheStore | null` `` stays one cell and
+ * `'a' \| 'b'` becomes the literal text `'a' | 'b'`.
+ */
+function splitTableRow(line: string): string[] {
+	const text = line.trim();
+	const cells: string[] = [];
+	let current = '';
+	let inCode = false;
+	let i = text.startsWith('|') ? 1 : 0;
+
+	for (; i < text.length; i++) {
+		const c = text[i];
+
+		if (c === '`') {
+			inCode = !inCode;
+			current += c;
+			continue;
+		}
+
+		if (c === '\\' && text[i + 1] === '|') {
+			current += '|';
+			i++;
+			continue;
+		}
+
+		if (c === '|' && !inCode) {
+			cells.push(current.trim());
+			current = '';
+			continue;
+		}
+
+		current += c;
+	}
+
+	if (!text.endsWith('|')) {
+		cells.push(current.trim());
+	}
+
+	return cells;
 }
 
 function findClosingBracket(text: string, openPos: number): number {

@@ -58,7 +58,7 @@ export function usePartialQuery(
 
 	let engine: ReturnType<typeof createPartialQueryEngine> | null = null;
 
-	function createEngine() {
+	function createEngine(): void {
 		engine = createPartialQueryEngine(client, partitions, {
 			fetchPolicy: options?.fetchPolicy,
 			onPartitionComplete: options?.onPartitionComplete,
@@ -75,7 +75,7 @@ export function usePartialQuery(
 	}
 
 	createEngine();
-	engine.execute(options?.variables);
+	engine!.execute(options?.variables);
 
 	watch(
 		() => JSON.stringify(options?.variables ?? {}),
@@ -85,13 +85,13 @@ export function usePartialQuery(
 		},
 	);
 
-	const resume = async () => {
+	const resume = async (): Promise<void> => {
 		if (engine) {
 			await engine.resume(options?.variables);
 		}
 	};
 
-	const refetch = async () => {
+	const refetch = async (): Promise<void> => {
 		if (engine) {
 			await engine.execute(options?.variables);
 		}

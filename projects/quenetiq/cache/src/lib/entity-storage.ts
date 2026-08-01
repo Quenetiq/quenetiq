@@ -23,10 +23,10 @@ export interface EntityStorage {
 }
 
 export class LocalEntityStorage implements EntityStorage {
-	private prefix: string;
-	private ttlConfig: Record<string, number>;
-	private maxSizeBytes: number;
-	private sizeHint = 0;
+	private readonly prefix: string;
+	private readonly ttlConfig: Record<string, number>;
+	private readonly maxSizeBytes: number;
+	private readonly sizeHint = 0;
 	private sizeValid = false;
 
 	constructor(config?: EntityStorageConfig) {
@@ -53,7 +53,7 @@ export class LocalEntityStorage implements EntityStorage {
 				? JSON.parse(metaRaw)
 				: { createdAt: Date.now(), updatedAt: Date.now() };
 			const typeTtl = this.ttlConfig[entity.__typename];
-			if (typeTtl != null && Date.now() - meta.updatedAt > typeTtl) {
+			if (typeTtl !== null && Date.now() - meta.updatedAt > typeTtl) {
 				await this.delete(key);
 				return undefined;
 			}
@@ -71,14 +71,12 @@ export class LocalEntityStorage implements EntityStorage {
 				: { createdAt: Date.now(), updatedAt: Date.now() };
 
 			localStorage.setItem(this.storageKey(key), JSON.stringify(entity));
-			localStorage.setItem(
-				this.metaKey(key),
-				JSON.stringify({
-					...existingMeta,
-					...meta,
-					updatedAt: Date.now(),
-				} as StoredEntityMeta),
-			);
+			const storedMeta: StoredEntityMeta = {
+				...existingMeta,
+				...meta,
+				updatedAt: Date.now(),
+			};
+			localStorage.setItem(this.metaKey(key), JSON.stringify(storedMeta));
 			this.sizeValid = false;
 		} catch (e) {
 			if (e instanceof DOMException && e.name === 'QuotaExceededError') {
@@ -92,6 +90,7 @@ export class LocalEntityStorage implements EntityStorage {
 		}
 	}
 
+	// eslint-disable-next-line require-await -- sync impl of the async EntityStorage interface
 	async delete(key: string): Promise<void> {
 		try {
 			localStorage.removeItem(this.storageKey(key));
@@ -101,6 +100,7 @@ export class LocalEntityStorage implements EntityStorage {
 		}
 	}
 
+	// eslint-disable-next-line require-await -- sync impl of the async EntityStorage interface
 	async keys(): Promise<string[]> {
 		const result: string[] = [];
 		const prefix = this.prefix;
@@ -118,12 +118,13 @@ export class LocalEntityStorage implements EntityStorage {
 		return result;
 	}
 
+	// eslint-disable-next-line require-await -- sync impl of the async EntityStorage interface
 	async clear(): Promise<void> {
 		try {
 			const toRemove: string[] = [];
 			for (let i = 0; i < localStorage.length; i++) {
 				const k = localStorage.key(i);
-				if (k && k.startsWith(this.prefix)) {
+				if (k?.startsWith(this.prefix)) {
 					toRemove.push(k);
 				}
 			}

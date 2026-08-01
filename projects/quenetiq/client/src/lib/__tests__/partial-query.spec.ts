@@ -8,9 +8,9 @@ import {
 } from '../partial-query';
 import { gql } from '../gql';
 
-const USER_QUERY = gql`query { user { name } }`;
-const POSTS_QUERY = gql`query { posts { title } }`;
-const NOTIFICATIONS_QUERY = gql`query { notifications { message } }`;
+const USER_QUERY = gql`query UserQuery { user { name } }`;
+const POSTS_QUERY = gql`query PostsQuery { posts { title } }`;
+const NOTIFICATIONS_QUERY = gql`query NotificationsQuery { notifications { message } }`;
 
 function createMockClient(results: Record<string, unknown>) {
 	let callCount = 0;

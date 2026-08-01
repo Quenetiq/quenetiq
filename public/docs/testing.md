@@ -3,7 +3,7 @@ title: Testing
 slug: testing
 group: Tools
 order: 4
-since: "0.0.1"
+since: '0.0.1'
 tags:
   - testing
   - mock
@@ -22,11 +22,11 @@ Replace the real GraphQL link with a mock link during testing using `provideQuen
 import { provideQuenetiqMock } from '@quenetiq/testing';
 
 TestBed.configureTestingModule({
-  providers: [
-    provideQuenetiqMock({
-      'Books': { data: { books: [{ id: '1', title: 'Dune' }] } },
-    }),
-  ],
+	providers: [
+		provideQuenetiqMock({
+			Books: { data: { books: [{ id: '1', title: 'Dune' }] } },
+		}),
+	],
 });
 ```
 
@@ -39,13 +39,11 @@ import { MockGraphqlLink } from '@quenetiq/testing';
 
 const mockLink = new MockGraphqlLink();
 mockLink.setResponse('Books', {
-  data: { books: [{ id: '1', title: 'Dune' }] },
+	data: { books: [{ id: '1', title: 'Dune' }] },
 });
 
 TestBed.configureTestingModule({
-  providers: [
-    provideQuenetiqCore({ link: mockLink }),
-  ],
+	providers: [provideQuenetiqCore({ link: mockLink })],
 });
 ```
 
@@ -68,39 +66,39 @@ expect(mockLink.operations[0].variables).toEqual({ limit: 10 });
 
 Injectable mock GraphQL service for testing. Intercepts queries and mutations, returning configured responses.
 
-| Name | Type | Description |
-|------|------|-------------|
-| `MockGraphqlService.when(request, result)` | method | Registers a mock response for a specific query and variables combination. Responses are consumed in FIFO order. |
-| `MockGraphqlService.query(document, variables?)` | method | Mocks a GraphQL query execution, returning the configured response or a default error. |
-| `MockGraphqlService.mutate(document, variables?)` | method | Mocks a GraphQL mutation execution. |
-| `MockGraphqlService.refetch(document, variables?)` | method | Mocks a query refetch. |
-| `MockGraphqlService.poll(document, intervalMs, variables?)` | method | Mocks a polling query execution. |
+| Name                                                        | Type   | Description                                                                                                     |
+| ----------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------- |
+| `MockGraphqlService.when(request, result)`                  | method | Registers a mock response for a specific query and variables combination. Responses are consumed in FIFO order. |
+| `MockGraphqlService.query(document, variables?)`            | method | Mocks a GraphQL query execution, returning the configured response or a default error.                          |
+| `MockGraphqlService.mutate(document, variables?)`           | method | Mocks a GraphQL mutation execution.                                                                             |
+| `MockGraphqlService.refetch(document, variables?)`          | method | Mocks a query refetch.                                                                                          |
+| `MockGraphqlService.poll(document, intervalMs, variables?)` | method | Mocks a polling query execution.                                                                                |
 
 ### MockedResponse
 
 Interface for a configured mock response with optional simulated delay.
 
-| Name | Type | Description |
-|------|------|-------------|
-| `MockedResponse.request` | property | The MockedRequest that this response matches against. |
-| `MockedResponse.result` | property | The GraphQLResult data to return for this response. |
-| `MockedResponse.delay` | property | Optional delay in milliseconds before the response is emitted. |
+| Name                     | Type     | Description                                                    |
+| ------------------------ | -------- | -------------------------------------------------------------- |
+| `MockedResponse.request` | property | The MockedRequest that this response matches against.          |
+| `MockedResponse.result`  | property | The GraphQLResult data to return for this response.            |
+| `MockedResponse.delay`   | property | Optional delay in milliseconds before the response is emitted. |
 
 ### MockedRequest
 
 Interface describing a GraphQL operation request with query string and optional variables.
 
-| Name | Type | Description |
-|------|------|-------------|
-| `MockedRequest.query` | property | The GraphQL query string. |
+| Name                      | Type     | Description                         |
+| ------------------------- | -------- | ----------------------------------- |
+| `MockedRequest.query`     | property | The GraphQL query string.           |
 | `MockedRequest.variables` | property | Optional variables for the request. |
 
 ### Functions
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name                       | Type     | Description                                                                         |
+| -------------------------- | -------- | ----------------------------------------------------------------------------------- |
 | `provideQuenetiqTesting()` | function | Angular provider function that registers MockGraphqlService for injection in tests. |
 
-## Try it live
+## Starters
 
 :::stackblitz starter="testing"

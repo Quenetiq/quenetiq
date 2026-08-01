@@ -94,7 +94,7 @@ export function useReactiveQuery<TDocument extends DocumentNode | TypedDocumentN
 	let pollTimer: ReturnType<typeof setInterval> | null = null;
 	let lastVars = variables;
 
-	const execute = async (vars?: TVariables, status?: NetworkStatus) => {
+	const execute = async (vars?: TVariables, status?: NetworkStatus): Promise<void> => {
 		if (skip) return;
 		cancelled = false;
 		state.status = status ?? 'loading';
@@ -108,7 +108,7 @@ export function useReactiveQuery<TDocument extends DocumentNode | TypedDocumentN
 		updateState(result);
 	};
 
-	const refetch = async (vars?: TVariables) => {
+	const refetch = async (vars?: TVariables): Promise<GraphQLResult<TData>> => {
 		state.status = 'refetching';
 		state.isRefetching = true;
 		const result = await client.refetch(document, (vars ?? lastVars) as InferVars<TDocument>);
@@ -116,7 +116,10 @@ export function useReactiveQuery<TDocument extends DocumentNode | TypedDocumentN
 		return result;
 	};
 
-	const fetchMore = async (merge: (prev: TData, next: TData) => TData, vars?: TVariables) => {
+	const fetchMore = async (
+		merge: (prev: TData, next: TData) => TData,
+		vars?: TVariables,
+	): Promise<GraphQLResult<TData>> => {
 		state.status = 'refetching';
 		state.isRefetching = true;
 		const result = await client.query(document, vars ?? lastVars);

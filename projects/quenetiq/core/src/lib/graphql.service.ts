@@ -1,6 +1,6 @@
 import { Injectable, inject, Injector } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable, catchError, map, of, shareReplay, timer, switchMap, tap, Subscriber } from 'rxjs';
+import { Observable, catchError, map, of, shareReplay, timer, switchMap, tap, type Subscriber } from 'rxjs';
 import { print, type DocumentNode, type TypedDocumentNode, type TypedQueryString } from './gql';
 import { gql } from './gql';
 import {
@@ -9,6 +9,7 @@ import {
 	type GraphqlCacheLike,
 	type QuenetiqConfig,
 	type OnErrorServiceConfig,
+	type StreamingConfig,
 } from './quenetiq-config';
 import {
 	applyMiddleware,
@@ -106,7 +107,7 @@ export class GraphqlService {
 			);
 		}
 		this.config = cfg;
-		this._endpoint = cfg.endpoint || cfg.url || '/graphql';
+		this._endpoint = cfg.endpoint ?? cfg.url ?? '/graphql';
 		this.errorPolicy = cfg.errorPolicy ?? 'none';
 		this.showErrorsOnSuccess = cfg.showErrorsOnSuccess ?? false;
 		this.retryCount = cfg.retryCount ?? 0;
@@ -123,6 +124,11 @@ export class GraphqlService {
 	/** Current GraphQL endpoint. */
 	get endpoint(): string {
 		return this._endpoint;
+	}
+
+	/** `@defer`/`@stream` streaming configuration from `QuenetiqConfig`. */
+	get streaming(): StreamingConfig {
+		return this.config.streaming ?? {};
 	}
 
 	query<TResponse, TVariables extends Record<string, unknown> = Record<string, unknown>>(
@@ -326,7 +332,7 @@ export class GraphqlService {
 						if (!entityKey) return;
 
 						const dependsOn = cache.getEntitiesForQuery?.(queryHash);
-						if (dependsOn && dependsOn.includes(entityKey)) {
+						if (dependsOn?.includes(entityKey)) {
 							// Re-read from cache
 							const cached = cache.readLocal(queryHash);
 							if (cached !== undefined) {
@@ -446,7 +452,7 @@ export class GraphqlService {
 
 	private executeHttp(request: GraphqlRequestContext): Observable<GraphQLResult<unknown>> {
 		const headers = new HttpHeaders(request.headers);
-		const url = request.endpoint || this._endpoint;
+		const url = request.endpoint ?? this._endpoint;
 		const errorPolicy = request.overrideErrorPolicy ?? this.errorPolicy;
 
 		if (request.method === 'GET') {
@@ -473,6 +479,11 @@ export class GraphqlService {
 		);
 	}
 
+	private streamingAcceptHeader(): string {
+		const delimiter = this.config.streaming?.delimiter ?? 'graphql';
+		return `multipart/mixed;boundary=${delimiter};defer=stream`;
+	}
+
 	/**
 	 * Execute a query using the Fetch API for streaming (`@defer`/`@stream`).
 	 * Emits each incremental patch as it arrives.
@@ -483,7 +494,7 @@ export class GraphqlService {
 		endpoint?: string,
 	): Observable<GraphQLResult<unknown>> {
 		return new Observable<GraphQLResult<unknown>>((subscriber: Subscriber<GraphQLResult<unknown>>) => {
-			const url = endpoint || this._endpoint;
+			const url = endpoint ?? this._endpoint;
 			const headers = this.getHeaderMap();
 			const controller = new AbortController();
 
@@ -494,7 +505,7 @@ export class GraphqlService {
 						headers: {
 							...headers,
 							'Content-Type': 'application/json',
-							Accept: 'multipart/mixed;boundary=graphql;defer=stream',
+							Accept: this.streamingAcceptHeader(),
 						},
 						body: JSON.stringify({ query, variables }),
 						signal: controller.signal,
@@ -560,7 +571,7 @@ export class GraphqlService {
 		endpoint?: string,
 	): Observable<Record<string, unknown>> {
 		return new Observable<Record<string, unknown>>((subscriber) => {
-			const url = endpoint || this._endpoint;
+			const url = endpoint ?? this._endpoint;
 			const headers = this.getHeaderMap();
 			const controller = new AbortController();
 
@@ -571,7 +582,7 @@ export class GraphqlService {
 						headers: {
 							...headers,
 							'Content-Type': 'application/json',
-							Accept: 'multipart/mixed;boundary=graphql;defer=stream',
+							Accept: this.streamingAcceptHeader(),
 						},
 						body: JSON.stringify({ query, variables }),
 						signal: controller.signal,
@@ -798,9 +809,7 @@ export class GraphqlService {
 		endpoint?: string,
 	): Observable<GraphQLResult<T>> {
 		return new Observable<GraphQLResult<T>>((subscriber) => {
-			if (!this.batchQueue) {
-				this.batchQueue = [];
-			}
+			this.batchQueue ??= [];
 
 			const context: GraphqlRequestContext = {
 				query,
@@ -818,9 +827,7 @@ export class GraphqlService {
 				},
 			});
 
-			if (!this.batchTimer) {
-				this.batchTimer = setTimeout(() => this.flushBatch(), this.batchWindow);
-			}
+			this.batchTimer ??= setTimeout(() => this.flushBatch(), this.batchWindow);
 		});
 	}
 
@@ -847,7 +854,7 @@ export class GraphqlService {
 			variables: item.request.variables,
 		}));
 
-		const url = queue[0].request.endpoint || this._endpoint;
+		const url = queue[0].request.endpoint ?? this._endpoint;
 		this.http
 			.post<GraphQLResponse<unknown>[]>(url, body, { headers })
 			.pipe(catchError((error: unknown) =>
@@ -887,7 +894,7 @@ export class GraphqlService {
 			formData.append(String(index), entry.file);
 		}
 
-		const url = endpoint || this._endpoint;
+		const url = endpoint ?? this._endpoint;
 		return this.http.post<GraphQLResponse<T>>(url, formData).pipe(
 			map((response) => this.toResult<T>(response)),
 			catchError((error: unknown) => of(this.toHttpError<T>(error))),
@@ -923,7 +930,7 @@ export class GraphqlService {
 		}
 
 		if (hasErrors && policy === 'ignore') {
-			if (response.data != null) {
+			if (response.data !== null && response.data !== undefined) {
 				const result: { status: 'success'; data: T; graphQLErrors?: GraphQLError[] } = {
 					status: 'success',
 					data: response.data as T,
@@ -941,7 +948,7 @@ export class GraphqlService {
 
 		if (hasErrors && policy === 'all') {
 			const msgs = response.errors!.map((e) => e.message);
-			if (response.data != null) {
+			if (response.data !== null && response.data !== undefined) {
 				return { status: 'success', data: response.data as T, graphQLErrors: response.errors };
 			}
 			return this.withErrorNotification({
@@ -952,7 +959,7 @@ export class GraphqlService {
 			});
 		}
 
-		if (response.data == null) {
+		if (response.data === null || response.data === undefined) {
 			return this.withErrorNotification({
 				status: 'error',
 				errorCode: 'NO_DATA',

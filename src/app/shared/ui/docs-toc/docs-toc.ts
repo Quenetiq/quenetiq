@@ -62,7 +62,7 @@ export class DocsToc {
 	private attachScrollListener(): void {
 		this.detachScrollListener();
 		const el = this.findScrollContainer();
-		const onScroll = () => {
+		const onScroll = (): void => {
 			cancelAnimationFrame(this.rafId);
 			this.rafId = requestAnimationFrame(() => this.updateActiveSection());
 		};
@@ -109,7 +109,7 @@ export class DocsToc {
 
 	private flattenSections(): string[] {
 		const result: string[] = [];
-		const walk = (list: TocSection[]) => {
+		const walk = (list: TocSection[]): void => {
 			for (const s of list) {
 				result.push(s.id);
 				if (s.children) walk(s.children);

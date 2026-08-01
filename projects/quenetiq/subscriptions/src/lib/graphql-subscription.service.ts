@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, Subscriber } from 'rxjs';
+import { Observable, type Subscriber } from 'rxjs';
 import { print, type DocumentNode, type QuenetiqConfig, QUENETIQ_CONFIG } from '@quenetiq/core';
 import { GraphqlSubscription } from './graphql-subscription';
 import { SUBSCRIPTIONS_CONFIG } from './subscriptions-config';
@@ -7,7 +7,7 @@ import { SUBSCRIPTIONS_CONFIG } from './subscriptions-config';
 @Injectable({ providedIn: 'root' })
 export class GraphqlSubscriptionService {
 	private readonly config: QuenetiqConfig =
-		inject(QUENETIQ_CONFIG, { optional: true }) ?? ({ endpoint: '/graphql' } as QuenetiqConfig);
+		inject(QUENETIQ_CONFIG, { optional: true }) ?? { endpoint: '/graphql' };
 
 	private readonly subsConfig = inject(SUBSCRIPTIONS_CONFIG, { optional: true });
 
@@ -37,7 +37,7 @@ export class GraphqlSubscriptionService {
 			let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 			let destroyed = false;
 
-			const connect = () => {
+			const connect = (): void => {
 				if (destroyed) return;
 
 				currentUnsubscribe = this.core.subscribe<T>(query, variables, {

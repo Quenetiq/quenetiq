@@ -16,7 +16,7 @@ export function useEpicFetus(): Readonly<Ref<NullDetectionInfo | null>> {
 	function handleMessage(e: MessageEvent): void {
 		if (e.source !== window) return;
 		const msg = e.data;
-		if (!msg || msg.source !== EXT_SOURCE || msg.type !== 'null-detection') return;
+		if (msg?.source !== EXT_SOURCE || msg.type !== 'null-detection') return;
 		if (timer) return;
 
 		event.value = msg.payload;

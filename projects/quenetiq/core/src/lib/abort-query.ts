@@ -1,7 +1,7 @@
 import { inject, Injector, signal, isSignal, type Signal, type WritableSignal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { Observable, Subject, switchMap, NEVER, share, ReplaySubject, startWith, distinctUntilChanged, of, map as rxMap, takeUntil } from 'rxjs';
-import { GraphqlService, type GraphQLResult } from './graphql.service';
+import { type Observable, Subject, switchMap, NEVER, share, ReplaySubject, startWith, distinctUntilChanged, of, map as rxMap, takeUntil } from 'rxjs';
+import { GraphqlService, type GraphQLResult, type RequestOverrideConfig } from './graphql.service';
 import { EndpointsService } from './endpoints.service';
 import type { GraphqlMiddleware } from './middleware';
 import type { DocumentNode, TypedDocumentNode, TypedQueryString } from './gql';
@@ -76,12 +76,12 @@ export function abortQuery<
 		return undefined;
 	};
 
-	const resolveOverride = (epName?: string) => {
+	const resolveOverride = (epName?: string): RequestOverrideConfig | undefined => {
 		if (!epName || !endpoints) return undefined;
 		const route = endpoints.getRoute(epName);
 		if (!route) return undefined;
-		const hasOverride = route.middleware || route.errorPolicy ||
-			route.retryCount !== undefined || route.retryDelay !== undefined;
+		const hasOverride = route.middleware ?? route.errorPolicy ??
+			(route.retryCount !== undefined || route.retryDelay !== undefined);
 		return hasOverride ? {
 			middleware: route.middleware?.filter((m): m is GraphqlMiddleware => typeof m !== 'string'),
 			errorPolicy: route.errorPolicy,

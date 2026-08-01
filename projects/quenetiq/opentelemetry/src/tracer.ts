@@ -14,9 +14,7 @@ import { consoleExporter } from './exporters/console-exporter';
 let activeTracer: MinimalTracer | null = null;
 
 export function getTracer(): MinimalTracer {
-	if (!activeTracer) {
-		activeTracer = new MinimalTracer();
-	}
+	activeTracer ??= new MinimalTracer();
 	return activeTracer;
 }
 

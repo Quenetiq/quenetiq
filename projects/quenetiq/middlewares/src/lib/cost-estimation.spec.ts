@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { estimateQueryCost, costEstimationMiddleware } from './cost-estimation';
 import type { GraphqlRequestContext, GraphQLResult } from '@quenetiq/core';
-import { Observable, of } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 
 describe('estimateQueryCost', () => {
 	it('returns cost 0 for a parse error', () => {

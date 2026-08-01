@@ -31,9 +31,9 @@ function addTypenameDeep(value: unknown, path?: string): unknown {
 	}
 	if (value !== null && typeof value === 'object') {
 		const obj = value as Record<string, unknown>;
-		if (obj.__typename === undefined && obj.id !== undefined) {
+		if (obj['__typename'] === undefined && obj['id'] !== undefined) {
 			const typename = path?.split('.')[0] ?? 'Unknown';
-			obj.__typename = typename;
+			obj['__typename'] = typename;
 		}
 		for (const key of Object.keys(obj)) {
 			obj[key] = addTypenameDeep(obj[key], path ? `${path}.${key}` : key);
@@ -98,6 +98,8 @@ function buildMockClient(
 	);
 }
 
+const mockProviderSlots: SlotsType<{ default: () => unknown }> = {};
+
 export const MockedProvider = /*#__PURE__*/ defineComponent({
 	name: 'QuenetiqMockedProvider',
 	props: {
@@ -122,7 +124,7 @@ export const MockedProvider = /*#__PURE__*/ defineComponent({
 			default: undefined,
 		},
 	},
-	slots: {} as SlotsType<{ default: () => unknown }>,
+	slots: mockProviderSlots,
 	setup(props, { slots }) {
 		const cache = props.cache ?? createCache();
 		const schemaMock = props.schema ? createSchemaMock({ schema: props.schema }) : null;

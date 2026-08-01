@@ -24,7 +24,7 @@ export function mapResult<T, U>(result: GraphQLResult<T>, fn: (data: T) => U): G
 }
 
 export function hasPartialErrors<T>(result: GraphQLResult<T>): boolean {
-	return result.status === 'success' && !!result.graphQLErrors?.length;
+	return result.status === 'success' && Boolean(result.graphQLErrors?.length);
 }
 
 export function getGraphQLErrors<T>(result: GraphQLResult<T>): GraphQLError[] {

@@ -91,7 +91,7 @@ export class CacheMetrics {
 			currentRefCountTotal: refCountTotal,
 			currentDanglingCount: danglingCount,
 			optimisticUpdateCount: optimisticCount,
-			localStateCount: localStateCount,
+			localStateCount,
 			sizeEstimateBytes: sizeEstimate,
 			totalReadTimeMs: this.totalReadTimeMs,
 			totalMergeTimeMs: this.totalMergeTimeMs,

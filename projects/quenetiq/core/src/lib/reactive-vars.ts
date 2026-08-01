@@ -1,7 +1,7 @@
 import { BehaviorSubject, type Observable } from 'rxjs';
 
 export class ReactiveVar<T> {
-	private subject: BehaviorSubject<T>;
+	private readonly subject: BehaviorSubject<T>;
 
 	constructor(initialValue: T) {
 		this.subject = new BehaviorSubject<T>(initialValue);

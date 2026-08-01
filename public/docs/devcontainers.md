@@ -16,30 +16,30 @@ Try Quenetiq online (React/Vue) or locally via Dev Containers. Each sandbox incl
 
 Demo apps are available on GitHub. Clone the repo and run the demo of your choice locally:
 
-| Demo | Stack | Run |
-| --- | --- | --- |
-| React | Vite + React 19 + `@quenetiq/react` | Open in StackBlitz · `git clone` + `cd demos/react && npm start` |
-| Vue | Vite + Vue 3 + `@quenetiq/vue` | Open in StackBlitz · `git clone` + `cd demos/vue && npm start` |
+| Demo  | Stack                               | Run                                         |
+| ----- | ----------------------------------- | ------------------------------------------- |
+| React | Vite + React 19 + `@quenetiq/react` | `git clone` + `cd demos/react && npm start` |
+| Vue   | Vite + Vue 3 + `@quenetiq/vue`      | `git clone` + `cd demos/vue && npm start`   |
 
 ## Starters
 
 Minimal scaffold projects to kickstart a new app. Each starter includes `@quenetiq/*` packages and a mock GraphQL endpoint:
 
-| Starter | Stack | Run |
-| --- | --- | --- |
-| Angular | Standalone Angular 22 + `provideQuenetiq` + `QuenetiqQuery` | Open in StackBlitz · [View on GitHub](https://github.com/Quenetiq/quenetiq/tree/main/starters/angular) · [Open in Codespaces](https://codespaces.new/Quenetiq/quenetiq?devcontainer_path=.devcontainer%2Fangular%2Fdevcontainer.json) |
-| React | React 18 + `@quenetiq/react` + `useQuery` | Open in StackBlitz · [Open in Codespaces](https://codespaces.new/Quenetiq/quenetiq?devcontainer_path=.devcontainer%2Freact%2Fdevcontainer.json) |
-| Vue | Vue 3 + `@quenetiq/vue` + `useQuery` | Open in StackBlitz · [Open in Codespaces](https://codespaces.new/Quenetiq/quenetiq?devcontainer_path=.devcontainer%2Fvue%2Fdevcontainer.json) |
+:::stackblitz starter="angular"
+
+:::stackblitz starter="react"
+
+:::stackblitz starter="vue"
 
 ## VS Code Dev Containers
 
 For local development with Docker, open in GitHub Codespaces or use VS Code Dev Containers:
 
-| Sandbox | Config | Ports |
-| --- | --- | --- |
+| Sandbox | Config                                    | Ports       |
+| ------- | ----------------------------------------- | ----------- |
 | Angular | `.devcontainer/angular/devcontainer.json` | 4200 + 4000 |
-| React | `.devcontainer/react/devcontainer.json` | 5173 + 4000 |
-| Vue | `.devcontainer/vue/devcontainer.json` | 5173 + 4000 |
+| React   | `.devcontainer/react/devcontainer.json`   | 5173 + 4000 |
+| Vue     | `.devcontainer/vue/devcontainer.json`     | 5173 + 4000 |
 
 ```bash
 # Open in GitHub Codespaces (just add "codespaces.new/" before the repo URL):

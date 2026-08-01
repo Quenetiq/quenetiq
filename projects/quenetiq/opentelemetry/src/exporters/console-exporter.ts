@@ -8,7 +8,7 @@ export function consoleExporter(options?: ConsoleExporterOptions): SpanExporter 
 	return {
 		export(span: ReadonlySpan) {
 			const { name, spanContext, parentSpanId, status, attributes, events, duration } = span;
-			const traceId = spanContext.traceId.slice(0, 8) + '…' + spanContext.traceId.slice(-8);
+			const traceId = `${spanContext.traceId.slice(0, 8)  }…${  spanContext.traceId.slice(-8)}`;
 			const spanId = spanContext.spanId;
 
 			if (options?.pretty) {

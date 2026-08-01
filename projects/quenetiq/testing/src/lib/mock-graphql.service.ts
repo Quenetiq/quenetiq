@@ -15,8 +15,8 @@ export interface MockedResponse<T = unknown> {
 
 @Injectable()
 export class MockGraphqlService {
-	private responses = new Map<string, MockedResponse[]>();
-	private defaultResponse$ = new BehaviorSubject<GraphQLResult<unknown>>({
+	private readonly responses = new Map<string, MockedResponse[]>();
+	private readonly defaultResponse$ = new BehaviorSubject<GraphQLResult<unknown>>({
 		status: 'error',
 		error: 'No mock response configured',
 	});

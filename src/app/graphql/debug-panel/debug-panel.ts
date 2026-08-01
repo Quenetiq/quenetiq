@@ -26,7 +26,7 @@ export class GraphqlDebugPanel {
 
 	protected readonly tabs = ['List', 'Field Tree', 'Timing Chart', 'Entities'];
 
-	protected get selectedEntry() {
+	protected get selectedEntry(): (typeof this.service.entries)[number] | null {
 		if (this.selectedEntryIndex === null) return null;
 		return this.service.entries[this.selectedEntryIndex] ?? null;
 	}
@@ -40,15 +40,15 @@ export class GraphqlDebugPanel {
 		this.selectedIndex = 1;
 	}
 
-	protected fieldTree(query: string) {
+	protected fieldTree(query: string): ReturnType<typeof parseFieldTree> {
 		return parseFieldTree(query);
 	}
 
-	protected mutationChart() {
+	protected mutationChart(): ReturnType<typeof buildMutationChart> {
 		return buildMutationChart(this.service.entries);
 	}
 
-	protected maxEnd(chart: ReturnType<typeof buildMutationChart>) {
+	protected maxEnd(chart: ReturnType<typeof buildMutationChart>): number {
 		if (chart.length === 0) return 1;
 		return chart.reduce((m: number, p) => Math.max(m, p.end), 0);
 	}
@@ -57,9 +57,9 @@ export class GraphqlDebugPanel {
 		return Object.keys(ents).length > 0;
 	}
 
-	protected entities(entryIndex: number) {
+	protected entities(entryIndex: number): ReturnType<typeof groupEntities> {
 		const entry = this.service.entries[entryIndex];
-		if (!entry || entry.result.status !== 'success') return {};
+		if (entry?.result.status !== 'success') return {};
 		return groupEntities(normalizeData((entry.result as { status: 'success'; data: unknown }).data));
 	}
 }

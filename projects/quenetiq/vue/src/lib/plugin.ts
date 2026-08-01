@@ -4,7 +4,7 @@ import { registerDirectives } from './directives';
 
 export const QUENETIQ_CLIENT_KEY: InjectionKey<QuenetiqClient> = Symbol('quenetiq-client');
 
-export function createQuenetiqPlugin(client: QuenetiqClient) {
+export function createQuenetiqPlugin(client: QuenetiqClient): { install: (app: App) => void } {
 	return {
 		install(app: App): void {
 			app.provide(QUENETIQ_CLIENT_KEY, client);

@@ -62,7 +62,7 @@ export function useSubscription<TDocument extends DocumentNode | TypedDocumentNo
 		let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 		let unsubscribed = false;
 
-		const connect = () => {
+		const connect = (): void => {
 			if (unsubscribed) return;
 
 			setLoading(true);

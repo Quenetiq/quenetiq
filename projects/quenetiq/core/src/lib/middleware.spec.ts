@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { applyMiddleware, authMiddleware, loggingMiddleware, hasFiles } from './middleware';
-import { Observable, of } from 'rxjs';
+import { type Observable, of, throwError } from 'rxjs';
 import type { GraphqlRequestContext, GraphQLResult } from './graphql.service';
 
 describe('applyMiddleware', () => {
@@ -69,6 +69,42 @@ describe('applyMiddleware', () => {
 			expect.objectContaining({ headers: expect.objectContaining({ 'x-added': 'yes' }) }),
 		);
 	});
+
+	it('propagates error from middleware', () => {
+		const errorMw = (
+			_req: GraphqlRequestContext,
+			_next: (req: GraphqlRequestContext) => Observable<GraphQLResult<unknown>>,
+		) => throwError(() => new Error('mw error'));
+		const final = vi.fn();
+		const pipeline = applyMiddleware([errorMw], final);
+		const request: GraphqlRequestContext = {
+			query: 'query { hi }',
+			variables: {},
+			headers: {},
+			type: 'query',
+		};
+		let error: unknown;
+		pipeline(request).subscribe({ error: (e: unknown) => { error = e; } });
+		expect(error).toBeInstanceOf(Error);
+		expect((error as Error).message).toBe('mw error');
+	});
+
+	it('handles middleware that does not call next', () => {
+		const noopMw = (
+			_req: GraphqlRequestContext,
+			_next: (req: GraphqlRequestContext) => Observable<GraphQLResult<unknown>>,
+		) => of({ status: 'success', data: {} } as GraphQLResult<unknown>);
+		const final = vi.fn();
+		const pipeline = applyMiddleware([noopMw], final);
+		const request: GraphqlRequestContext = {
+			query: 'query { hi }',
+			variables: {},
+			headers: {},
+			type: 'query',
+		};
+		pipeline(request).subscribe();
+		expect(final).not.toHaveBeenCalled();
+	});
 });
 
 describe('authMiddleware', () => {
@@ -101,6 +137,36 @@ describe('authMiddleware', () => {
 			expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer existing-token' }) }),
 		);
 	});
+
+	it('handles empty token', () => {
+		const mw = authMiddleware('');
+		const next = vi.fn((req: GraphqlRequestContext) => of({ status: 'success', data: {} } as GraphQLResult<unknown>));
+		const request: GraphqlRequestContext = {
+			query: 'query { hi }',
+			variables: {},
+			headers: {},
+			type: 'query',
+		};
+		mw(request, next);
+		expect(next).toHaveBeenCalledWith(
+			expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer ' }) }),
+		);
+	});
+
+	it('uses custom header name', () => {
+		const mw = authMiddleware('my-token', 'X-API-Key');
+		const next = vi.fn((req: GraphqlRequestContext) => of({ status: 'success', data: {} } as GraphQLResult<unknown>));
+		const request: GraphqlRequestContext = {
+			query: 'query { hi }',
+			variables: {},
+			headers: {},
+			type: 'query',
+		};
+		mw(request, next);
+		expect(next).toHaveBeenCalledWith(
+			expect.objectContaining({ headers: expect.objectContaining({ 'X-API-Key': 'Bearer my-token' }) }),
+		);
+	});
 });
 
 describe('loggingMiddleware', () => {
@@ -108,6 +174,22 @@ describe('loggingMiddleware', () => {
 		const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
 		const mw = loggingMiddleware('test');
 		const next = vi.fn((req: GraphqlRequestContext) => of({ status: 'success', data: {} } as GraphQLResult<unknown>));
+		const request: GraphqlRequestContext = {
+			query: 'query { hi }',
+			variables: {},
+			headers: {},
+			type: 'query',
+		};
+		mw(request, next).subscribe(() => {
+			expect(spy).toHaveBeenCalled();
+			spy.mockRestore();
+		});
+	});
+
+	it('logs error results', () => {
+		const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+		const mw = loggingMiddleware('test');
+		const next = vi.fn((req: GraphqlRequestContext) => of({ status: 'error', error: 'fail' } as GraphQLResult<unknown>));
 		const request: GraphqlRequestContext = {
 			query: 'query { hi }',
 			variables: {},
@@ -148,5 +230,13 @@ describe('hasFiles', () => {
 	it('detects file in arrays', () => {
 		const file = new File([''], 'test.txt', { type: 'text/plain' });
 		expect(hasFiles([file])).toBe(true);
+	});
+
+	it('returns false for null', () => {
+		expect(hasFiles(null)).toBe(false);
+	});
+
+	it('returns false for undefined', () => {
+		expect(hasFiles(undefined)).toBe(false);
 	});
 });

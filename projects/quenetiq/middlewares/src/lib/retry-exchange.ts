@@ -1,4 +1,4 @@
-import { Observable, of, timer } from 'rxjs';
+import { type Observable, of, timer } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 import { type GraphqlMiddleware, type GraphQLResult } from '@quenetiq/core';
 
@@ -23,7 +23,7 @@ function calculateDelay(attempt: number, config: RetryExchangeConfig): number {
 }
 
 function defaultShouldRetry(result: GraphQLResult<unknown>): boolean {
-	return result.status === 'error' && !!result.networkError;
+	return result.status === 'error' && Boolean(result.networkError);
 }
 
 export function retryExchange(config?: RetryExchangeConfig): GraphqlMiddleware {

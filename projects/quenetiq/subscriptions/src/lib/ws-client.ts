@@ -48,7 +48,7 @@ type WsState = 'connecting' | 'connected' | 'reconnecting' | 'closed';
 export class WsClient {
 	private ws: WebSocket | null = null;
 	private state: WsState = 'closed';
-	private subscriptions = new Map<string, ActiveSubscription>();
+	private readonly subscriptions = new Map<string, ActiveSubscription>();
 	private nextSubId = 0;
 	private reconnectAttempts = 0;
 	private reconnectTimer: ReturnType<typeof setTimeout> | null = null;

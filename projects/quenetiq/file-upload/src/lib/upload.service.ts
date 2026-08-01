@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, catchError, of } from 'rxjs';
+import { type Observable, catchError, of } from 'rxjs';
 import { print, type DocumentNode, type QuenetiqConfig, QUENETIQ_CONFIG } from '@quenetiq/core';
 
 export interface FileEntry {
@@ -12,7 +12,7 @@ export interface FileEntry {
 export class UploadService {
 	private readonly http = inject(HttpClient);
 	private readonly config: QuenetiqConfig =
-		inject(QUENETIQ_CONFIG, { optional: true }) ?? ({ endpoint: '/graphql' } as QuenetiqConfig);
+		inject(QUENETIQ_CONFIG, { optional: true }) ?? { endpoint: '/graphql' };
 
 	upload<T>(
 		document: DocumentNode,

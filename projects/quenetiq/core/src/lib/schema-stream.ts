@@ -1,6 +1,6 @@
 import { Injectable, inject, type Provider, ENVIRONMENT_INITIALIZER } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, Subject, from, of } from 'rxjs';
+import { type Observable, Subject, from, of } from 'rxjs';
 import { concatMap, map, catchError } from 'rxjs/operators';
 
 export interface SchemaProgressEvent {
@@ -107,12 +107,13 @@ export class SchemaStreamService {
 								.pipe(
 									map(() => {
 										const idx = types.indexOf(type);
-										return {
+										const progress: SchemaProgressEvent = {
 											loaded: idx + 1,
 											total,
 											typeName: type.name,
 											done: idx === types.length - 1,
-										} as SchemaProgressEvent;
+										};
+										return progress;
 									}),
 									catchError(() =>
 										of({
@@ -144,21 +145,21 @@ export class SchemaStreamService {
 }
 
 export function provideSchemaStream(config?: { url?: string; batchSize?: number }): Provider[] {
+	const schemaStreamProvider: Provider = {
+		provide: ENVIRONMENT_INITIALIZER,
+		multi: true,
+		useFactory: () => {
+			const svc = inject(SchemaStreamService);
+			return () => {
+				if (!config?.url) return;
+				svc.streamIntrospection({ url: config.url }).subscribe();
+			};
+		},
+	};
 	return [
 		SchemaStreamService,
 		...(config?.url
-			? [
-					{
-						provide: ENVIRONMENT_INITIALIZER,
-						multi: true,
-						useFactory: () => {
-							const svc = inject(SchemaStreamService);
-							return () => {
-								svc.streamIntrospection({ url: config.url! }).subscribe();
-							};
-						},
-					} as Provider,
-			]
+			? [schemaStreamProvider]
 			: []),
 	];
 }

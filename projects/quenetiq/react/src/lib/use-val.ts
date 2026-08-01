@@ -20,7 +20,7 @@ export function useVal<T>(initialValue: T): ReactVal<T> {
 	const innerRef = useReactRef(new Val(initialValue));
 	const [, trigger] = useState(0);
 
-	const rerender = () => trigger((n) => n + 1);
+	const rerender = (): void => trigger((n) => n + 1);
 
 	return {
 		get value(): T {

@@ -25,7 +25,7 @@ export interface WsClientManagerOptions {
  * Multiple subscriptions to the same URL share a single connection.
  */
 export class WsClientManager {
-	private clients = new Map<string, WsClient>();
+	private readonly clients = new Map<string, WsClient>();
 	private readonly options: WsClientManagerOptions;
 
 	constructor(options: WsClientManagerOptions = {}) {

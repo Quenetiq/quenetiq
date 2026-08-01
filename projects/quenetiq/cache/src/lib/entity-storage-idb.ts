@@ -35,8 +35,8 @@ function openDb(): Promise<IDBDatabase> {
 }
 
 export class IndexedDbEntityStorage implements EntityStorage {
-	private ttlConfig: Record<string, number>;
-	private prefix: string;
+	private readonly ttlConfig: Record<string, number>;
+	private readonly prefix: string;
 
 	constructor(config?: EntityStorageConfig) {
 		this.prefix = config?.prefix ?? 'qntc:ec:';
@@ -70,7 +70,7 @@ export class IndexedDbEntityStorage implements EntityStorage {
 			const meta: StoredEntityMeta = metaRec?.meta ?? { createdAt: Date.now(), updatedAt: Date.now() };
 
 			const typeTtl = this.ttlConfig[entityRec.entity.__typename];
-			if (typeTtl != null && Date.now() - meta.updatedAt > typeTtl) {
+			if (typeTtl !== null && typeTtl !== undefined && Date.now() - meta.updatedAt > typeTtl) {
 				await this.delete(key);
 				return undefined;
 			}

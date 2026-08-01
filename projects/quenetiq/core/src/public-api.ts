@@ -1,6 +1,7 @@
 export { type QuenetiqConfig, type GraphqlConfig } from './lib/graphql-config';
 export type {
 	GraphqlCoreConfig,
+	StreamingConfig,
 	SubscriptionsConfig,
 	CacheConfig,
 	PersistedQueriesConfig,
@@ -15,10 +16,11 @@ export type {
 	FeatureConfig,
 } from './lib/quenetiq-config';
 export { QuenetiqConfigService, validateQuenetiqConfig, type ConfigValidationError } from './lib/config.service';
-export { quenetiqConfig, provideQuenetiq, provideQuenetiqFeature } from './lib/provider';
+export { quenetiqConfig, provideQuenetiq, provideQuenetiqFeature, provideStreaming } from './lib/provider';
 export {
 	QUENETIQ_CONFIG,
 	GRAPHQL_CONFIG,
+	STREAMING_CONFIG,
 	GRAPHQL_CACHE,
 	REACTIVE_QUENETIQ_CONFIG,
 	FEATURE_CONFIGS,
@@ -97,8 +99,17 @@ export {
 	GraphqlUnwrapPipe,
 } from './lib/pipes';
 
-export { QuenetiqQueryDirective, QuenetiqAutoFetchDirective } from './lib/directives';
-export type { QuenetiqQueryContext } from './lib/directives';
+export { QuenetiqQueryDirective, QuenetiqAutoFetchDirective, QuenetiqMutationDirective, QuenetiqSubscriptionDirective } from './lib/directives';
+export type { QuenetiqQueryContext, QuenetiqMutationContext, QuenetiqSubscriptionContext } from './lib/directives';
+export {
+	UseQuery,
+	UseMutation,
+	UseSubscription,
+	type UseQueryOptions,
+	type UseMutationOptions,
+	type UseSubscriptionOptions,
+	type UseSubscriptionHandle,
+} from './lib/use-decorators';
 export {
 	applyMiddleware,
 	authMiddleware,

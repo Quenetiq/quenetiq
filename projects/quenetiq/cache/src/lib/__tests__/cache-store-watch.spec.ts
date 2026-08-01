@@ -47,6 +47,20 @@ describe('CacheStore query entity dependency tracking', () => {
 		expect(store.getQueriesForEntity('User:3')).toEqual(['q1']);
 	});
 
+	it('records empty dependency set', () => {
+		const store = new CacheStore();
+		store.recordQueryDependencies('q1', new Set());
+		expect(store.getEntitiesForQuery('q1')).toEqual([]);
+	});
+
+	it('removes stale reverse mapping on re-record with empty set', () => {
+		const store = new CacheStore();
+		store.recordQueryDependencies('q1', new Set(['Post:1']));
+		store.recordQueryDependencies('q1', new Set());
+		expect(store.getEntitiesForQuery('q1')).toEqual([]);
+		expect(store.getQueriesForEntity('Post:1')).toEqual([]);
+	});
+
 	it('notifyQueryChanged triggers listeners', () => {
 		const store = new CacheStore();
 		let notified = false;
@@ -62,5 +76,29 @@ describe('CacheStore query entity dependency tracking', () => {
 		const store = new CacheStore();
 		// Should not throw
 		store.notifyQueryChanged('nonexistent');
+	});
+
+	it('watchLocal unsubscription stops notifications', () => {
+		const store = new CacheStore();
+		let count = 0;
+		const unsub = store.watchLocal('test:hash', () => { count++; });
+		store.writeLocal('test:hash', { status: 'success', data: { v: 1 } });
+		store.notifyQueryChanged('test:hash');
+		const called = count;
+		unsub();
+		store.notifyQueryChanged('test:hash');
+		expect(count).toBe(called);
+	});
+
+	it('multiple watchLocal listeners all fire', () => {
+		const store = new CacheStore();
+		let a = 0;
+		let b = 0;
+		store.watchLocal('test:hash', () => { a++; });
+		store.watchLocal('test:hash', () => { b++; });
+		store.writeLocal('test:hash', { status: 'success', data: { v: 1 } });
+		store.notifyQueryChanged('test:hash');
+		expect(a).toBeGreaterThanOrEqual(1);
+		expect(b).toBeGreaterThanOrEqual(1);
 	});
 });

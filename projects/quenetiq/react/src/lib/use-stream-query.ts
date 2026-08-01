@@ -70,7 +70,7 @@ export function useStreamQuery<TDocument extends DocumentNode | TypedDocumentNod
 		setErrorCode(undefined);
 		latestDataRef.current = null;
 
-		const iterate = async () => {
+		const iterate = async (): Promise<void> => {
 			try {
 				const iterable = client.queryDefer<TDocument>(document, variables);
 

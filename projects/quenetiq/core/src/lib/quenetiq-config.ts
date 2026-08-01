@@ -46,6 +46,16 @@ export interface GraphqlCoreConfig {
 	readonly errorHandler?: { handle(error: unknown): boolean | Promise<boolean> };
 }
 
+// ─── Streaming / @defer / @stream ──────────────────────────────────────────
+
+export interface StreamingConfig {
+	readonly enabled?: boolean;
+	/** Auto-start streaming (`@defer`/`@stream`) for queries by default. */
+	readonly streamOn?: boolean;
+	readonly delimiter?: string;
+	readonly chunkTimeout?: number;
+}
+
 // ─── Subscriptions ──────────────────────────────────────────────────────────
 
 export interface SubscriptionsConfig {
@@ -193,6 +203,7 @@ export interface QuenetiqConfig extends GraphqlCoreConfig {
 	readonly autoDownload?: boolean;
 	readonly autoDownloadSchema?: boolean;
 	readonly subscriptions?: SubscriptionsConfig;
+	readonly streaming?: StreamingConfig;
 	readonly cache?: CacheConfig;
 	readonly persistedQueries?: PersistedQueriesConfig;
 	readonly upload?: UploadConfig;
@@ -239,6 +250,8 @@ export const REACTIVE_QUENETIQ_CONFIG = new InjectionToken<ReactiveQuenetiqConfi
 export const FEATURE_CONFIGS = new InjectionToken<FeatureConfig[]>('FEATURE_CONFIGS');
 
 export { GRAPHQL_CACHE, type GraphqlCacheLike } from '@quenetiq/cache';
+
+export const STREAMING_CONFIG = new InjectionToken<StreamingConfig>('STREAMING_CONFIG');
 
 export function defineConfig(config: QuenetiqConfig): QuenetiqConfig {
 	return config;

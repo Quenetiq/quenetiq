@@ -1,6 +1,6 @@
 import type { GraphqlMiddleware, GraphqlRequestContext } from './middleware';
 import type { GraphQLResult } from './graphql.service';
-import { Observable, throwError } from 'rxjs';
+import { type Observable, throwError } from 'rxjs';
 
 export interface RateLimitConfig {
 	/** Max requests allowed within the window. Default: 10 */

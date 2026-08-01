@@ -19,18 +19,18 @@ function simpleHash(input: string): string {
 	return Math.abs(hash).toString(16);
 }
 
-export async function computeHash(query: string, algorithm: 'sha256' | 'simple' = 'sha256'): Promise<string> {
-	return algorithm === 'sha256' ? sha256Hex(query) : simpleHash(query);
+export function computeHash(query: string, algorithm: 'sha256' | 'simple' = 'sha256'): Promise<string> {
+	return algorithm === 'sha256' ? sha256Hex(query) : Promise.resolve(simpleHash(query));
 }
 
 // ─── Persisted Query Registry ─────────────────────────────────────────────
 
 export class PersistedQueryRegistry {
-	private hashToQuery = new Map<string, string>();
-	private queryToHash = new Map<string, string>();
-	private registeredHashes = new Set<string>();
+	private readonly hashToQuery = new Map<string, string>();
+	private readonly queryToHash = new Map<string, string>();
+	private readonly registeredHashes = new Set<string>();
 
-	constructor(private config: PersistedQueriesConfig) {}
+	constructor(private readonly config: PersistedQueriesConfig) {}
 
 	/** Compute hash and register the query locally. */
 	register(query: string): string {

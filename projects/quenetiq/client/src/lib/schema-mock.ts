@@ -17,7 +17,7 @@ import {
 	isUnionType,
 	isListType,
 	isNonNullType,
-	GraphQLEnumType,
+	type GraphQLEnumType,
 } from 'graphql';
 
 const counter = new Map<string, number>();
@@ -99,8 +99,8 @@ function mockObjectType(
 	}
 
 	if (typeName !== 'Query' && typeName !== 'Mutation' && typeName !== 'Subscription') {
-		result.__typename = typeName;
-		result.id ??= `mock-${typeName.toLowerCase()}-${nextId(typeName)}`;
+		result['__typename'] = typeName;
+		result['id'] ??= `mock-${typeName.toLowerCase()}-${nextId(typeName)}`;
 	}
 
 	return result;
@@ -122,7 +122,7 @@ function extractOperationFields(
 
 				if (!fieldDef || !parentType) return;
 				if (node.name.value === '__typename') {
-					result.__typename = parentType.name;
+					result['__typename'] = parentType.name;
 					return;
 				}
 

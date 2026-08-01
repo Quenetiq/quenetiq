@@ -1,5 +1,5 @@
 import { inject, signal, type Signal } from '@angular/core';
-import { defer, Observable, tap } from 'rxjs';
+import { defer, type Observable, tap } from 'rxjs';
 import { GraphqlService, type GraphQLResult, type RequestOverrideConfig, type RefetchQueryDef } from './graphql.service';
 import { EndpointsService } from './endpoints.service';
 import type { DocumentNode, TypedDocumentNode, TypedQueryString } from './gql';
@@ -69,8 +69,8 @@ export function injectMutation<
 		if (!epName || !endpoints) return {};
 		const route = endpoints.getRoute(epName);
 		if (!route) return {};
-		const hasOverride = route.middleware || route.errorPolicy ||
-			route.retryCount !== undefined || route.retryDelay !== undefined;
+		const hasOverride = route.middleware ?? route.errorPolicy ??
+			(route.retryCount !== undefined || route.retryDelay !== undefined);
 		return {
 			url: route.url,
 			overrideCfg: hasOverride ? {

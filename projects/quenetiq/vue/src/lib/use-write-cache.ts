@@ -11,6 +11,14 @@ export interface WriteFragmentOptions {
 	field: string;
 }
 
+export interface WriteQueryResult {
+	writeQuery: (options: WriteQueryOptions, data: Record<string, unknown>) => void;
+}
+
+export interface WriteFragmentResult {
+	writeFragment: (options: WriteFragmentOptions, value: unknown) => void;
+}
+
 /**
  * Write data directly into the cache for an entity.
  * Useful for optimistic updates or manual cache manipulation.
@@ -21,7 +29,7 @@ export interface WriteFragmentOptions {
  * writeQuery({ __typename: 'User', id: '1' }, { name: 'John', email: 'john@example.com' });
  * ```
  */
-export function useWriteQuery() {
+export function useWriteQuery(): WriteQueryResult {
 	const client = useClient();
 	const cache = client.getCacheService();
 
@@ -32,9 +40,9 @@ export function useWriteQuery() {
 		const id = options.id ?? '';
 		const existing = cache.query(options.__typename, id);
 		if (existing) {
-			cache.write(options.__typename, id, { ...existing, ...data });
+			cache.write({ ...existing, __typename: options.__typename, id, ...data });
 		} else {
-			cache.write(options.__typename, id, data);
+			cache.write({ __typename: options.__typename, id, ...data });
 		}
 	};
 
@@ -50,7 +58,7 @@ export function useWriteQuery() {
  * writeFragment({ __typename: 'User', id: '1', field: 'name' }, 'Jane');
  * ```
  */
-export function useWriteFragment() {
+export function useWriteFragment(): WriteFragmentResult {
 	const client = useClient();
 	const cache = client.getCacheService();
 
@@ -61,9 +69,9 @@ export function useWriteFragment() {
 		const id = options.id ?? '';
 		const existing = cache.query(options.__typename, id);
 		if (existing) {
-			cache.write(options.__typename, id, { ...existing, [options.field]: value });
+			cache.write({ ...existing, __typename: options.__typename, id, [options.field]: value });
 		} else {
-			cache.write(options.__typename, id, { [options.field]: value });
+			cache.write({ __typename: options.__typename, id, [options.field]: value });
 		}
 	};
 

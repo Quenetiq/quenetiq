@@ -6,23 +6,31 @@
 	align-items: flex-start;
 	justify-content: center;
 	padding-top: 10vh;
-	background: rgba(0, 0, 0, 0.5);
+	background: rgb(0 0 0 / 50%);
 	backdrop-filter: blur(4px);
-	animation: fadeIn 0.15s ease;
+	animation: fade-in 0.15s ease;
 
 	&.closing {
-		animation: fadeOut 0.1s ease forwards;
+		animation: fade-out 0.1s ease forwards;
 	}
 }
 
-@keyframes fadeIn {
-	from { opacity: 0; }
-	to { opacity: 1; }
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
 }
 
-@keyframes fadeOut {
-	from { opacity: 1; }
-	to { opacity: 0; }
+@keyframes fade-out {
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0;
+	}
 }
 
 .search-dialog {
@@ -31,31 +39,33 @@
 	background: var(--q-surface, #fff);
 	border: 1px solid var(--q-border, #e5e5e5);
 	border-radius: 0.75rem;
-	box-shadow: var(--q-shadow-lg, 0 10px 15px -3px rgb(0 0 0 / 0.1));
+	box-shadow: var(--q-shadow-lg, 0 10px 15px -3px rgb(0 0 0 / 10%));
 	overflow: hidden;
-	animation: slideUp 0.15s ease;
+	animation: slide-up 0.15s ease;
 }
 
 .search-overlay.closing .search-dialog {
-	animation: slideDown 0.1s ease forwards;
+	animation: slide-down 0.1s ease forwards;
 }
 
-@keyframes slideUp {
+@keyframes slide-up {
 	from {
 		opacity: 0;
 		transform: translateY(-8px) scale(0.98);
 	}
+
 	to {
 		opacity: 1;
 		transform: translateY(0) scale(1);
 	}
 }
 
-@keyframes slideDown {
+@keyframes slide-down {
 	from {
 		opacity: 1;
 		transform: translateY(0) scale(1);
 	}
+
 	to {
 		opacity: 0;
 		transform: translateY(-4px) scale(0.98);
@@ -102,7 +112,8 @@
 }
 
 .search-loading,
-.search-empty {
+.search-empty,
+.search-hint {
 	padding: 2rem 1rem;
 	text-align: center;
 	color: var(--q-text-tertiary, #888);
@@ -126,7 +137,8 @@
 	text-align: left;
 	transition: background 0.1s ease;
 
-	&:hover {
+	&:hover,
+	&.highlighted {
 		background: var(--q-surface-neutral, #f5f5f5);
 	}
 }

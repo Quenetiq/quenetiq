@@ -1,12 +1,13 @@
 import { inject, Injector, signal, isSignal, type Signal, type WritableSignal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { Observable, Subject, switchMap, NEVER, share, ReplaySubject, startWith, distinctUntilChanged, of, map as rxMap, takeUntil } from 'rxjs';
-import { GraphqlService, type GraphQLResult } from './graphql.service';
+import { Subject, switchMap, NEVER, share, ReplaySubject, startWith, distinctUntilChanged, of, map as rxMap, takeUntil, type Observable } from 'rxjs';
+import { GraphqlService, type GraphQLResult, type ErrorPolicy } from './graphql.service';
 import { EndpointsService } from './endpoints.service';
+import { QuenetiqConfigService } from './config.service';
 import type { DocumentNode, TypedDocumentNode, TypedQueryString } from './gql';
 import type { InferResponse, InferVariables, InferEndpointNames } from './types';
 import type { EndpointsYaml } from './endpoints-config';
-import type { QuenetiqInjectOptions } from './inject-options';
+import { toInjectOptions, type QuenetiqInjectOptions } from './inject-options';
 
 export type InjectQueryEndpointParam<Yaml extends EndpointsYaml | undefined = undefined> =
 	[Yaml] extends [EndpointsYaml]
@@ -20,6 +21,13 @@ export interface InjectQueryOptions extends QuenetiqInjectOptions {
 	readonly placeholderData?: InferResponse<DocumentNode>;
 	/** Skip the initial fetch. */
 	readonly skip?: boolean;
+	/**
+	 * Auto-start streaming (`@defer`/`@stream`) for this query.
+	 * When `undefined`, falls back to `config.streaming.streamOn`.
+	 */
+	readonly streamOn?: boolean | undefined;
+	/** Error policy for this request. Defaults to `config.errorPolicy`. */
+	readonly errorPolicy?: ErrorPolicy;
 }
 
 export interface InjectQueryHandle<T> {
@@ -53,12 +61,27 @@ export function injectQuery<
 	variables?: TVariables,
 	options?: InjectQueryOptions,
 ): InjectQueryHandle<TResponse> {
-	const graphql = inject(GraphqlService);
-	const injector = inject(Injector);
-	const endpoints = inject(EndpointsService, { optional: true, ...options });
+	const diOptions = toInjectOptions(options);
+	const graphql = inject(GraphqlService, diOptions);
+	if (!graphql) {
+		throw new Error(
+			'Quenetiq: GraphqlService not found in the current injector. ' +
+				'Add provideQuenetiq() to your providers or loosen the DI options passed to injectQuery().',
+		);
+	}
+	const injector = inject(Injector, diOptions);
+	if (!injector) {
+		throw new Error('Quenetiq: Injector not available in the current injection context.');
+	}
+	const endpoints = inject(EndpointsService, { optional: true, ...diOptions });
+	const config = inject(QuenetiqConfigService, { optional: true, ...diOptions });
 	const enabled = signal(!options?.skip);
 	const refetch$ = new Subject<void>();
 	const destroy$ = new Subject<void>();
+
+	const streamOn = options?.streamOn ?? config?.streaming?.streamOn ?? false;
+	const streamingEnabled = config?.streaming?.enabled ?? true;
+	const useStream = streamOn && streamingEnabled;
 
 	let resolvedName: string | undefined;
 	if (endpoints) {
@@ -94,8 +117,10 @@ export function injectQuery<
 				switchMap(() => endpoint$.pipe(
 					switchMap((url) => {
 						const doc = document as TypedDocumentNode<TResponse, Record<string, unknown>>;
-						return graphql.query<TResponse>(doc, variables, url)
-							.pipe(takeUntil(destroy$));
+						const request$ = useStream
+							? graphql.queryDefer<TResponse>(doc, variables, url)
+							: graphql.query<TResponse>(doc, variables, url, { errorPolicy: options?.errorPolicy });
+						return request$.pipe(takeUntil(destroy$));
 					}),
 				)),
 			);

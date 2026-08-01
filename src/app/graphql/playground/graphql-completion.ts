@@ -4,7 +4,7 @@ import {
 	type Completion,
 	autocompletion,
 } from '@codemirror/autocomplete';
-import { EditorView } from '@codemirror/view';
+import { type EditorView } from '@codemirror/view';
 import {
 	type GraphQLSchema,
 	type GraphQLObjectType,

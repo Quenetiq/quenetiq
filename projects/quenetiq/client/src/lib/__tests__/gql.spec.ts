@@ -4,7 +4,7 @@ import { gql } from '../gql';
 describe('gql (client)', () => {
 	it('parses a simple query', () => {
 		const doc = gql`
-			query {
+			query SimpleQuery {
 				hello
 			}
 		`;
@@ -14,7 +14,7 @@ describe('gql (client)', () => {
 
 	it('parses a mutation', () => {
 		const doc = gql`
-			mutation {
+			mutation AddFoo {
 				addFoo {
 					id
 				}
@@ -30,6 +30,7 @@ describe('gql (client)', () => {
 	});
 
 	it('throws on invalid input', () => {
+		// eslint-disable-next-line quenetiq/gql-parse
 		expect(() => gql`not a query`).toThrow();
 	});
 });

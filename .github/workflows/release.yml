@@ -50,6 +50,7 @@ on:
             @quenetiq/cache:rc
             @quenetiq/opentelemetry:skip
             @quenetiq/core:latest:1.0.6
+            @quenetiq/eslint-plugin-gql:skip
         required: false
         default: ''
         type: string

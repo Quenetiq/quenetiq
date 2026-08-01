@@ -75,7 +75,7 @@ function extractGqlFromSource(fileName: string, content: string): ParsedGraphQLF
 	while ((match = gqlRegex.exec(content)) !== null) {
 		const templateContent = match[1];
 		if (!templateContent.trim()) continue;
-		raw += templateContent + '\n';
+		raw += `${templateContent  }\n`;
 
 		try {
 			const doc = parse(templateContent, { noLocation: true });
@@ -93,7 +93,7 @@ function extractGqlFromSource(fileName: string, content: string): ParsedGraphQLF
 			const doc = parse(str, { noLocation: true });
 			operations.push(...doc.definitions.filter(isOperation));
 			fragments.push(...doc.definitions.filter(isFragment));
-			raw += str + '\n';
+			raw += `${str  }\n`;
 		} catch {
 			// Skip
 		}

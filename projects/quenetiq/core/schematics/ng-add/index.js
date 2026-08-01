@@ -243,7 +243,7 @@ function generateEndpointsYaml(tree, context) {
 
 default_endpoint: main
 
-routes:
+endpoints:
   main:
     url: http://localhost:4000/graphql
     headers:

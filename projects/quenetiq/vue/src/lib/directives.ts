@@ -17,7 +17,7 @@ let _client: QuenetiqClient | null = null;
 export function registerDirectives(app: App, client: QuenetiqClient): void {
 	_client = client;
 
-	app.directive('dql-mutate', {
+	app.directive('qtq-mutate', {
 		mounted(el: HTMLElement, binding: DirectiveBinding<MutateValue>) {
 			el.style.cursor = 'pointer';
 			el.addEventListener('click', async () => {
@@ -47,12 +47,12 @@ export function registerDirectives(app: App, client: QuenetiqClient): void {
 		},
 	} as Directive<HTMLElement, MutateValue>);
 
-	app.directive('dql-loading', {
+	app.directive('qtq-loading', {
 		mounted(el: HTMLElement, binding: DirectiveBinding<boolean>) {
-			if (binding.value) el.classList.add('dql-loading');
+			if (binding.value) el.classList.add('qtq-loading');
 		},
 		updated(el: HTMLElement, binding: DirectiveBinding<boolean>) {
-			el.classList.toggle('dql-loading', binding.value);
+			el.classList.toggle('qtq-loading', binding.value);
 		},
 	} as Directive<HTMLElement, boolean>);
 }

@@ -1,10 +1,11 @@
 import { inject, Injectable, InjectionToken, type Provider } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import type { EndpointsYaml, EndpointRoute } from './endpoints-config';
-import { parseEndpointsYaml, validateEndpointsYaml, resolveHeaderEnvVars } from './endpoints-config';
+import { resolveHeaderEnvVars } from './endpoints-config';
 import { GraphqlEndpoint, getEndpointToken } from './endpoint';
 import type { GraphqlMiddleware } from './middleware';
 import { GraphqlService, type RequestOverrideConfig } from './graphql.service';
+import { buildMultiEndpointConfig } from './endpoints-providers';
 
 export const ENDPOINTS_YAML = new InjectionToken<EndpointsYaml>('ENDPOINTS_YAML');
 export const IS_MULTI_ENDPOINT = new InjectionToken<boolean>('IS_MULTI_ENDPOINT');
@@ -191,8 +192,8 @@ function createEndpointProviders(yaml: EndpointsYaml): Provider[] {
 	for (const [name, route] of Object.entries(yaml.endpoints)) {
 		const token = getEndpointToken(name);
 		const resolvedHeaders = route.headers ? resolveHeaderEnvVars(route.headers) : undefined;
-		const hasOverride = route.middleware || route.errorPolicy ||
-			route.retryCount !== undefined || route.retryDelay !== undefined;
+		const hasOverride = route.middleware ?? route.errorPolicy ??
+			(route.retryCount !== undefined || route.retryDelay !== undefined);
 		const overrideConfig: RequestOverrideConfig | undefined = hasOverride
 			? {
 				middleware: route.middleware?.filter((m): m is GraphqlMiddleware => typeof m !== 'string'),
@@ -214,12 +215,7 @@ function createEndpointProviders(yaml: EndpointsYaml): Provider[] {
 }
 
 export function provideMultiEndpoint(yamlContent: string | EndpointsYaml): Provider[] {
-	const yaml = typeof yamlContent === 'string' ? parseEndpointsYaml(yamlContent) : yamlContent;
-
-	const errors = validateEndpointsYaml(yaml);
-	if (errors.length > 0) {
-		throw new Error(`Quenetiq: Invalid endpoints.yml configuration:\n  - ${errors.join('\n  - ')}`);
-	}
+	const { yaml } = buildMultiEndpointConfig(yamlContent);
 
 	return [
 		{ provide: IS_MULTI_ENDPOINT, useValue: true },

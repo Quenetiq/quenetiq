@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { otelMiddleware, otelClientMiddleware } from './middleware';
 import { MinimalTracer, setTracer } from './tracer';
-import { Observable, of } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 
 function makeNext() {
 	return vi.fn((req: any) => of({ status: 'success', data: {} }) as Observable<any>);

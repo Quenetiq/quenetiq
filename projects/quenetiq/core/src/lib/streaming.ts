@@ -1,4 +1,4 @@
-import { Observable, Subscriber } from 'rxjs';
+import { Observable, type Subscriber } from 'rxjs';
 import type { GraphQLResult } from './graphql.service';
 import type { GraphqlMiddleware, GraphqlRequestContext } from './middleware';
 
@@ -128,9 +128,7 @@ export function streamingMiddleware(): GraphqlMiddleware {
 					const response = result.data as unknown as IncrementalResponse<unknown>;
 
 					if (response.incremental) {
-						if (!baseData) {
-							baseData = (response.data as Record<string, unknown>) ?? {};
-						}
+						baseData ??= (response.data as Record<string, unknown>) ?? {};
 
 						for (const patch of response.incremental) {
 							if (patch.path !== undefined && patch.data !== undefined) {

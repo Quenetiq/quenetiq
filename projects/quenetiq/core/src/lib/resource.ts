@@ -2,7 +2,7 @@ import { resource, type ResourceRef } from '@angular/core';
 import { lastValueFrom, fromEvent } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import type { DocumentNode, TypedDocumentNode } from './gql';
-import { GraphqlService } from './graphql.service';
+import { type GraphqlService } from './graphql.service';
 
 export interface GraphqlResourceOptions<TData, TVariables extends Record<string, unknown>> {
 	client: GraphqlService;

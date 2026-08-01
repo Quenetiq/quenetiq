@@ -12,9 +12,23 @@ done
 
 NGINX_ROOT="/var/www/$DOMAIN"
 BUILD_DIR="$NGINX_ROOT/build"
+NGINX_CONF="/etc/nginx/sites-available/$DOMAIN"
+NGINX_ENABLED="/etc/nginx/sites-enabled/$DOMAIN"
 
 echo ""
 echo "=== Deploying Quenetiq to $DOMAIN ==="
+echo ""
+
+# ── 0. Ensure required directories exist ──────────────────────────────
+echo "=== 0/8 Ensuring required directories ==="
+sudo mkdir -p "$NGINX_ROOT"
+sudo mkdir -p "$BUILD_DIR"
+sudo mkdir -p /etc/nginx/sites-available
+sudo mkdir -p /etc/nginx/sites-enabled
+echo "  ✓ $NGINX_ROOT"
+echo "  ✓ $BUILD_DIR"
+echo "  ✓ /etc/nginx/sites-available"
+echo "  ✓ /etc/nginx/sites-enabled"
 echo ""
 
 # ── 1. Select branch ──────────────────────────────────────────────────
@@ -49,33 +63,29 @@ echo "Using branch: $SELECTED_BRANCH"
 echo ""
 
 # ── 2. Clone ──────────────────────────────────────────────────────────
-echo "=== 2/7 Cloning $SELECTED_BRANCH from $REPO_URL ==="
+echo "=== 2/8 Cloning $SELECTED_BRANCH from $REPO_URL ==="
 git clone --depth=1 --branch "$SELECTED_BRANCH" "$REPO_URL" "$TEMP_DIR"
 cd "$TEMP_DIR"
 
 # ── 3. Install ────────────────────────────────────────────────────────
-echo "=== 3/7 Installing dependencies ==="
+echo "=== 3/8 Installing dependencies ==="
 npm ci
 
 # ── 4. Build packages ─────────────────────────────────────────────────
-echo "=== 4/7 Building @quenetiq/* packages ==="
+echo "=== 4/8 Building @quenetiq/* packages ==="
 node scripts/build-packages.mjs
 
 # ── 5. Build Angular ──────────────────────────────────────────────────
-echo "=== 5/7 Building Angular app ==="
+echo "=== 5/8 Building Angular app ==="
 npx ng build --configuration=production --progress=false
 
 # ── 6. Copy ───────────────────────────────────────────────────────────
-echo "=== 6/7 Deploying to $BUILD_DIR ==="
-sudo mkdir -p "$BUILD_DIR"
+echo "=== 6/8 Deploying to $BUILD_DIR ==="
 sudo cp -r dist/dumb-keystore/* "$BUILD_DIR"
 cd / && rm -rf "$TEMP_DIR"
 
-# ── 7. nginx + SSL ────────────────────────────────────────────────────
-echo "=== 7/7 Configuring nginx + SSL ==="
-
-NGINX_CONF="/etc/nginx/sites-available/$DOMAIN"
-NGINX_ENABLED="/etc/nginx/sites-enabled/$DOMAIN"
+# ── 7. nginx ──────────────────────────────────────────────────────────
+echo "=== 7/8 Configuring nginx ==="
 
 if [[ ! -f "$NGINX_CONF" ]]; then
   sudo tee "$NGINX_CONF" > /dev/null <<NGINXEOF
@@ -96,16 +106,29 @@ server {
 }
 NGINXEOF
 
-  sudo mkdir -p /etc/nginx/sites-enabled
   [[ -L "$NGINX_ENABLED" ]] || sudo ln -sf "$NGINX_CONF" "$NGINX_ENABLED"
   sudo nginx -t && sudo systemctl reload nginx
 fi
 
-if ! sudo certbot certificates 2>/dev/null | grep -q "$DOMAIN"; then
-  sudo certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "admin@$DOMAIN" || {
-    echo "WARNING: certbot failed. Run manually:"
-    echo "  sudo certbot --nginx -d $DOMAIN"
-  }
+# ── 8. SSL (optional) ─────────────────────────────────────────────────
+echo "=== 8/8 SSL (optional) ==="
+SETUP_SSL=""
+while [[ "$SETUP_SSL" != "y" && "$SETUP_SSL" != "n" ]]; do
+  read -rp "Set up SSL with Let's Encrypt? (y/n): " SETUP_SSL
+done
+
+if [[ "$SETUP_SSL" == "y" ]]; then
+  if sudo certbot certificates 2>/dev/null | grep -q "$DOMAIN"; then
+    echo "  ✓ SSL certificate already exists for $DOMAIN"
+  else
+    sudo certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "admin@$DOMAIN" || {
+      echo "WARNING: certbot failed. Run manually:"
+      echo "  sudo certbot --nginx -d $DOMAIN"
+    }
+  fi
+else
+  echo "  Skipped SSL. You can run later:"
+  echo "  sudo certbot --nginx -d $DOMAIN"
 fi
 
 echo ""

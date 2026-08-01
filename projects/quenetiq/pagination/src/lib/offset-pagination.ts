@@ -42,7 +42,7 @@ export function offsetPagination<T, TVars extends Record<string, unknown> = Reco
 		const prev = state$.value;
 		state$.next({ ...prev, loading: true, error: null });
 
-		query<T, TVars>(document, {
+		query<DocumentNode, T, TVars>(document, undefined, {
 			...options.variables,
 			offset,
 			limit: prev.limit,

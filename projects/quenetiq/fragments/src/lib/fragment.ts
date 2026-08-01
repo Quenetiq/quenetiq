@@ -57,7 +57,7 @@ export function useFragment<TData>(
 	_fragment: FragmentDefinition<TData> | TypedDoc,
 	data: TData | FragmentKey<TData> | null | undefined,
 ): TData | null {
-	if (data == null) return null;
+	if (data === null || data === undefined) return null;
 	if (typeof data === 'object' && data !== null) {
 		for (const key of Object.keys(data)) {
 			if (key.startsWith(' ')) return (data as Record<string, unknown>)[key] as TData;

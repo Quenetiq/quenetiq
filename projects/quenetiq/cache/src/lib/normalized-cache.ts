@@ -64,9 +64,9 @@ export interface DryMergeResult {
 }
 
 export class NormalizedCache {
-	private entities = new Map<string, CacheEntity>();
-	private optimistics = new Map<string, OptimisticUpdate>();
-	private meta = new Map<string, EntityMeta>();
+	private readonly entities = new Map<string, CacheEntity>();
+	private readonly optimistics = new Map<string, OptimisticUpdate>();
+	private readonly meta = new Map<string, EntityMeta>();
 	private typePolicies: Record<string, TypePolicy>;
 
 	constructor(typePolicies?: Record<string, TypePolicy>) {

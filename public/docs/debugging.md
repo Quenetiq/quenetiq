@@ -3,7 +3,7 @@ title: Debugging
 slug: debugging
 group: Tools
 order: 5
-since: "0.0.1"
+since: '0.0.1'
 tags:
   - debugging
   - devtools
@@ -39,13 +39,13 @@ The `DevtoolsService` connects your Angular application to the browser extension
 import { provideQuenetiq, devtoolsMiddleware } from '@quenetiq/core';
 
 provideQuenetiq({
-  endpoint: '/graphql',
-  devtools: {
-    autoConnect: true,
-    maxRequests: 500,
-    captureSchema: true,
-    endpoint: '/graphql',
-  },
+	endpoint: '/graphql',
+	devtools: {
+		autoConnect: true,
+		maxRequests: 500,
+		captureSchema: true,
+		endpoint: '/graphql',
+	},
 });
 ```
 
@@ -56,9 +56,9 @@ import { devtoolsMiddleware } from '@quenetiq/core';
 
 // Manual middleware setup
 const middleware = devtoolsMiddleware({
-  autoConnect: true,
-  maxRequests: 500,
-  captureSchema: true,
+	autoConnect: true,
+	maxRequests: 500,
+	captureSchema: true,
 });
 ```
 
@@ -76,15 +76,15 @@ The DevTools panel displays a real-time, filterable list of all captured GraphQL
 
 Click any request in the timeline to open its detail view with the following tabs:
 
-| Tab | Content |
-|-----|---------|
-| **Overview** | Operation type, name, endpoint URL, HTTP status, duration, timestamp, entity summary, timing chart |
-| **Query** | Indented query tree with nesting + raw query text with copy button |
-| **Variables** | JSON-formatted variables with syntax coloring |
-| **Response** | Full response JSON with syntax coloring |
-| **Projection** | Field projection analysis — compares requested vs returned fields |
-| **Cache** | Normalized entity view grouped by type |
-| **Schema** | Interactive schema browser with type graph |
+| Tab            | Content                                                                                            |
+| -------------- | -------------------------------------------------------------------------------------------------- |
+| **Overview**   | Operation type, name, endpoint URL, HTTP status, duration, timestamp, entity summary, timing chart |
+| **Query**      | Indented query tree with nesting + raw query text with copy button                                 |
+| **Variables**  | JSON-formatted variables with syntax coloring                                                      |
+| **Response**   | Full response JSON with syntax coloring                                                            |
+| **Projection** | Field projection analysis — compares requested vs returned fields                                  |
+| **Cache**      | Normalized entity view grouped by type                                                             |
+| **Schema**     | Interactive schema browser with type graph                                                         |
 
 ## Schema Browser
 
@@ -132,10 +132,10 @@ Enable detailed logging of all Quenetiq operations using `provideQuenetiqDebuggi
 import { provideQuenetiqDebugging } from '@quenetiq/debugging';
 
 provideQuenetiqDebugging({
-  logQueries: true,
-  logMutations: true,
-  logCacheOps: true,
-  logMiddleware: true,
+	logQueries: true,
+	logMutations: true,
+	logCacheOps: true,
+	logMiddleware: true,
 });
 ```
 
@@ -156,13 +156,17 @@ Parse a GraphQL query into a structured field tree for visualization or analysis
 ```typescript
 import { parseFieldTree } from '@quenetiq/debugging';
 
-const tree = parseFieldTree(gql`query {
-  books(limit: 10) {
-    id
-    title
-    author { name }
-  }
-}`);
+const tree = parseFieldTree(gql`
+	query {
+		books(limit: 10) {
+			id
+			title
+			author {
+				name
+			}
+		}
+	}
+`);
 
 console.log(tree);
 // {
@@ -180,9 +184,14 @@ Generate a structured graph of cache interactions for a given mutation:
 ```typescript
 import { buildMutationChart } from '@quenetiq/debugging';
 
-const chart = buildMutationChart(
-  gql`mutation LikePost($id: ID!) { likePost(id: $id) { id likes } }`,
-);
+const chart = buildMutationChart(gql`
+	mutation LikePost($id: ID!) {
+		likePost(id: $id) {
+			id
+			likes
+		}
+	}
+`);
 // Returns a structured graph of cache interactions
 ```
 
@@ -194,13 +203,11 @@ Normalize raw server data into the cache's internal format, useful for debugging
 import { normalizeData } from '@quenetiq/debugging';
 
 const normalized = normalizeData(
-  {
-    __typename: 'Query',
-    books: [
-      { __typename: 'Book', id: '1', title: 'Dune' },
-    ],
-  },
-  { keyFields: ['id'] },
+	{
+		__typename: 'Query',
+		books: [{ __typename: 'Book', id: '1', title: 'Dune' }],
+	},
+	{ keyFields: ['id'] },
 );
 
 console.log(normalized);
@@ -216,28 +223,28 @@ console.log(normalized);
 
 Debug logging service that records operation type, document, variables, timestamp, duration, result for up to 500 entries.
 
-| Name | Type | Description |
-|------|------|-------------|
-| `GraphqlDebugService.entries` | property | Read-only array of recorded debug entries. |
-| `GraphqlDebugService.enabled` | property | Toggle debug recording on/off. Default: `true` |
-| `GraphqlDebugService.query(document, variables?)` | method | Executes a query and logs the operation. |
-| `GraphqlDebugService.mutate(document, variables?)` | method | Executes a mutation and logs the operation. |
-| `GraphqlDebugService.clear()` | method | Clears all recorded debug entries. |
+| Name                                               | Type     | Description                                    |
+| -------------------------------------------------- | -------- | ---------------------------------------------- |
+| `GraphqlDebugService.entries`                      | property | Read-only array of recorded debug entries.     |
+| `GraphqlDebugService.enabled`                      | property | Toggle debug recording on/off. Default: `true` |
+| `GraphqlDebugService.query(document, variables?)`  | method   | Executes a query and logs the operation.       |
+| `GraphqlDebugService.mutate(document, variables?)` | method   | Executes a mutation and logs the operation.    |
+| `GraphqlDebugService.clear()`                      | method   | Clears all recorded debug entries.             |
 
 ### GraphqlDebugEntry
 
 Recorded debug entry with timing, doc, variables, and result.
 
-| Name | Type | Description |
-|------|------|-------------|
-| `GraphqlDebugEntry.type` | property | Operation type: query or mutate. |
-| `GraphqlDebugEntry.document` | property | Raw GraphQL document string. |
-| `GraphqlDebugEntry.variables` | property | Variables sent with the operation. |
-| `GraphqlDebugEntry.timestamp` | property | Start timestamp from performance.now(). |
-| `GraphqlDebugEntry.duration` | property | Duration in ms. |
-| `GraphqlDebugEntry.result` | property | GraphQLResult with status, data, or error. |
-| `GraphqlDebugEntry.operationName` | property | Extracted operation name, if any. |
-| `GraphqlDebugEntry.fields` | property | Extracted field names from the document. |
+| Name                              | Type     | Description                                |
+| --------------------------------- | -------- | ------------------------------------------ |
+| `GraphqlDebugEntry.type`          | property | Operation type: query or mutate.           |
+| `GraphqlDebugEntry.document`      | property | Raw GraphQL document string.               |
+| `GraphqlDebugEntry.variables`     | property | Variables sent with the operation.         |
+| `GraphqlDebugEntry.timestamp`     | property | Start timestamp from performance.now().    |
+| `GraphqlDebugEntry.duration`      | property | Duration in ms.                            |
+| `GraphqlDebugEntry.result`        | property | GraphQLResult with status, data, or error. |
+| `GraphqlDebugEntry.operationName` | property | Extracted operation name, if any.          |
+| `GraphqlDebugEntry.fields`        | property | Extracted field names from the document.   |
 
 ### parseFieldTree(query)
 
@@ -247,11 +254,11 @@ Parses a GraphQL query into a structured field tree object for visualization or 
 
 A node in the parsed field tree.
 
-| Name | Type | Description |
-|------|------|-------------|
-| `InspectedField.name` | property | Field name. |
-| `InspectedField.depth` | property | Nesting depth of this field. |
-| `InspectedField.children` | property | Child fields, if any. |
+| Name                      | Type     | Description                  |
+| ------------------------- | -------- | ---------------------------- |
+| `InspectedField.name`     | property | Field name.                  |
+| `InspectedField.depth`    | property | Nesting depth of this field. |
+| `InspectedField.children` | property | Child fields, if any.        |
 
 ### buildMutationChart(entries)
 
@@ -261,70 +268,70 @@ Generates a timeline chart from debug entries for visualization.
 
 A single point on the mutation timeline chart.
 
-| Name | Type | Description |
-|------|------|-------------|
-| `MutationChartPoint.label` | property | Operation label or anonymous. |
-| `MutationChartPoint.start` | property | Start offset relative to earliest entry. |
-| `MutationChartPoint.end` | property | End offset relative to earliest entry. |
-| `MutationChartPoint.duration` | property | Duration in ms. |
-| `MutationChartPoint.ok` | property | Whether the operation succeeded. |
+| Name                          | Type     | Description                              |
+| ----------------------------- | -------- | ---------------------------------------- |
+| `MutationChartPoint.label`    | property | Operation label or anonymous.            |
+| `MutationChartPoint.start`    | property | Start offset relative to earliest entry. |
+| `MutationChartPoint.end`      | property | End offset relative to earliest entry.   |
+| `MutationChartPoint.duration` | property | Duration in ms.                          |
+| `MutationChartPoint.ok`       | property | Whether the operation succeeded.         |
 
 ### normalizeData(data, parentPath?)
 
-Normalizes raw server data into normalized entities keyed by __typename + id.
+Normalizes raw server data into normalized entities keyed by \_\_typename + id.
 
 ### NormalizedEntity
 
 A single normalized cache entity.
 
-| Name | Type | Description |
-|------|------|-------------|
-| `NormalizedEntity.type` | property | __typename value. |
-| `NormalizedEntity.id` | property | Entity ID (id or _id field). |
+| Name                    | Type     | Description                                      |
+| ----------------------- | -------- | ------------------------------------------------ |
+| `NormalizedEntity.type` | property | \_\_typename value.                              |
+| `NormalizedEntity.id`   | property | Entity ID (id or \_id field).                    |
 | `NormalizedEntity.path` | property | Dot-notation path to the entity in the response. |
 
 ### Other Exports
 
-| Name | Type | Description |
-|------|------|-------------|
-| `groupEntities(entries)` | function | Groups normalized entities by their __typename. |
-| `provideDevToolsPanel()` | function | Angular provider that registers the DevTools keyboard shortcut (Ctrl+Shift+D). |
-| `provideQuenetiqDebugging(config)` | function | Angular provider that enables detailed logging of all Quenetiq operations. |
+| Name                               | Type     | Description                                                                    |
+| ---------------------------------- | -------- | ------------------------------------------------------------------------------ |
+| `groupEntities(entries)`           | function | Groups normalized entities by their \_\_typename.                              |
+| `provideDevToolsPanel()`           | function | Angular provider that registers the DevTools keyboard shortcut (Ctrl+Shift+D). |
+| `provideQuenetiqDebugging(config)` | function | Angular provider that enables detailed logging of all Quenetiq operations.     |
 
 ### DevToolsService
 
 Service managing DevTools panel visibility, tabs, and cache snapshots.
 
-| Name | Type | Description |
-|------|------|-------------|
-| `DevToolsService.visible$` | property | Observable of panel visibility. |
-| `DevToolsService.activeTab$` | property | Observable of active tab. |
-| `DevToolsService.cacheSnapshot$` | property | Observable of cache snapshot. |
-| `DevToolsService.entries` | property | Live debug entries from GraphqlDebugService. |
-| `DevToolsService.cacheSnapshotValue` | property | Synchronous cache snapshot value. |
-| `DevToolsService.init()` | method | Initializes keyboard shortcut listener. |
-| `DevToolsService.destroy()` | method | Removes keyboard shortcut listener. |
-| `DevToolsService.toggle()` | method | Toggles DevTools panel visibility. |
-| `DevToolsService.open()` | method | Opens DevTools panel. |
-| `DevToolsService.close()` | method | Closes DevTools panel. |
-| `DevToolsService.setTab(tab)` | method | Switches to a specific tab. |
-| `DevToolsService.getQueryCount()` | method | Returns total recorded query count. |
-| `DevToolsService.getErrorCount()` | method | Returns total recorded error count. |
+| Name                                 | Type     | Description                                  |
+| ------------------------------------ | -------- | -------------------------------------------- |
+| `DevToolsService.visible$`           | property | Observable of panel visibility.              |
+| `DevToolsService.activeTab$`         | property | Observable of active tab.                    |
+| `DevToolsService.cacheSnapshot$`     | property | Observable of cache snapshot.                |
+| `DevToolsService.entries`            | property | Live debug entries from GraphqlDebugService. |
+| `DevToolsService.cacheSnapshotValue` | property | Synchronous cache snapshot value.            |
+| `DevToolsService.init()`             | method   | Initializes keyboard shortcut listener.      |
+| `DevToolsService.destroy()`          | method   | Removes keyboard shortcut listener.          |
+| `DevToolsService.toggle()`           | method   | Toggles DevTools panel visibility.           |
+| `DevToolsService.open()`             | method   | Opens DevTools panel.                        |
+| `DevToolsService.close()`            | method   | Closes DevTools panel.                       |
+| `DevToolsService.setTab(tab)`        | method   | Switches to a specific tab.                  |
+| `DevToolsService.getQueryCount()`    | method   | Returns total recorded query count.          |
+| `DevToolsService.getErrorCount()`    | method   | Returns total recorded error count.          |
 
 ### Types
 
-| Name | Type | Description |
-|------|------|-------------|
-| `DevToolsTab` | type | Available DevTools tabs: queries, cache, errors. |
-| `CacheSnapshot` | interface | Snapshot of a single cache entity. |
-| `CacheSnapshot.typename` | property | Entity __typename. |
-| `CacheSnapshot.id` | property | Entity ID. |
-| `CacheSnapshot.fields` | property | All fields of the entity. |
+| Name                     | Type      | Description                                      |
+| ------------------------ | --------- | ------------------------------------------------ |
+| `DevToolsTab`            | type      | Available DevTools tabs: queries, cache, errors. |
+| `CacheSnapshot`          | interface | Snapshot of a single cache entity.               |
+| `CacheSnapshot.typename` | property  | Entity \_\_typename.                             |
+| `CacheSnapshot.id`       | property  | Entity ID.                                       |
+| `CacheSnapshot.fields`   | property  | All fields of the entity.                        |
 
 ### DevToolsPanelComponent
 
 Standalone Angular component rendering the DevTools panel UI.
 
-## Try it live
+## Starters
 
 :::stackblitz starter="debugging"

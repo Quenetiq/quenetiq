@@ -45,7 +45,7 @@ export function useCacheEntity<T extends CacheEntity = CacheEntity>(
 		}
 
 		try {
-			const entity = cache.query<T>(typename, id);
+			const entity = cache.query(typename, id) as T | undefined;
 			setData(entity ?? null);
 			setError(null);
 		} catch (err) {

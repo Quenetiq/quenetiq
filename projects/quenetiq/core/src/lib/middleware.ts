@@ -1,4 +1,4 @@
-import { Observable, map } from 'rxjs';
+import { type Observable, map } from 'rxjs';
 import type { GraphQLResult } from './graphql.service';
 
 export interface GraphqlRequestContext {

@@ -50,18 +50,18 @@ const steps = migrationGuide(apolloClient);
 
 ## API Reference
 
-| Name | Description | Type |
-| --- | --- | --- |
-| `fromApolloCache(apolloCache)` | Converts an Apollo InMemoryCache with its typePolicies into a Quenetiq cache configuration. | function |
-| `ApolloCacheCompatible` | Minimal interface that Apollo Client InMemoryCache satisfies. Covers readQuery, writeQuery, evict, gc, extract, and restore. | interface |
-| `ApolloCacheCompatible.readQuery` | Reads a query from the cache. | method |
-| `ApolloCacheCompatible.writeQuery` | Writes a query result to the cache. | method |
-| `ApolloCacheCompatible.evict` | Evicts an entity from the cache by id and optional fieldName. | method |
-| `ApolloCacheCompatible.gc` | Runs garbage collection on the cache. | method |
-| `ApolloCacheCompatible.extract` | Extracts full cache state, optionally including optimistic data. | method |
-| `ApolloCacheCompatible.restore` | Restores cache state from a serialized snapshot. | method |
-| `createMigrationGuide()` | Returns a mapping of common Apollo Client patterns to their Quenetiq equivalents for incremental migration. | function |
+| Name                               | Description                                                                                                                  | Type      |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | --------- |
+| `fromApolloCache(apolloCache)`     | Converts an Apollo InMemoryCache with its typePolicies into a Quenetiq cache configuration.                                  | function  |
+| `ApolloCacheCompatible`            | Minimal interface that Apollo Client InMemoryCache satisfies. Covers readQuery, writeQuery, evict, gc, extract, and restore. | interface |
+| `ApolloCacheCompatible.readQuery`  | Reads a query from the cache.                                                                                                | method    |
+| `ApolloCacheCompatible.writeQuery` | Writes a query result to the cache.                                                                                          | method    |
+| `ApolloCacheCompatible.evict`      | Evicts an entity from the cache by id and optional fieldName.                                                                | method    |
+| `ApolloCacheCompatible.gc`         | Runs garbage collection on the cache.                                                                                        | method    |
+| `ApolloCacheCompatible.extract`    | Extracts full cache state, optionally including optimistic data.                                                             | method    |
+| `ApolloCacheCompatible.restore`    | Restores cache state from a serialized snapshot.                                                                             | method    |
+| `createMigrationGuide()`           | Returns a mapping of common Apollo Client patterns to their Quenetiq equivalents for incremental migration.                  | function  |
 
-## Try it live
+## Starters
 
 :::stackblitz starter="apollo-adapter"

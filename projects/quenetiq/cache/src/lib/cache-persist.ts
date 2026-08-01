@@ -29,7 +29,7 @@ function createStorage(config: CachePersistConfig): StorageBackend {
 }
 
 class InMemoryStorage implements StorageBackend {
-	private store = new Map<string, string>();
+	private readonly store = new Map<string, string>();
 
 	getItem(key: string): string | null {
 		return this.store.get(key) ?? null;
@@ -51,11 +51,11 @@ interface PersistedPayload {
 }
 
 export class CachePersistence {
-	private key: string;
+	private readonly key: string;
 	private timer: ReturnType<typeof setTimeout> | null = null;
-	private storage: StorageBackend;
-	private version?: string;
-	private maxAge?: number;
+	private readonly storage: StorageBackend;
+	private readonly version?: string;
+	private readonly maxAge?: number;
 
 	constructor(config?: CachePersistConfig) {
 		this.key = config?.storageKey ?? '__quenetiq_cache';
@@ -64,7 +64,7 @@ export class CachePersistence {
 		this.maxAge = config?.maxAge;
 	}
 
-	async persist(data: [string, Record<string, unknown>][]): Promise<void> {
+	persist(data: [string, Record<string, unknown>][]): void {
 		const payload: PersistedPayload = {
 			version: this.version,
 			timestamp: Date.now(),
@@ -85,7 +85,7 @@ export class CachePersistence {
 		}, delay);
 	}
 
-	async restore(): Promise<[string, Record<string, unknown>][] | null> {
+	restore(): [string, Record<string, unknown>][] | null {
 		try {
 			const raw = this.storage.getItem(this.key);
 			if (!raw) return null;
@@ -109,7 +109,7 @@ export class CachePersistence {
 		}
 	}
 
-	async clear(): Promise<void> {
+	clear(): void {
 		try {
 			this.storage.removeItem(this.key);
 		} catch {

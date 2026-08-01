@@ -41,14 +41,14 @@ export function useCacheEntity<T extends CacheEntity = CacheEntity>(
 	const loading = ref(true);
 	const error = ref<string | null>(null);
 
-	const readEntity = () => {
+	const readEntity = (): void => {
 		if (!cache) {
 			loading.value = false;
 			return;
 		}
 
 		try {
-			const entity = cache.query<T>(typename, id);
+			const entity = cache.query(typename, id) as T | undefined;
 			data.value = entity ?? null;
 			error.value = null;
 		} catch (err) {

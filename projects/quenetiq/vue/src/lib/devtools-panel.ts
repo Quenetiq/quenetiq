@@ -13,7 +13,7 @@ function formatSize(bytes: number): string {
 }
 
 function truncate(str: string, max: number): string {
-	return str.length > max ? str.slice(0, max) + '...' : str;
+	return str.length > max ? `${str.slice(0, max)  }...` : str;
 }
 
 const panelStyle: CSSProperties = {
@@ -111,7 +111,7 @@ export const DevToolsPanel = defineComponent({
 
 		const isOpen = computed(() => props.isOpen ?? internalOpen.value);
 
-		function toggle() {
+		function toggle(): void {
 			const next = !isOpen.value;
 			internalOpen.value = next;
 			props.onToggle?.(next);
@@ -123,7 +123,7 @@ export const DevToolsPanel = defineComponent({
 				.slice(0, props.maxEntries),
 		);
 
-		function toggleEntry(entry: QueryLogEntry) {
+		function toggleEntry(entry: QueryLogEntry): void {
 			selectedEntry.value = selectedEntry.value?.id === entry.id ? null : entry;
 		}
 

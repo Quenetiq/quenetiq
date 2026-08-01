@@ -1,4 +1,4 @@
-import { EnvironmentProviders, inject, makeEnvironmentProviders, provideAppInitializer } from '@angular/core';
+import { type EnvironmentProviders, inject, makeEnvironmentProviders, provideAppInitializer } from '@angular/core';
 import { DevToolsService } from './devtools.service';
 
 export { DevToolsService, type DevToolsTab, type CacheSnapshot } from './devtools.service';

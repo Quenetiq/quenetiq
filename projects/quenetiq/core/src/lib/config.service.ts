@@ -6,6 +6,7 @@ import {
 	type GraphqlMiddleware,
 	type CacheConfig,
 	type SubscriptionsConfig,
+	type StreamingConfig,
 	type PersistedQueriesConfig,
 	type UploadConfig,
 	type DebugConfig,
@@ -127,6 +128,10 @@ export class QuenetiqConfigService {
 
 	get subscriptions(): SubscriptionsConfig {
 		return this._raw.subscriptions ?? {};
+	}
+
+	get streaming(): StreamingConfig {
+		return this._raw.streaming ?? {};
 	}
 
 	get persistedQueries(): PersistedQueriesConfig {

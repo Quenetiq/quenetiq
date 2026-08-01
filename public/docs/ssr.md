@@ -22,10 +22,7 @@ Add `provideQuenetiqSsr()` to your application config. No additional configurati
 import { provideQuenetiqSsr } from '@quenetiq/ssr';
 
 export const appConfig: ApplicationConfig = {
-  providers: [
-    provideQuenetiqCore({ link: createHttpLink({ uri: '/graphql' }) }),
-    provideQuenetiqSsr(),
-  ],
+	providers: [provideQuenetiqCore({ link: createHttpLink({ uri: '/graphql' }) }), provideQuenetiqSsr()],
 };
 ```
 
@@ -45,28 +42,28 @@ For large SSR payloads, enable chunked transfer to stream query results in small
 
 ```ts
 provideQuenetiqSsr({
-  chunked: true,
-  chunkSize: 8192, // 8 kB per chunk
-  flushOnNavigation: true, // flush pending queries on route change
+	chunked: true,
+	chunkSize: 8192, // 8 kB per chunk
+	flushOnNavigation: true, // flush pending queries on route change
 });
 ```
 
 ## API Reference
 
-| Name | Description | Type | Default |
-|------|-------------|------|---------|
-| `SsrStreamService` | Injectable service for progressive SSR transfer of GraphQL data. Splits large payloads into chunks for faster TTFB. | class | |
-| `SsrStreamService.writeChunked(key, data)` | Serializes data to Angular TransferState under a prefixed key. | method | |
-| `SsrStreamService.readChunked(key)` | Reads chunked data from Angular TransferState by key. | method | |
-| `SsrStreamService.clear()` | Clears all GQL-related TransferState entries. | method | |
-| `SsrStreamConfig` | Configuration interface for SSR stream options with custom key prefix and chunk size. | interface | |
-| `SsrStreamConfig.key` | Key prefix for TransferState entries. | property | `gql` |
-| `SsrStreamConfig.chunkSize` | Chunk size in bytes for progressive loading. | property | |
-| `SSR_STREAM_KEY` | Angular InjectionToken used to provide SsrStreamConfig to the SSR stream service. | constant | |
-| `TransferCacheService` | Injectable service that saves cache state on the server and restores it on the browser during SSR hydration. | class | |
-| `TransferCacheService.save(cache)` | Serializes and saves cache state for transfer to the browser. No-op on the browser side. | method | |
-| `TransferCacheService.restore(cache)` | Restores cache state from SSR transfer data. Returns true on success. | method | |
+| Name                                       | Description                                                                                                         | Type      | Default |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- | --------- | ------- |
+| `SsrStreamService`                         | Injectable service for progressive SSR transfer of GraphQL data. Splits large payloads into chunks for faster TTFB. | class     |         |
+| `SsrStreamService.writeChunked(key, data)` | Serializes data to Angular TransferState under a prefixed key.                                                      | method    |         |
+| `SsrStreamService.readChunked(key)`        | Reads chunked data from Angular TransferState by key.                                                               | method    |         |
+| `SsrStreamService.clear()`                 | Clears all GQL-related TransferState entries.                                                                       | method    |         |
+| `SsrStreamConfig`                          | Configuration interface for SSR stream options with custom key prefix and chunk size.                               | interface |         |
+| `SsrStreamConfig.key`                      | Key prefix for TransferState entries.                                                                               | property  | `gql`   |
+| `SsrStreamConfig.chunkSize`                | Chunk size in bytes for progressive loading.                                                                        | property  |         |
+| `SSR_STREAM_KEY`                           | Angular InjectionToken used to provide SsrStreamConfig to the SSR stream service.                                   | constant  |         |
+| `TransferCacheService`                     | Injectable service that saves cache state on the server and restores it on the browser during SSR hydration.        | class     |         |
+| `TransferCacheService.save(cache)`         | Serializes and saves cache state for transfer to the browser. No-op on the browser side.                            | method    |         |
+| `TransferCacheService.restore(cache)`      | Restores cache state from SSR transfer data. Returns true on success.                                               | method    |         |
 
-## Try it live
+## Starters
 
-:::stackblitz starter="ssr"
+:::stackblitz starter="ssr" |

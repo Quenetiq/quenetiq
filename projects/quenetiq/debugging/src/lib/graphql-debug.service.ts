@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { type Observable, tap } from 'rxjs';
 import type { DocumentNode, GraphQLResult } from '@quenetiq/core';
 import { GraphqlService } from '@quenetiq/core';
 

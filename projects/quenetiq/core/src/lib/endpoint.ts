@@ -1,5 +1,5 @@
 import { inject, InjectionToken, type Provider } from '@angular/core';
-import { Observable, switchMap, of } from 'rxjs';
+import { type Observable, switchMap, of } from 'rxjs';
 import { GraphqlService, type GraphQLResult, type RequestOverrideConfig } from './graphql.service';
 import { EndpointsService, type EndpointLifecycleHook, ENDPOINT_LIFECYCLE } from './endpoints.service';
 import type { DocumentNode, TypedDocumentNode } from './gql';

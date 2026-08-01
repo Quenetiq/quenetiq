@@ -1,5 +1,5 @@
 import { inject, type Signal } from '@angular/core';
-import { defer, Observable } from 'rxjs';
+import { defer, type Observable } from 'rxjs';
 import { GraphqlService, type GraphQLResult, type RequestOverrideConfig, type RefetchQueryDef } from './graphql.service';
 import { EndpointsService } from './endpoints.service';
 import type { DocumentNode, TypedDocumentNode, TypedQueryString } from './gql';
@@ -74,8 +74,8 @@ export function mutate<
 			const route = endpoints.getRoute(epName);
 			url = route?.url;
 			if (route) {
-				const has = route.middleware || route.errorPolicy ||
-					route.retryCount !== undefined || route.retryDelay !== undefined;
+				const has = route.middleware ?? route.errorPolicy ??
+					(route.retryCount !== undefined || route.retryDelay !== undefined);
 				if (has) {
 					overrideCfg = {
 						middleware: route.middleware?.filter((m): m is GraphqlMiddleware => typeof m !== 'string'),

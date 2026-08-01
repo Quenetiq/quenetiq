@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process';
-import { existsSync, rmSync, symlinkSync, mkdirSync, cpSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, rmSync, symlinkSync, mkdirSync, cpSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const ROOT = resolve(import.meta.dirname, '..');
@@ -27,10 +27,11 @@ const BUILD_ORDER = [
   'opentelemetry',
   'react',
   'vue',
+  'eslint-plugin-gql',
 ];
 
 // Packages compiled with tsc (not ng-packagr, not plain copy)
-const TSC_PACKAGES = ['cache', 'client', 'react', 'vue', 'dev-server', 'opentelemetry'];
+const TSC_PACKAGES = ['cache', 'client', 'react', 'vue', 'dev-server', 'opentelemetry', 'eslint-plugin-gql'];
 
 function linkPackage(pkg, distOut) {
   const nmLink = join(NM, pkg);
@@ -80,6 +81,24 @@ function fixDistPackageJson(distOut) {
   writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
 }
 
+// ng-packagr/tsc emit compiled JS and declarations inline next to source files
+// (e.g. core/src, cache/src). Remove any generated artifact that has a .ts
+// sibling so the working tree stays clean; hand-written files (shims, scripts)
+// have no .ts sibling and are preserved.
+function purgeInlineArtifacts(pkgDir) {
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) walk(path);
+      else if (entry.name.endsWith('.js') || entry.name.endsWith('.js.map') || entry.name.endsWith('.d.ts') || entry.name.endsWith('.d.ts.map')) {
+        const stem = entry.name.replace(/\.(js|d\.ts)(\.map)?$/, '');
+        if (existsSync(join(dir, `${stem}.ts`))) rmSync(path);
+      }
+    }
+  };
+  walk(join(pkgDir, 'src'));
+}
+
 function build(pkg) {
   console.log(`\n📦 Building @quenetiq/${pkg}...`);
   const pkgDir = join(ROOT, 'projects', 'quenetiq', pkg);
@@ -90,11 +109,16 @@ function build(pkg) {
     const npxCmd = existsSync(join(ROOT, 'node_modules', '.bin', 'ng-packagr'))
       ? 'npx ng-packagr'
       : 'npx --yes ng-packagr';
-    execSync(`${npxCmd} -p ${pkgDir}/ng-package.json`, {
+    // Pass a self-contained tsconfig (ng-packagr default lib is es2018, too old
+    // for es2020+ APIs such as Promise.allSettled; per-package configs extend
+    // the root tsconfig and break ng-packagr's entry-point analysis).
+    const ngTsconfig = join(ROOT, 'scripts', 'tsconfig.ngpackagr.json');
+    execSync(`${npxCmd} -c ${ngTsconfig} -p ${pkgDir}/ng-package.json`, {
       cwd: ROOT,
       stdio: 'inherit',
       env: { ...process.env, NODE_OPTIONS: '--max_old_space_size=4096' },
     });
+    purgeInlineArtifacts(pkgDir);
     linkPackage(pkg, distOut);
     return;
   }
@@ -108,6 +132,17 @@ function build(pkg) {
     execSync(`npx tsc -p ${tsconfig}`, { cwd: ROOT, stdio: 'inherit' });
     cpSync(join(pkgDir, 'package.json'), join(distOut, 'package.json'));
     fixDistPackageJson(distOut);
+    // Copy ambient shims (e.g. shims-vue.d.ts) and .vue SFC sources so that
+    // dist consumers can both type-check and import the components at runtime.
+    for (const shim of readdirSync(join(pkgDir, 'src')).filter((f) => f.endsWith('.d.ts'))) {
+      cpSync(join(pkgDir, 'src', shim), join(distOut, shim));
+    }
+    const libDir = join(pkgDir, 'src', 'lib');
+    if (existsSync(libDir)) {
+      for (const f of readdirSync(libDir).filter((f) => f.endsWith('.vue'))) {
+        cpSync(join(libDir, f), join(distOut, 'lib', f));
+      }
+    }
     // Copy subdirectories (angular/, bin/ etc.)
     for (const sub of ['angular', 'bin']) {
       const subDir = join(pkgDir, sub);
@@ -119,6 +154,7 @@ function build(pkg) {
       const p = join(pkgDir, f);
       if (existsSync(p)) cpSync(p, join(distOut, f));
     }
+    purgeInlineArtifacts(pkgDir);
     linkPackage(pkg, distOut);
     return;
   }

@@ -4,26 +4,26 @@ import { CachePersistence, type CachePersistConfig } from './cache-persist';
 export type { CachePersistConfig };
 
 export class CachePersistenceService {
-	private inner: CachePersistence;
+	private readonly inner: CachePersistence;
 
 	constructor(config?: CachePersistConfig) {
 		this.inner = new CachePersistence(config ?? {});
 	}
 
-	async persist(data: [string, Record<string, unknown>][]): Promise<void> {
-		return this.inner.persist(data);
+	persist(data: [string, Record<string, unknown>][]): Promise<void> {
+		return Promise.resolve(this.inner.persist(data));
 	}
 
 	persistThrottled(data: [string, Record<string, unknown>][], delay?: number): void {
 		this.inner.persistThrottled(data, delay);
 	}
 
-	async restore(): Promise<[string, Record<string, unknown>][] | null> {
-		return this.inner.restore();
+	restore(): Promise<[string, Record<string, unknown>][] | null> {
+		return Promise.resolve(this.inner.restore());
 	}
 
-	async clear(): Promise<void> {
-		return this.inner.clear();
+	clear(): Promise<void> {
+		return Promise.resolve(this.inner.clear());
 	}
 }
 

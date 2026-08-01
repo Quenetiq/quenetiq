@@ -79,7 +79,7 @@ export class GraphqlLiveQuery {
 		const subId =
 			typeof crypto !== 'undefined' && crypto.randomUUID
 				? crypto.randomUUID()
-				: 'sub_' + Math.random().toString(36).substring(2, 9);
+				: `sub_${  Math.random().toString(36).substring(2, 9)}`;
 
 		const { next, error, complete } = emit ?? {
 			next: () => {},

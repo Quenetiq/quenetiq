@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { Observable, of } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 import { rateLimitMiddleware } from './rate-limit';
 import type { GraphqlRequestContext, GraphQLResult } from '@quenetiq/core';
 

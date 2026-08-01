@@ -7,7 +7,7 @@ import type { DocumentNode, GraphQLResult } from '@quenetiq/core';
 import { GET_CURRENT_USER, GET_NOTES } from './queries';
 
 const TEST_QUERY: DocumentNode = gql`
-	{
+	query Status {
 		status
 	}
 `;
@@ -73,7 +73,7 @@ describe('GraphqlService', () => {
 		const req = httpMock.expectOne('/graphql');
 		req.flush({ errors: [{ message: 'Unauthorized' }] });
 
-		expect(result).toEqual({ status: 'error', error: 'Unauthorized', graphQLErrors: [{ message: 'Unauthorized' }] });
+		expect(result).toEqual({ status: 'error', error: 'Unauthorized', errorCode: 'GRAPHQL_ERROR', graphQLErrors: [{ message: 'Unauthorized' }] });
 	});
 
 	it('handles empty data response', () => {
@@ -86,7 +86,7 @@ describe('GraphqlService', () => {
 		const req = httpMock.expectOne('/graphql');
 		req.flush({});
 
-		expect(result).toEqual({ status: 'error', error: 'No data returned from server' });
+		expect(result).toEqual({ status: 'error', error: 'No data returned from server', errorCode: 'NO_DATA' });
 	});
 
 	it('handles http network error', () => {
@@ -102,6 +102,7 @@ describe('GraphqlService', () => {
 		expect(result).toEqual({
 			status: 'error',
 			error: 'Unknown Error',
+			errorCode: 'NETWORK_ERROR',
 			networkError: { message: 'Unknown Error', status: 0, statusText: 'Unknown Error' },
 		});
 	});
@@ -119,6 +120,7 @@ describe('GraphqlService', () => {
 		expect(result).toEqual({
 			status: 'error',
 			error: 'Internal Server Error',
+			errorCode: 'NETWORK_ERROR',
 			networkError: { message: 'Internal Server Error', status: 500, statusText: 'Internal Server Error' },
 		});
 	});

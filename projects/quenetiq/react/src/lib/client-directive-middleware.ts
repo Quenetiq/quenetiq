@@ -73,22 +73,24 @@ export function clientDirectiveMiddleware(): GraphqlMiddleware {
 		const hasOnlyClientFields = isAllClientFields(request.query);
 
 		if (hasOnlyClientFields) {
-			return {
+			const clientOnlyResult: GraphQLResult<Record<string, unknown>> = {
 				status: 'success',
 				data: resolveLocalFields(request.query),
-			} as GraphQLResult<Record<string, unknown>>;
+			};
+			return clientOnlyResult;
 		}
 
 		const result = await next({ ...request, query: cleanedQuery });
 
 		if (result.status === 'error') return result;
 
-		return {
+		const mergedResult: GraphQLResult<Record<string, unknown>> = {
 			status: 'success',
 			data: {
 				...(isRecord(result.data) ? result.data : {}),
 				...resolveLocalFields(request.query),
 			},
-		} as GraphQLResult<Record<string, unknown>>;
+		};
+		return mergedResult;
 	};
 }

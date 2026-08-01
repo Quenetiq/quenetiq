@@ -3,7 +3,7 @@ title: Epic Fetus
 slug: epic-fetus
 group: Features
 order: 8
-since: "1.0.5"
+since: '1.0.5'
 tags:
   - null-detection
   - overlay
@@ -12,7 +12,7 @@ description: Null detection overlay
 
 # Epic Fetus
 
-A dramatic null-detection animation inspired by *The Binding of Isaac* — whenever GraphQL responds with `null` data or an error, a missile strikes the page. Because null values should never go unnoticed.
+A dramatic null-detection animation inspired by _The Binding of Isaac_ — whenever GraphQL responds with `null` data or an error, a missile strikes the page. Because null values should never go unnoticed.
 
 ## What is Epic Fetus?
 
@@ -44,9 +44,7 @@ import { provideNullDetection } from '@quenetiq/core';
 import { NullOverlay } from '@quenetiq/core';
 
 export const appConfig: ApplicationConfig = {
-  providers: [
-    provideNullDetection(),
-  ],
+	providers: [provideNullDetection()],
 };
 ```
 
@@ -78,9 +76,9 @@ Use the `useEpicFetus` composable in Vue 3:
 
 ```html
 <script setup>
-import { useEpicFetus } from '@quenetiq/vue';
+	import { useEpicFetus } from '@quenetiq/vue';
 
-const detection = useEpicFetus();
+	const detection = useEpicFetus();
 </script>
 ```
 
@@ -97,10 +95,10 @@ Simply omit `provideNullDetection()` from your app config. No overlay, no middle
 import { provideGraphql } from '@quenetiq/core';
 
 export const appConfig: ApplicationConfig = {
-  providers: [
-    // Don't call provideNullDetection() — no overlay, no middleware
-    provideGraphql({ endpoint: '/graphql' }),
-  ],
+	providers: [
+		// Don't call provideNullDetection() — no overlay, no middleware
+		provideGraphql({ endpoint: '/graphql' }),
+	],
 };
 ```
 
@@ -120,7 +118,9 @@ The extension is the primary trigger. Uninstall it, or if the extension has a to
 The animation elements use the `ef-*` class prefix. You can hide them globally:
 
 ```css
-[class*="ef-"] { display: none !important; }
+[class*='ef-'] {
+	display: none !important;
+}
 ```
 
 ### 4. Don't install — it ships only with the devtools extension
@@ -133,83 +133,10 @@ Epic Fetus does not expose a public API. It is managed internally by the Queneti
 
 ## Starters
 
-Choose your framework and copy the starter code below:
+:::stackblitz starter="angular"
 
-### Vanilla
+:::stackblitz starter="react"
 
-```typescript
-import { createClient, gql } from '@quenetiq/client';
-import { nullDetectionMiddleware } from '@quenetiq/client';
-
-const client = createClient({
-  endpoint: '/graphql',
-  middlewares: [nullDetectionMiddleware()],
-});
-
-// The middleware logs null fields detected in responses
-```
-
-### Angular
-
-```typescript
-import { provideQuenetiq, provideNullDetection } from '@quenetiq/core';
-import { createHttpLink } from '@quenetiq/core/link';
-
-export const appConfig: ApplicationConfig = {
-  providers: [
-    provideQuenetiq({ link: createHttpLink({ uri: '/graphql' }) }),
-    provideNullDetection(true), // shows overlay
-  ],
-};
-
-// The overlay appears when null fields are detected
-// Toggle with Ctrl+Shift+N
-```
-
-### React
-
-```tsx
-import { QuenetiqProvider, useEpicFetus, NullOverlay } from '@quenetiq/react';
-import { createClient } from '@quenetiq/client';
-
-const client = createClient({ endpoint: '/graphql' });
-
-function App() {
-  const epicFetus = useEpicFetus();
-
-  return (
-    <QuenetiqProvider client={client}>
-      <MyComponent />
-      <NullOverlay />
-    </QuenetiqProvider>
-  );
-}
-
-// NullOverlay shows a fixed-position indicator
-// when null fields are detected in GraphQL responses
-```
-
-### Vue
-
-```vue
-<script setup>
-import { createQuenetiqPlugin, useEpicFetus, NullOverlay } from '@quenetiq/vue';
-import { createClient } from '@quenetiq/client';
-import { createApp } from 'vue';
-
-const client = createClient({ endpoint: '/graphql' });
-const app = createApp(App);
-app.use(createQuenetiqPlugin(client));
-</script>
-
-<script setup>
-useEpicFetus();
-</script>
-
-<template>
-  <RouterView />
-  <NullOverlay />
-</template>
-```
+:::stackblitz starter="vue"
 
 > NullOverlay shows a floating indicator when null fields are detected.

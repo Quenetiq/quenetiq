@@ -1,5 +1,5 @@
 import { Injectable, inject, isDevMode, ENVIRONMENT_INITIALIZER, type Provider, type OnDestroy } from '@angular/core';
-import { Subject, BehaviorSubject, Observable } from 'rxjs';
+import { Subject, BehaviorSubject, type Observable } from 'rxjs';
 import { QUENETIQ_CONFIG, type QuenetiqConfig } from './quenetiq-config';
 import { SchemaService } from './schema.service';
 

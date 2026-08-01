@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { defer, Observable } from 'rxjs';
+import { defer, type Observable } from 'rxjs';
 import { GraphqlSubscriptionService } from './graphql-subscription.service';
 import type { DocumentNode } from '@quenetiq/core';
 

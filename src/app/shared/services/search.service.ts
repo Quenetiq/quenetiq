@@ -16,7 +16,7 @@ export interface SearchResult extends SearchEntry {
 
 @Injectable({ providedIn: 'root' })
 export class SearchService {
-	private entries: SearchEntry[] = [];
+	private readonly entries: SearchEntry[] = [];
 	readonly results = signal<SearchResult[]>([]);
 	readonly loading = signal(false);
 	readonly query = signal('');
@@ -27,7 +27,9 @@ export class SearchService {
 		this.loading.set(true);
 
 		try {
-			const allItems = SIDEBAR_GROUPS.flatMap((g) => g.items);
+			const allItems = SIDEBAR_GROUPS.flatMap((g) => g.items).flatMap((item) =>
+				item.children ? [item, ...item.children] : [item],
+			);
 
 			for (const item of allItems) {
 				try {
@@ -106,8 +108,8 @@ export class SearchService {
 		const end = Math.min(body.length, idx + matchLen + 80);
 		let snippet = body.slice(start, end);
 
-		if (start > 0) snippet = '...' + snippet;
-		if (end < body.length) snippet = snippet + '...';
+		if (start > 0) snippet = `...${  snippet}`;
+		if (end < body.length) snippet = `${snippet  }...`;
 
 		return snippet;
 	}

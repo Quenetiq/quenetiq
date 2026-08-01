@@ -3,14 +3,14 @@
 	margin: 0 auto;
 	padding: 2rem 1.5rem;
 
-  @media(max-width <= 1024px) {
-    padding: 0rem;
-  }
+	@media (max-width <= 1024px) {
+		padding: 0;
+	}
 }
 
 @media (width <= 768px) {
 	.docs-content {
-		padding: 0rem;
+		padding: 0;
 	}
 
 	.docs-page-title {
@@ -32,13 +32,16 @@
 	padding: 4rem 0;
 	text-align: center;
 
-	h2 {
+	&-title {
 		color: var(--q-text-primary, #1a1a2e);
-		margin-bottom: 0.5rem;
+		margin: 0 0 0.5rem;
+		font-size: 1.5rem;
+		font-weight: 500;
 	}
 
-	p {
+	&-message {
 		color: var(--q-text-secondary, #555);
+		margin: 0 0 1.5rem;
 	}
 }
 
@@ -53,7 +56,7 @@
 .docs-page-title {
 	font-size: 2rem;
 	font-weight: 500;
-	font-family: 'Inter Tight', 'Inter', sans-serif;
+	font-family: 'Inter Tight', Inter, sans-serif;
 	color: var(--q-text-primary, #1a1a2e);
 	margin: 0 0 0.5rem;
 	line-height: 1.2;

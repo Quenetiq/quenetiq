@@ -6,7 +6,7 @@ import { parse } from 'graphql';
 describe('gql', () => {
 	it('parses a simple query', () => {
 		const doc = gql`
-			query {
+			query SimpleQuery {
 				hello
 			}
 		`;
@@ -32,7 +32,7 @@ describe('createTypedQuery', () => {
 		interface Result {
 			hello: string;
 		}
-		const q = createTypedQuery<Result>('query { hello }');
+		const q = createTypedQuery<Result>('query HelloQuery { hello }');
 		// Type-level check: q is TypedQueryString<Result, Record<string, never>>
 		const typed: TypedQueryString<Result> = q;
 		expect(typed).toBe(q);

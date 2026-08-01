@@ -1,7 +1,7 @@
 import {
 	Component,
-	AfterViewInit,
-	OnDestroy,
+	type AfterViewInit,
+	type OnDestroy,
 	inject,
 	signal,
 	ChangeDetectionStrategy,

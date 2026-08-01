@@ -13,28 +13,28 @@ function captureDirectives() {
 }
 
 describe('registerDirectives', () => {
-	it('registers dql-mutate and dql-loading directives', () => {
+	it('registers qtq-mutate and qtq-loading directives', () => {
 		const directive = vi.fn();
 		const app = { directive } as unknown as App;
 
 		registerDirectives(app, {} as any);
 
 		expect(directive).toHaveBeenCalledTimes(2);
-		expect(directive).toHaveBeenCalledWith('dql-mutate', expect.objectContaining({ mounted: expect.any(Function) }));
+		expect(directive).toHaveBeenCalledWith('qtq-mutate', expect.objectContaining({ mounted: expect.any(Function) }));
 		expect(directive).toHaveBeenCalledWith(
-			'dql-loading',
+			'qtq-loading',
 			expect.objectContaining({ mounted: expect.any(Function), updated: expect.any(Function) }),
 		);
 	});
 
-	describe('v-dql-mutate', () => {
+	describe('v-qtq-mutate', () => {
 		it('calls client.mutate on click with { mutation, variables }', async () => {
 			const client = { mutate: vi.fn().mockResolvedValue({ status: 'success', data: {} }) };
 			const { app, defs } = captureDirectives();
 			registerDirectives(app, client as any);
 
 			const addEventListener = vi.fn();
-			defs['dql-mutate'].mounted(
+			defs['qtq-mutate'].mounted(
 				{ style: {}, addEventListener },
 				{ value: { mutation: 'mutation { x }', variables: { id: 1 } } },
 			);
@@ -50,7 +50,7 @@ describe('registerDirectives', () => {
 			registerDirectives(app, client as any);
 
 			const addEventListener = vi.fn();
-			defs['dql-mutate'].mounted({ style: {}, addEventListener }, { value: 'mutation { x }' });
+			defs['qtq-mutate'].mounted({ style: {}, addEventListener }, { value: 'mutation { x }' });
 
 			const handler = addEventListener.mock.calls[0][1];
 			await handler();
@@ -58,14 +58,14 @@ describe('registerDirectives', () => {
 		});
 	});
 
-	describe('v-dql-loading', () => {
+	describe('v-qtq-loading', () => {
 		it('adds class on mount when truthy', () => {
 			const { app, defs } = captureDirectives();
 			registerDirectives(app, {} as any);
 
 			const classList = { add: vi.fn(), toggle: vi.fn() };
-			defs['dql-loading'].mounted({ classList }, { value: true });
-			expect(classList.add).toHaveBeenCalledWith('dql-loading');
+			defs['qtq-loading'].mounted({ classList }, { value: true });
+			expect(classList.add).toHaveBeenCalledWith('qtq-loading');
 		});
 
 		it('toggles class on update', () => {
@@ -73,8 +73,8 @@ describe('registerDirectives', () => {
 			registerDirectives(app, {} as any);
 
 			const classList = { add: vi.fn(), toggle: vi.fn() };
-			defs['dql-loading'].updated({ classList }, { value: false, oldValue: true });
-			expect(classList.toggle).toHaveBeenCalledWith('dql-loading', false);
+			defs['qtq-loading'].updated({ classList }, { value: false, oldValue: true });
+			expect(classList.toggle).toHaveBeenCalledWith('qtq-loading', false);
 		});
 
 		it('does not add class on mount when falsy', () => {
@@ -82,7 +82,7 @@ describe('registerDirectives', () => {
 			registerDirectives(app, {} as any);
 
 			const classList = { add: vi.fn(), toggle: vi.fn() };
-			defs['dql-loading'].mounted({ classList }, { value: false });
+			defs['qtq-loading'].mounted({ classList }, { value: false });
 			expect(classList.add).not.toHaveBeenCalled();
 		});
 	});

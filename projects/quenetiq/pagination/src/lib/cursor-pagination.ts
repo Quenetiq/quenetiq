@@ -33,7 +33,7 @@ export function cursorPagination<T, TVars extends Record<string, unknown> = Reco
 	document: DocumentNode,
 	variables?: TVars,
 ): QueryHandle<CursorConnection<T>> {
-	return query<CursorConnection<T>, TVars>(document, variables);
+	return query<DocumentNode, CursorConnection<T>, TVars>(document, undefined, variables);
 }
 
 export function cursorMerge<T = unknown>(existing: T[] | undefined, incoming: T[]): T[] {

@@ -1,9 +1,11 @@
 import { signal, computed } from '@angular/core';
 import {
 	QUENETIQ_CONFIG,
+	STREAMING_CONFIG,
 	REACTIVE_QUENETIQ_CONFIG,
 	FEATURE_CONFIGS,
 	type QuenetiqConfig,
+	type StreamingConfig,
 	type ReactiveQuenetiqConfig,
 	type GraphqlMiddleware,
 	type FeatureConfig,
@@ -83,6 +85,11 @@ class QuenetiqConfigBuilder {
 
 	subscriptions(config: QuenetiqConfig['subscriptions']): this {
 		this.config = { ...this.config, subscriptions: { ...this.config.subscriptions, ...config } };
+		return this;
+	}
+
+	streaming(config: StreamingConfig): this {
+		this.config = { ...this.config, streaming: { ...this.config.streaming, ...config } };
 		return this;
 	}
 
@@ -281,4 +288,8 @@ function buildProvidersWithReactive(config: QuenetiqConfig): Provider[] {
 		{ provide: QUENETIQ_CONFIG, useValue: config },
 		{ provide: REACTIVE_QUENETIQ_CONFIG, useValue: reactiveConfig },
 	];
+}
+
+export function provideStreaming(config?: StreamingConfig): Provider[] {
+	return config ? [{ provide: STREAMING_CONFIG, useValue: config }] : [];
 }

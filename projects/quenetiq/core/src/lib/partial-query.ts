@@ -144,7 +144,7 @@ export function injectPartialQuery<
 	}
 
 	function mergeData(parts: Record<string, PartitionResult>): TResponse {
-		const merged = {} as Record<string, unknown>;
+		const merged: Record<string, unknown> = {};
 		for (const [name, result] of Object.entries(parts)) {
 			if ((result.status === 'success' || result.status === 'cached') && result.data !== undefined) {
 				merged[name] = result.data;

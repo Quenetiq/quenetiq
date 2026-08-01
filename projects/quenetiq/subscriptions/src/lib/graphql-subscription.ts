@@ -13,7 +13,7 @@ interface SubscriptionCallbacks<T> {
 const WS_PROTOCOL = 'graphql-transport-ws';
 const CONNECTION_TIMEOUT = 10000;
 
-const NOOP = () => {}; // eslint-disable-line @typescript-eslint/no-empty-function
+const NOOP = (): void => {}; // eslint-disable-line @typescript-eslint/no-empty-function
 
 function defaultWsUrl(endpoint: string): string {
 	return endpoint.replace(/^http/, 'ws');
@@ -33,7 +33,7 @@ export class GraphqlSubscription {
 		const subId =
 			typeof crypto !== 'undefined' && crypto.randomUUID
 				? crypto.randomUUID()
-				: 'sub_' + Math.random().toString(36).substring(2, 9);
+				: `sub_${  Math.random().toString(36).substring(2, 9)}`;
 
 		const emit = {
 			next: callbacks?.next ?? NOOP,

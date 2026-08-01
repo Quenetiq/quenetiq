@@ -39,6 +39,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Typecheck @quenetiq/eslint-plugin-gql
+        run: npx tsc -p projects/quenetiq/eslint-plugin-gql/tsconfig.lib.json --noEmit
+
       - name: Test + coverage
         run: npx vitest run --coverage --coverage.reporter=lcovonly --coverage.reporter=text
 

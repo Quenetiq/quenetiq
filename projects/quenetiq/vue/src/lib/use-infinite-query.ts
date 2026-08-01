@@ -38,10 +38,12 @@ export function useInfiniteQuery<TDocument extends DocumentNode | TypedDocumentN
 	const pages: TData[] = [];
 	let abortController: AbortController | null = null;
 
-	const executePage = async (variables: TVariables): Promise<GraphQLResult<TData>> => {
+	const executePage = (variables: TVariables): Promise<GraphQLResult<TData>> => {
 		abortController?.abort();
 		abortController = new AbortController();
-		return client.query<TDocument>(document, variables, undefined, { signal: abortController.signal });
+		return Promise.resolve(
+			client.query<TDocument>(document, variables, undefined, { signal: abortController.signal }),
+		);
 	};
 
 	const fetchMore = async (): Promise<void> => {

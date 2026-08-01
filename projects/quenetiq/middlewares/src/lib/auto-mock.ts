@@ -178,7 +178,7 @@ function generateMockData(request: GraphqlRequestContext, config: AutoMockConfig
 	try {
 		const doc = parse(request.query);
 		const def = doc.definitions[0];
-		if (!def || def.kind !== 'OperationDefinition') return null;
+		if (def?.kind !== 'OperationDefinition') return null;
 
 		let rootType: ReturnType<typeof getNamedType> | undefined;
 		if (schema) {
@@ -187,8 +187,9 @@ function generateMockData(request: GraphqlRequestContext, config: AutoMockConfig
 			if (t) rootType = t;
 		}
 
+		const fallbackRoot = { name: 'Query' };
 		const data = mockObjectValue(
-			rootType ?? ({ name: 'Query' } as ReturnType<typeof getNamedType>),
+			rootType ?? (fallbackRoot as ReturnType<typeof getNamedType>),
 			def.selectionSet,
 			ctx,
 		);

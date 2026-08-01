@@ -95,7 +95,7 @@ function formatEvent(event: CacheEvent): string {
 }
 
 export class CacheEvents {
-	private listeners = new Set<CacheEventListener>();
+	private readonly listeners = new Set<CacheEventListener>();
 	private loggingUnsub: (() => void) | null = null;
 	private seq = 0;
 
@@ -107,7 +107,7 @@ export class CacheEvents {
 	}
 
 	emit(event: Omit<CacheEvent, 'timestamp' | 'seq'>): void {
-		const stamped: CacheEvent = { ...event, timestamp: Date.now(), seq: this.seq++ } as CacheEvent;
+		const stamped = { ...event, timestamp: Date.now(), seq: this.seq++ } as unknown as CacheEvent;
 		for (const listener of this.listeners) {
 			listener(stamped);
 		}

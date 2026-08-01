@@ -1,11 +1,12 @@
 @if (visible()) {
-	<div class="search-overlay"
+	<div
+		class="search-overlay"
 		[class.closing]="closing()"
 		tabindex="-1"
 		(click)="onBackdropClick($event)"
 		(keydown.escape)="close()"
 	>
-		<div class="search-dialog">
+		<div class="search-dialog" tabindex="-1" (keydown)="onKeydown($event)">
 			<div class="search-input-wrapper">
 				<tui-icon icon="@tui.search" class="search-icon" />
 				<input
@@ -22,9 +23,9 @@
 			@if (searchService.loading()) {
 				<div class="search-loading">Loading index...</div>
 			} @else if (searchService.results().length > 0) {
-				<div class="search-results">
-					@for (result of searchService.results(); track result.id) {
-						<button class="search-result" (click)="goTo(result)">
+				<div #resultsContainer class="search-results">
+					@for (result of searchService.results(); track result.id; let idx = $index) {
+						<button class="search-result" [class.highlighted]="highlightedIndex() === idx" (click)="goTo(result)">
 							<div class="result-title">{{ result.title }}</div>
 							@if (result.group) {
 								<span class="result-group">{{ result.group }}</span>
@@ -35,6 +36,8 @@
 				</div>
 			} @else if (searchInput() && !searchService.loading()) {
 				<div class="search-empty">No results found for "{{ searchInput() }}"</div>
+			} @else {
+				<div class="search-hint">Start typing to search documentation...</div>
 			}
 		</div>
 	</div>

@@ -20,7 +20,7 @@ export function useReactiveFragment<TData extends Record<string, unknown>>(
 	const data = ref<TData | null>(null) as Ref<TData | null>;
 	const complete = ref(false);
 
-	const load = () => {
+	const load = (): void => {
 		if (!identifier) {
 			data.value = null;
 			complete.value = false;

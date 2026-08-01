@@ -1,12 +1,12 @@
-import { NormalizedCache } from './normalized-cache';
+import { type NormalizedCache } from './normalized-cache';
 
 export class CacheGc {
-	private refCount = new Map<string, number>();
-	private danglingSince = new Map<string, number>();
+	private readonly refCount = new Map<string, number>();
+	private readonly danglingSince = new Map<string, number>();
 
 	constructor(
-		private cache: NormalizedCache,
-		private ttlMs = 60_000,
+		private readonly cache: NormalizedCache,
+		private readonly ttlMs = 60_000,
 	) {}
 
 	track(entities: { __typename: string; id: string }[]): void {

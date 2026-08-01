@@ -12,7 +12,7 @@ function mockFetchOk(data: unknown) {
 	});
 }
 
-const QUERY = gql`{ __typename }`;
+const QUERY = gql`query TypeCheckQuery { __typename }`;
 
 describe('QuenetiqClient fetchPolicy', () => {
 	afterEach(() => {

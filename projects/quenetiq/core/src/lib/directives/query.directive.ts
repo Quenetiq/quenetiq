@@ -13,7 +13,7 @@ import {
 import { toObservable } from '@angular/core/rxjs-interop';
 import { Subject, switchMap, of, catchError, tap, combineLatest } from 'rxjs';
 import type { DocumentNode } from '../gql';
-import { GraphqlService, type GraphQLResult } from '../graphql.service';
+import { GraphqlService, type GraphQLResult, type ErrorPolicy } from '../graphql.service';
 
 export interface QuenetiqQueryContext<T> {
 	$implicit: GraphQLResult<T>;
@@ -21,6 +21,10 @@ export interface QuenetiqQueryContext<T> {
 	loading: boolean;
 	error: string | null;
 	refetch: () => void;
+	data: T | null;
+	status: 'idle' | 'loading' | 'success' | 'error';
+	pollInterval: number;
+	skip: boolean;
 }
 
 @Directive({
@@ -31,6 +35,10 @@ export class QuenetiqQueryDirective<T = unknown> {
 	readonly query = input<DocumentNode | null>(null);
 	readonly quenetiqQueryVars = input<Record<string, unknown>>({});
 	readonly quenetiqQueryEnabled = input(true);
+	readonly quenetiqQueryPollInterval = input(0);
+	readonly quenetiqQuerySkip = input(false);
+	readonly quenetiqQueryErrorPolicy = input<ErrorPolicy>('none');
+	readonly quenetiqQueryStreamOn = input(false);
 
 	private readonly graphql = inject(GraphqlService);
 	private readonly injector = inject(Injector);
@@ -48,20 +56,31 @@ export class QuenetiqQueryDirective<T = unknown> {
 	protected readonly result: Signal<GraphQLResult<T> | null> = this.resultSignal;
 	protected readonly loading: Signal<boolean> = this.loadingSignal;
 
+	private pollIntervalId: ReturnType<typeof setInterval> | null = null;
+
 	private viewRef: ReturnType<typeof this.viewContainer.createEmbeddedView> | null = null;
 
 	constructor() {
 		const enabled$ = toObservable(this.quenetiqQueryEnabled, { injector: this.injector });
+		const skip$ = toObservable(this.quenetiqQuerySkip, { injector: this.injector });
 
-		const query$ = combineLatest([this.refetch$, enabled$]).pipe(
-			switchMap(([, enabled]) => {
-				if (!enabled) return of(null);
+		const query$ = combineLatest([this.refetch$, enabled$, skip$]).pipe(
+			switchMap(([, enabled, skip]) => {
+				if (!enabled || skip) return of(null);
 				return this.doc$.pipe(
 					switchMap((doc) => {
 						if (!doc) return of(null);
 						return this.vars$.pipe(
-							switchMap((vars) =>
-								this.graphql.query<T>(doc, vars).pipe(
+							switchMap((vars) => {
+								const streaming = this.graphql.streaming;
+								const streamOn = this.quenetiqQueryStreamOn() || streaming.streamOn === true;
+								const useStream = streamOn && (streaming.enabled ?? true);
+								const request$ = useStream
+									? this.graphql.queryDefer<T>(doc, vars, undefined)
+									: this.graphql.query<T>(doc, vars, undefined, {
+										errorPolicy: this.quenetiqQueryErrorPolicy(),
+									});
+								return request$.pipe(
 									tap({
 										next: () => this.loadingSignal.set(false),
 										error: () => this.loadingSignal.set(false),
@@ -71,8 +90,8 @@ export class QuenetiqQueryDirective<T = unknown> {
 										const msg = err instanceof Error ? err.message : 'Query failed';
 										return of({ status: 'error' as const, error: msg });
 									}),
-								),
-							),
+								);
+							}),
 						);
 					}),
 				);
@@ -80,7 +99,12 @@ export class QuenetiqQueryDirective<T = unknown> {
 		);
 
 		const sub = query$.subscribe((r) => this.updateView(r));
-		this.destroyRef.onDestroy(() => sub.unsubscribe());
+		this.destroyRef.onDestroy(() => {
+			sub.unsubscribe();
+			if (this.pollIntervalId !== null) {
+				clearInterval(this.pollIntervalId);
+			}
+		});
 
 		/*
 		 * Why afterRenderEffect instead of effect:
@@ -104,6 +128,20 @@ export class QuenetiqQueryDirective<T = unknown> {
 			this.quenetiqQueryVars();
 			this.refetch$.next();
 		});
+
+		afterRenderEffect(() => {
+			const pollInterval = this.quenetiqQueryPollInterval();
+			const skip = this.quenetiqQuerySkip();
+
+			if (this.pollIntervalId !== null) {
+				clearInterval(this.pollIntervalId);
+				this.pollIntervalId = null;
+			}
+
+			if (pollInterval > 0 && !skip) {
+				this.pollIntervalId = setInterval(() => this.refetch$.next(), pollInterval);
+			}
+		});
 	}
 
 	/** Expose refetch so callers can trigger manual re-fetch. */
@@ -126,6 +164,17 @@ export class QuenetiqQueryDirective<T = unknown> {
 					? r.graphQLErrors.map((e) => e.message).join('; ')
 					: null;
 
+		const data = r.status === 'success' ? r.data : null;
+		const status: 'idle' | 'loading' | 'success' | 'error' = this.loadingSignal()
+			? 'loading'
+			: r.status === 'success'
+				? 'success'
+				: r.status === 'error'
+					? 'error'
+					: 'idle';
+		const pollInterval = this.quenetiqQueryPollInterval();
+		const skip = this.quenetiqQuerySkip();
+
 		if (!this.viewRef) {
 			this.viewRef = this.viewContainer.createEmbeddedView(this.templateRef, {
 				$implicit: r,
@@ -133,6 +182,10 @@ export class QuenetiqQueryDirective<T = unknown> {
 				loading: this.loadingSignal(),
 				error: errorText,
 				refetch: () => this.refetch(),
+				data,
+				status,
+				pollInterval,
+				skip,
 			});
 		} else {
 			const ctx = this.viewRef.context as QuenetiqQueryContext<T>;
@@ -140,6 +193,10 @@ export class QuenetiqQueryDirective<T = unknown> {
 			ctx.result = r;
 			ctx.loading = this.loadingSignal();
 			ctx.error = errorText;
+			ctx.data = data;
+			ctx.status = status;
+			ctx.pollInterval = pollInterval;
+			ctx.skip = skip;
 			this.viewRef.markForCheck();
 		}
 	}

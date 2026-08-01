@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { parseEndpointsYaml, validateEndpointsYaml, generateEndpointsYamlTemplate } from '../endpoints-config';
+import { resolveHeaderEnvVars, registerTransformError, resolveTransformError } from '../endpoints-resolver';
 
 describe('parseEndpointsYaml', () => {
 	it('parses a basic endpoints.yml with one route', () => {
@@ -229,5 +230,79 @@ describe('generateEndpointsYamlTemplate', () => {
 	it('contains comments', () => {
 		const template = generateEndpointsYamlTemplate();
 		expect(template).toContain('# Quenetiq Endpoints Configuration');
+	});
+});
+
+describe('registerTransformError / resolveTransformError', () => {
+	it('registers and resolves a transform function', () => {
+		const fn = (msg: string, code?: number) => `[${code}] ${msg}`;
+		registerTransformError('test', fn);
+		const resolved = resolveTransformError('test');
+		expect(resolved).toBe(fn);
+		expect(resolved!('error', 400)).toBe('[400] error');
+	});
+
+	it('returns undefined for unregistered name', () => {
+		expect(resolveTransformError('nonexistent')).toBeUndefined();
+	});
+
+	it('overwrites existing transform', () => {
+		const fn1 = (msg: string) => `fn1: ${msg}`;
+		const fn2 = (msg: string) => `fn2: ${msg}`;
+		registerTransformError('override', fn1);
+		registerTransformError('override', fn2);
+		expect(resolveTransformError('override')).toBe(fn2);
+	});
+});
+
+describe('resolveHeaderEnvVars', () => {
+	it('passes through function values unchanged', () => {
+		const fn = () => 'dynamic';
+		const result = resolveHeaderEnvVars({ Authorization: fn });
+		expect(result.Authorization).toBe(fn);
+	});
+
+	it('passes through plain strings without env patterns', () => {
+		const result = resolveHeaderEnvVars({ 'X-Key': 'static-value' });
+		expect(result['X-Key']).toBe('static-value');
+	});
+
+	it('resolves env vars from process.env when available', () => {
+		vi.stubGlobal('process', { env: { TOKEN: 'secret123' } });
+		const result = resolveHeaderEnvVars({ Authorization: 'Bearer ${TOKEN}' });
+		expect(typeof result.Authorization).toBe('function');
+		expect((result.Authorization as () => string)()).toBe('Bearer secret123');
+	});
+
+	it('returns empty string for unresolvable env var', () => {
+		const result = resolveHeaderEnvVars({ Authorization: 'Bearer ${MISSING}' });
+		expect(typeof result.Authorization).toBe('function');
+		expect((result.Authorization as () => string)()).toBe('Bearer ');
+	});
+
+	it('resolves multiple env vars in one value', () => {
+		vi.stubGlobal('process', { env: { HOST: 'api.example.com', PORT: '443' } });
+		const result = resolveHeaderEnvVars({ Url: 'https://${HOST}:${PORT}/graphql' });
+		expect(typeof result.Url).toBe('function');
+		expect((result.Url as () => string)()).toBe('https://api.example.com:443/graphql');
+	});
+
+	it('handles mixed static and env var values', () => {
+		vi.stubGlobal('process', { env: { TOKEN: 'tok123' } });
+		const headers = {
+			Authorization: 'Bearer ${TOKEN}',
+			'X-Static': 'fixed',
+		};
+		const result = resolveHeaderEnvVars(headers);
+		expect(result['X-Static']).toBe('fixed');
+		expect(typeof result.Authorization).toBe('function');
+		expect((result.Authorization as () => string)()).toBe('Bearer tok123');
+	});
+
+	it('handles process missing env gracefully', () => {
+		vi.stubGlobal('process', {});
+		const result = resolveHeaderEnvVars({ Key: 'val-${ENV_VAR}' });
+		expect(typeof result.Key).toBe('function');
+		expect((result.Key as () => string)()).toBe('val-');
 	});
 });

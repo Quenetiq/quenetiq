@@ -1,6 +1,6 @@
 import {
 	Component,
-	OnInit,
+	type OnInit,
 	inject,
 	signal,
 	ChangeDetectionStrategy,
@@ -10,9 +10,9 @@ import {
 	ViewContainerRef,
 	EnvironmentInjector,
 } from '@angular/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TuiLoader, TuiLink, TuiIcon, TuiNotificationService } from '@taiga-ui/core';
 import { TuiBadge } from '@taiga-ui/kit';
 import { VersionService } from '../../../shared/services/version.service';
@@ -26,7 +26,7 @@ import { parseMarkdown, renderInline, type MdBlock, type MdHeading, type MdInlin
 @Component({
 	selector: 'app-docs-content',
 	standalone: true,
-	imports: [TuiLoader, TuiBadge, TuiLink, TuiIcon],
+	imports: [TuiLoader, TuiBadge, TuiLink, TuiIcon, RouterLink],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	templateUrl: './docs-content.html',
 	styleUrl: './docs-content.scss',
@@ -61,7 +61,7 @@ export class DocsContent implements OnInit {
 				const link = (e.target as HTMLElement).closest('a');
 				if (link) {
 					const href = link.getAttribute('href');
-					if (href && href.startsWith('/')) {
+					if (href?.startsWith('/')) {
 						e.preventDefault();
 						this.router.navigateByUrl(href);
 					}
@@ -89,7 +89,9 @@ export class DocsContent implements OnInit {
 		this.error.set(null);
 
 		try {
-			const allItems = SIDEBAR_GROUPS.flatMap((g) => g.items);
+			const allItems = SIDEBAR_GROUPS.flatMap((g) => g.items).flatMap((item) =>
+				item.children ? [item, ...item.children] : [item],
+			);
 			const docMeta = allItems.find((item) => item.slug === slug);
 
 			if (docMeta && !this.versionService.isVersionAtLeast(docMeta.since)) {
@@ -111,13 +113,13 @@ export class DocsContent implements OnInit {
 
 			if (frontmatter['title']) {
 				this.meta.set({
-					title: frontmatter['title'] || docMeta?.title || slug,
+					title: frontmatter['title'] ?? docMeta?.title ?? slug,
 					slug,
-					group: frontmatter['group'] || docMeta?.group || '',
-					order: Number(frontmatter['order']) || docMeta?.order || 0,
-					since: frontmatter['since'] || docMeta?.since || '0.0.1',
-					tags: frontmatter['tags'] ? String(frontmatter['tags']).split(',').map((t: string) => t.trim()) : docMeta?.tags || [],
-					description: frontmatter['description'] || docMeta?.description || '',
+					group: frontmatter['group'] ?? docMeta?.group ?? '',
+					order: Number(frontmatter['order']) ?? docMeta?.order ?? 0,
+					since: frontmatter['since'] ?? docMeta?.since ?? '0.0.1',
+					tags: frontmatter['tags'] ? String(frontmatter['tags']).split(',').map((t: string) => t.trim()) : docMeta?.tags ?? [],
+					description: frontmatter['description'] ?? docMeta?.description ?? '',
 					github: frontmatter['github'] || docMeta?.github,
 					package: frontmatter['package'] || docMeta?.package,
 				});

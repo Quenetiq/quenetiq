@@ -55,7 +55,7 @@ export function useQuery<TDocument extends DocumentNode | TypedDocumentNode>(
 	let lastVars = variables;
 	let currentController: AbortController | null = null;
 
-	const abort = () => {
+	const abort = (): void => {
 		currentController?.abort();
 		currentController = null;
 		aborted.value = true;
@@ -63,7 +63,7 @@ export function useQuery<TDocument extends DocumentNode | TypedDocumentNode>(
 		networkStatus.value = 'ready';
 	};
 
-	const execute = async (vars?: TVariables, status?: NetworkStatus) => {
+	const execute = async (vars?: TVariables, status?: NetworkStatus): Promise<void> => {
 		if (skip) return;
 		currentController?.abort();
 		const controller = new AbortController();
@@ -138,7 +138,7 @@ export function useQuery<TDocument extends DocumentNode | TypedDocumentNode>(
 		},
 	);
 
-	const refetch = async (vars?: TVariables) => {
+	const refetch = async (vars?: TVariables): Promise<GraphQLResult<TData>> => {
 		currentController?.abort();
 		const controller = new AbortController();
 		currentController = controller;
@@ -161,7 +161,10 @@ export function useQuery<TDocument extends DocumentNode | TypedDocumentNode>(
 		return result;
 	};
 
-	const fetchMore = async (merge: (prev: TData, next: TData) => TData, vars?: TVariables) => {
+	const fetchMore = async (
+		merge: (prev: TData, next: TData) => TData,
+		vars?: TVariables,
+	): Promise<GraphQLResult<TData>> => {
 		networkStatus.value = 'refetching';
 		const result = await client.query(document, vars ?? lastVars);
 		if (result.status === 'success' && data.value) {

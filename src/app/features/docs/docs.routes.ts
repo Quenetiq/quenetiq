@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+import { type Routes } from '@angular/router';
 import { docsChildGuard } from './docs.guard';
 
 export const docsRoutes: Routes = [

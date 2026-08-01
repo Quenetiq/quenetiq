@@ -189,7 +189,12 @@ describe('useInfiniteQuery', () => {
 	});
 
 	it('handles non-Error thrown values', async () => {
-		const client = makeClient(vi.fn().mockImplementation(async () => { throw 'string error'; }));
+		const client = makeClient(
+			vi.fn().mockImplementation(async () => {
+				// eslint-disable-next-line no-throw-literal
+				throw 'string error';
+			}),
+		);
 		vi.mocked(useClient).mockReturnValue(client as never);
 
 		const { error, loading } = useInfiniteQuery('query { items }' as any, {

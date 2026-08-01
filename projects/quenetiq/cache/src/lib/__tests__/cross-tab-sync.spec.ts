@@ -7,10 +7,18 @@ function createMockOps(): CacheSyncOperations {
 		merge: vi.fn(),
 		write: vi.fn(),
 		evict: vi.fn(),
-		rollbackOptimistic: vi.fn(),
-		commitOptimistic: vi.fn(),
 		clear: vi.fn(() => Promise.resolve()),
 	};
+}
+
+function getChannel(sync: CrossTabSync): BroadcastChannel {
+	const channel = (sync as unknown as Record<string, unknown>).channel as BroadcastChannel | null;
+	expect(channel).not.toBeNull();
+	return channel as BroadcastChannel;
+}
+
+function dispatch(sync: CrossTabSync, data: unknown): void {
+	getChannel(sync).onmessage?.({ data } as MessageEvent);
 }
 
 describe('CrossTabSync', () => {
@@ -36,58 +44,97 @@ describe('CrossTabSync', () => {
 
 	it('disconnect closes channel and unsubscribes', () => {
 		const sync = new CrossTabSync(events, ops);
-		const channel = (sync as unknown as Record<string, unknown>).channel;
-		expect(channel).not.toBeNull();
+		const channel = getChannel(sync);
 
 		const closeSpy = vi.fn();
-		if (channel) (channel as { close: () => void }).close = closeSpy;
+		channel.close = closeSpy;
 
 		sync.disconnect();
 		expect(closeSpy).toHaveBeenCalled();
-		const ch = (sync as unknown as Record<string, unknown>).channel;
-		expect(ch).toBeNull();
+		expect((sync as unknown as Record<string, unknown>).channel).toBeNull();
 	});
 
-	it('broadcasts merge event and applies it to ops on remote message', () => {
+	it('applies a remote merge message to ops', () => {
 		const sync = new CrossTabSync(events, ops, { enabled: true });
-		const channel = (sync as unknown as Record<string, unknown>).channel as BroadcastChannel;
-		const fakeSender = 'other-tab';
-		const msg = { type: 'merge', entity: { __typename: 'User', id: '1', name: 'Alice' }, sender: fakeSender, seq: 1 };
+		const entity = { __typename: 'User', id: '1', name: 'Alice' };
+		dispatch(sync, { type: 'merge', entity, sender: 'other-tab', seq: 1 });
 
-		channel.onmessage?.({ data: msg } as MessageEvent);
-
-		expect(ops.merge).toHaveBeenCalledWith(msg.entity, 'cross-tab');
+		expect(ops.merge).toHaveBeenCalledWith(entity, 'cross-tab');
 	});
 
-	it('ignores messages from self', () => {
+	it('applies a remote write message to ops', () => {
 		const sync = new CrossTabSync(events, ops, { enabled: true });
-		const channel = (sync as unknown as Record<string, unknown>).channel as BroadcastChannel;
-		const senderId = (sync as unknown as Record<string, unknown>).senderId as string;
-		const msg = { type: 'write', entity: { __typename: 'User', id: '1' }, sender: senderId, seq: 1 };
+		const entity = { __typename: 'User', id: '1', name: 'Bob' };
+		dispatch(sync, { type: 'write', entity, sender: 'other-tab', seq: 2 });
 
-		channel.onmessage?.({ data: msg } as MessageEvent);
-
-		expect(ops.write).not.toHaveBeenCalled();
+		expect(ops.write).toHaveBeenCalledWith(entity, 'cross-tab');
 	});
 
-	it('broadcasts clear and calls ops.clear', () => {
+	it('applies a remote evict message to ops', () => {
 		const sync = new CrossTabSync(events, ops, { enabled: true });
-		const channel = (sync as unknown as Record<string, unknown>).channel as BroadcastChannel;
-		const msg = { type: 'clear', sender: 'other-tab', seq: 1 };
+		dispatch(sync, { type: 'evict', typename: 'User', id: '1', sender: 'other-tab', seq: 3 });
 
-		channel.onmessage?.({ data: msg } as MessageEvent);
+		expect(ops.evict).toHaveBeenCalledWith('User', '1');
+	});
+
+	it('applies a remote clear message to ops', () => {
+		const sync = new CrossTabSync(events, ops, { enabled: true });
+		dispatch(sync, { type: 'clear', sender: 'other-tab', seq: 4 });
 
 		expect(ops.clear).toHaveBeenCalled();
 	});
 
-	it('broadcasts optimistic commit and applies it', () => {
+	it('ignores messages from self', () => {
 		const sync = new CrossTabSync(events, ops, { enabled: true });
-		const channel = (sync as unknown as Record<string, unknown>).channel as BroadcastChannel;
-		const msg = { type: 'optimistic', action: 'commit', id: 'opt-1', sender: 'other-tab', seq: 1 };
+		const senderId = (sync as unknown as Record<string, unknown>).senderId as string;
+		dispatch(sync, { type: 'write', entity: { __typename: 'User', id: '1' }, sender: senderId, seq: 5 });
 
-		channel.onmessage?.({ data: msg } as MessageEvent);
+		expect(ops.write).not.toHaveBeenCalled();
+	});
 
-		expect(ops.commitOptimistic).toHaveBeenCalledWith('opt-1');
+	it('does not re-broadcast events emitted while applying a remote message', () => {
+		const sync = new CrossTabSync(events, ops, { enabled: true });
+		const spy = vi.spyOn(BroadcastChannel.prototype, 'postMessage');
+
+		(ops.merge as ReturnType<typeof vi.fn>).mockImplementation((entity: unknown) => {
+			events.emit({
+				type: 'merge',
+				data: { entity: entity as { __typename: string; id?: string }, key: 'User:1', existed: true, changedFields: [] },
+			});
+		});
+
+		dispatch(sync, { type: 'merge', entity: { __typename: 'User', id: '1', name: 'Alice' }, sender: 'other-tab', seq: 6 });
+
+		expect(ops.merge).toHaveBeenCalled();
+		expect(spy).not.toHaveBeenCalled();
+	});
+
+	it('deduplicates the same message delivered twice', () => {
+		const sync = new CrossTabSync(events, ops, { enabled: true });
+		const msg = { type: 'merge', entity: { __typename: 'User', id: '1' }, sender: 'other-tab', seq: 7 };
+
+		dispatch(sync, msg);
+		dispatch(sync, msg);
+
+		expect(ops.merge).toHaveBeenCalledTimes(1);
+	});
+
+	it('ignores malformed messages', () => {
+		const sync = new CrossTabSync(events, ops, { enabled: true });
+
+		dispatch(sync, null);
+		dispatch(sync, undefined);
+		dispatch(sync, {});
+		dispatch(sync, { type: 'merge', sender: 'other-tab', seq: 1 });
+		dispatch(sync, { type: 'merge', entity: {}, sender: 'other-tab', seq: 1 });
+		dispatch(sync, { type: 'unknown', sender: 'other-tab', seq: 1 });
+		dispatch(sync, { type: 'clear', sender: '', seq: 1 });
+		dispatch(sync, { type: 'clear', sender: 'other-tab', seq: 1.5 });
+
+		expect(ops.merge).not.toHaveBeenCalled();
+		expect(ops.write).not.toHaveBeenCalled();
+		expect(ops.evict).not.toHaveBeenCalled();
+		expect(ops.clear).not.toHaveBeenCalled();
 	});
 
 	it('subscribes to cache events and broadcasts write', () => {
@@ -102,6 +149,19 @@ describe('CrossTabSync', () => {
 		expect((call.entity as Record<string, unknown>).__typename).toBe('Note');
 	});
 
+	it('does not broadcast local-only cache events', () => {
+		const sync = new CrossTabSync(events, ops, { enabled: true });
+		const spy = vi.spyOn(BroadcastChannel.prototype, 'postMessage');
+
+		events.emit({ type: 'optimistic', data: { action: 'apply', id: 'opt-1' } });
+		events.emit({ type: 'read', data: { typename: 'User', id: '1', hit: true } });
+		events.emit({ type: 'gcSweep', data: { evicted: ['User:1'], refCounts: {} } });
+		events.emit({ type: 'error', data: { operation: 'persist', error: new Error('boom') } });
+
+		expect(spy).not.toHaveBeenCalled();
+		expect(sync).toBeDefined();
+	});
+
 	it('unsubscribes from cache events on disconnect', () => {
 		const sync = new CrossTabSync(events, ops, { enabled: true });
 		const spy = vi.spyOn(BroadcastChannel.prototype, 'postMessage');
@@ -110,15 +170,5 @@ describe('CrossTabSync', () => {
 		events.emit({ type: 'write', data: { entity: { __typename: 'X', id: '1', val: 1 }, key: 'X:1' } });
 
 		expect(spy).not.toHaveBeenCalled();
-	});
-
-	it('handles null/undefined message gracefully', () => {
-		const sync = new CrossTabSync(events, ops, { enabled: true });
-		const channel = (sync as unknown as Record<string, unknown>).channel as BroadcastChannel;
-
-		expect(() => {
-			channel.onmessage?.({ data: null } as MessageEvent);
-			channel.onmessage?.({ data: undefined } as MessageEvent);
-		}).not.toThrow();
 	});
 });

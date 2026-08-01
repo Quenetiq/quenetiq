@@ -1,6 +1,6 @@
 import { Injectable, inject, type Provider, ENVIRONMENT_INITIALIZER, InjectionToken } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 import { map, catchError, shareReplay } from 'rxjs/operators';
 
 export interface SchemaServiceConfig {
@@ -29,20 +29,18 @@ export class SchemaService {
 			return of(null);
 		}
 
-		if (!this.schema$) {
-			this.schema$ = this.http
-				.post<{
-					data: Record<string, unknown>;
-				}>(this.config.url, { query: INTROSPECTION_QUERY }, { headers: this.config.headers ?? {} })
-				.pipe(
-					map((res) => {
-						schemaDataCache = res.data;
-						return res.data;
-					}),
-					catchError(() => of(null)),
-					shareReplay(1),
-				);
-		}
+		this.schema$ ??= this.http
+			.post<{
+				data: Record<string, unknown>;
+			}>(this.config.url, { query: INTROSPECTION_QUERY }, { headers: this.config.headers ?? {} })
+			.pipe(
+				map((res) => {
+					schemaDataCache = res.data;
+					return res.data;
+				}),
+				catchError(() => of(null)),
+				shareReplay(1),
+			);
 
 		return this.schema$;
 	}

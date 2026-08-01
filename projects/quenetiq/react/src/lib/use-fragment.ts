@@ -76,7 +76,7 @@ export function useFragment<TData extends Record<string, unknown>>(
 			}
 		} else {
 			const entity = cache.query(identifier.__typename, identifier.id ?? '');
-			setData(entity as TData | null);
+			setData(entity as unknown as TData | null);
 			setComplete(entity !== undefined);
 		}
 	}, [cache, identifier]);

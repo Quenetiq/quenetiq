@@ -1,4 +1,4 @@
-import { from, of } from 'rxjs';
+import { from, of, type Observable } from 'rxjs';
 import { catchError, mergeMap } from 'rxjs/operators';
 import type { GraphqlMiddleware, GraphQLResult } from '@quenetiq/core';
 
@@ -14,7 +14,7 @@ export function errorHandlerMiddleware(config: ErrorHandlerConfig): GraphqlMiddl
 		return next(request).pipe(
 			catchError((error: unknown) => {
 				const out = config.handle(error);
-				const toResult$ = (handled: boolean) => {
+				const toResult$ = (handled: boolean): Observable<GraphQLResult<never>> => {
 					if (handled) {
 						return of<GraphQLResult<never>>({
 							status: 'error',

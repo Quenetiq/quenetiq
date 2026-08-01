@@ -1,8 +1,8 @@
 import {
 	Component,
 	ElementRef,
-	AfterViewInit,
-	OnDestroy,
+	type AfterViewInit,
+	type OnDestroy,
 	input,
 	signal,
 	output,
@@ -102,20 +102,20 @@ export class PlaygroundComponent implements AfterViewInit, OnDestroy {
 		const logs: string[] = [];
 		const proxyConsole = {
 			log: (...args: unknown[]) => logs.push(args.map(String).join(' ')),
-			warn: (...args: unknown[]) => logs.push('[warn] ' + args.map(String).join(' ')),
-			error: (...args: unknown[]) => logs.push('[error] ' + args.map(String).join(' ')),
-			info: (...args: unknown[]) => logs.push('[info] ' + args.map(String).join(' ')),
+			warn: (...args: unknown[]) => logs.push(`[warn] ${  args.map(String).join(' ')}`),
+			error: (...args: unknown[]) => logs.push(`[error] ${  args.map(String).join(' ')}`),
+			info: (...args: unknown[]) => logs.push(`[info] ${  args.map(String).join(' ')}`),
 		};
 
 		try {
-			const fn = new Function('console', '"use strict";\n' + code);
+			const fn = new Function('console', `"use strict";\n${  code}`);
 			const result = fn(proxyConsole);
 			const allOutput = [...logs, result !== undefined ? String(result) : ''].filter(Boolean).join('\n');
 			this.outputContent.set(allOutput);
 			this.runComplete.emit(allOutput);
 		} catch (e) {
 			const msg = e instanceof Error ? e.message : String(e);
-			const allOutput = [...logs, '[error] ' + msg].join('\n');
+			const allOutput = [...logs, `[error] ${  msg}`].join('\n');
 			this.errorContent.set(allOutput);
 		} finally {
 			this.running.set(false);

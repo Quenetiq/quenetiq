@@ -12,7 +12,7 @@ export interface SmartPersistConfig extends EntityStorageConfig {
 }
 
 export class SmartPersistence implements CacheStorePersist {
-	private storage: EntityStorage;
+	private readonly storage: EntityStorage;
 
 	constructor(config?: SmartPersistConfig) {
 		if (config?.storage && typeof config.storage === 'object' && 'get' in config.storage) {

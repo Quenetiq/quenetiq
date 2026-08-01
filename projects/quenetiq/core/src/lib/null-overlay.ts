@@ -1,5 +1,5 @@
-import { Component, ChangeDetectionStrategy, inject, OnDestroy, signal } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Component, ChangeDetectionStrategy, inject, type OnDestroy, signal } from '@angular/core';
+import { type Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { NullDetectionService } from './null-detection.service';
 
@@ -12,7 +12,7 @@ import { NullDetectionService } from './null-detection.service';
 })
 export class NullOverlay implements OnDestroy {
 	private readonly detector = inject(NullDetectionService, { optional: true });
-	private sub: Subscription | null = null;
+	private readonly sub: Subscription | null = null;
 	private lastTimeout: ReturnType<typeof setTimeout> | null = null;
 
 	protected readonly title = signal('');

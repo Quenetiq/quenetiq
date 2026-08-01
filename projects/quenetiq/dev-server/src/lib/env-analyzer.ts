@@ -9,8 +9,8 @@ export interface EnvInfo {
 }
 
 export function analyzeEnvironment(rewriteOverride?: boolean): EnvInfo {
-	const isStackBlitz = !!process.env.STACKBLITZ;
-	const isCodespaces = !!process.env.CODESPACES;
+	const isStackBlitz = Boolean(process.env.STACKBLITZ);
+	const isCodespaces = Boolean(process.env.CODESPACES);
 
 	const autoRewrite = isStackBlitz || isCodespaces;
 

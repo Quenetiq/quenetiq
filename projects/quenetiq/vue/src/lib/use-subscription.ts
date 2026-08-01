@@ -54,7 +54,7 @@ export function useSubscription<TData, TVariables extends Record<string, unknown
 	let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 	let unsubscribed = false;
 
-	const connect = () => {
+	const connect = (): void => {
 		if (unsubscribed) return;
 
 		loading.value = true;

@@ -1,10 +1,10 @@
-import type { GraphQLResult } from './result';
+import type { GraphQLResult, GraphQLResultWithCache } from './result';
 import type { GraphqlMiddleware } from './middleware';
 import type { CacheStore } from '@quenetiq/cache';
 import type { CacheConfig } from './config';
 
-function markCached<T>(result: GraphQLResult<T>, ts: number): GraphQLResult<T> {
-	return { ...result, fromCache: true, cachedAt: ts, entityKeys: [] };
+function markCached<T>(result: GraphQLResult<T>, ts: number): GraphQLResultWithCache<T> {
+	return { ...result, fromCache: true, cachedAt: ts, entityKeys: [] as string[] };
 }
 
 interface EntityRef {

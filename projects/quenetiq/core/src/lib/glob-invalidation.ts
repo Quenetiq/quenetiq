@@ -24,9 +24,9 @@ export function injectGlobInvalidation(di?: QuenetiqInjectOptions) {
 
 		// Simple glob pattern matching: * matches any characters except ':'
 		// Pattern: "User:*" matches "User:1", "User:2", etc.
-		const regexStr = '^' + glob.replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+		const regexStr = `^${  glob.replace(/[.+?^${}()|[\]\\]/g, '\\$&')
 			.replace(/\*/g, '[^:]*')
-			.replace(/\*\*/g, '.*') + '$';
+			.replace(/\*\*/g, '.*')  }$`;
 		const regex = new RegExp(regexStr);
 
 		let count = 0;

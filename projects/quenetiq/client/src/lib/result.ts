@@ -28,6 +28,14 @@ export interface GraphQLResponse<T> {
 	errors?: { message: string; extensions?: Record<string, unknown> }[];
 }
 
+export interface CacheMeta {
+	fromCache: boolean;
+	cachedAt: number;
+	entityKeys: string[];
+}
+
+export type GraphQLResultWithCache<T> = GraphQLResult<T> & CacheMeta;
+
 export function resultError<T>(
 	error: string,
 	errorCode?: ErrorCode,

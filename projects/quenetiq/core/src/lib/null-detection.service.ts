@@ -1,5 +1,5 @@
 import { Injectable, type OnDestroy } from '@angular/core';
-import { Subject, Observable } from 'rxjs';
+import { Subject, type Observable } from 'rxjs';
 
 export interface NullDetectionEvent {
 	type: 'null-value' | 'query-error';
@@ -25,7 +25,7 @@ function sendToExtension(event: NullDetectionEvent): void {
 
 @Injectable({ providedIn: 'root' })
 export class NullDetectionService implements OnDestroy {
-	private events$ = new Subject<NullDetectionEvent>();
+	private readonly events$ = new Subject<NullDetectionEvent>();
 
 	readonly onEvent: Observable<NullDetectionEvent> = this.events$.asObservable();
 

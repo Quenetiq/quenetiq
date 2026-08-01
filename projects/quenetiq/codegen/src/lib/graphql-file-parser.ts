@@ -48,7 +48,7 @@ export function parseGraphqlFile(filePath: string): ParsedOperation | null {
 	const name = def.name?.value;
 	if (!name) return null;
 
-	const variables: OperationVar[] = (def.variableDefinitions || []).map((v: VariableDefinitionNode) => {
+	const variables: OperationVar[] = (def.variableDefinitions ?? []).map((v: VariableDefinitionNode) => {
 		return {
 			name: v.variable.name.value,
 			type: printTypeRef(v.type),

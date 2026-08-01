@@ -257,7 +257,7 @@ describe('NormalizedCache', () => {
 		it('restore replaces all entities', () => {
 			const cache = createCache();
 			cache.set(user1);
-			cache.restore(JSON.stringify({ entities: [['Post:10', post1]], inlineCounter: 0 }));
+			cache.restore({ entities: [['Post:10', post1]], meta: [] });
 			expect(cache.count()).toBe(1);
 			expect(cache.get('Post', '10')).toEqual(post1);
 			expect(cache.get('User', '1')).toBeUndefined();

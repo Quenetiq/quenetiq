@@ -263,7 +263,7 @@ function attachSchemaWatcher(config: DevServerConfig, state: SchemaWatchState, s
 	const wss = new WebSocketServer({ server, path: '/schema-ws' });
 	console.log(`  Schema WebSocket: /schema-ws (watching ${schemaPath})`);
 
-	const broadcast = (event: string, data: unknown) => {
+	const broadcast = (event: string, data: unknown): void => {
 		const msg = JSON.stringify({ type: event, data });
 		wss.clients.forEach((client) => {
 			if (client.readyState === 1) client.send(msg);
@@ -340,7 +340,7 @@ function waitForTarget(url: string, timeout = 300_000, interval = 1_000): Promis
 		const requester = isHttps ? httpsRequest : httpRequest;
 		const parsed = new URL(url);
 
-		function poll() {
+		function poll(): void {
 			const req = requester(
 				{
 					hostname: parsed.hostname,
@@ -379,7 +379,7 @@ function waitForTarget(url: string, timeout = 300_000, interval = 1_000): Promis
 	});
 }
 
-export async function startDevServer(config: DevServerConfig & { port?: number }): Promise<Server> {
+export function startDevServer(config: DevServerConfig & { port?: number }): Promise<Server> {
 	const port = config.port ?? 4000;
 	const frontend = config.proxy?.target ?? 'http://localhost:4200';
 	const env = analyzeEnvironment();

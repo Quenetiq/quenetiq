@@ -73,8 +73,8 @@ export function useFragment<TData extends Record<string, unknown>>(
 			}
 		} else {
 			const entity = cache.query(idRef.__typename, idRef.id ?? '');
-			data.value = entity as TData | null;
-			complete.value = entity != null;
+			data.value = entity as unknown as TData | null;
+			complete.value = entity !== null && entity !== undefined;
 		}
 	};
 
@@ -119,5 +119,5 @@ export function useFragment<TData extends Record<string, unknown>>(
 		});
 	}
 
-	return { data: readonly(data), complete: readonly(complete) };
+	return { data: readonly(data) as Readonly<Ref<TData | null>>, complete: readonly(complete) };
 }

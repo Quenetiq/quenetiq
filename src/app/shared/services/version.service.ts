@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 
 function compareVersions(a: string, b: string): number {
-	const parse = (v: string) => {
+	const parse = (v: string): { parts: number[]; pre?: string } => {
 		const [main, pre] = v.split('-', 2);
 		const parts = main.split('.').map(Number);
 		return { parts, pre };

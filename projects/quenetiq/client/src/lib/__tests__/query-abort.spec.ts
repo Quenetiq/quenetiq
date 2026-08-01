@@ -20,7 +20,7 @@ function mockFetchAbort() {
 	});
 }
 
-const QUERY = gql`{ __typename }`;
+const QUERY = gql`query AbortQuery { __typename }`;
 
 describe('QuenetiqClient AbortController', () => {
 	afterEach(() => {

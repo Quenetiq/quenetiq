@@ -45,19 +45,17 @@ export function useSuspenseQuery<TDocument extends DocumentNode | TypedDocumentN
 	}
 
 	if (!dataRef.current && !errorRef.current) {
-		if (!promiseRef.current) {
-			promiseRef.current = client.query(query, variables).then((res: GraphQLResult<TData>) => {
-				if (res.status === 'success') {
-					dataRef.current = res.data;
-					onCompletedRef.current?.(res.data);
-				} else {
-					errorRef.current = res.error ?? 'Query failed';
-					errorCodeRef.current = res.errorCode;
-					onErrorRef.current?.(res.error ?? 'Query failed', res.errorCode);
-				}
-				promiseRef.current = undefined;
-			});
-		}
+		promiseRef.current ??= client.query(query, variables).then((res: GraphQLResult<TData>) => {
+			if (res.status === 'success') {
+				dataRef.current = res.data;
+				onCompletedRef.current?.(res.data);
+			} else {
+				errorRef.current = res.error ?? 'Query failed';
+				errorCodeRef.current = res.errorCode;
+				onErrorRef.current?.(res.error ?? 'Query failed', res.errorCode);
+			}
+			promiseRef.current = undefined;
+		});
 		throw promiseRef.current;
 	}
 

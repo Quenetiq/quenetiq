@@ -9,7 +9,7 @@ export interface ErrorHandlerConfig {
 
 export class ErrorHandler {
 	private handlers: { filter: ErrorFilter; handler: ErrorHandlerFn }[] = [];
-	private config: Required<ErrorHandlerConfig>;
+	private readonly config: Required<ErrorHandlerConfig>;
 
 	constructor(config?: ErrorHandlerConfig) {
 		this.config = {

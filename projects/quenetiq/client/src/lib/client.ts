@@ -53,21 +53,21 @@ interface FileEntry {
 
 export class QuenetiqClient {
 	private _endpoint: string;
-	private errorPolicy: 'none' | 'all' | 'ignore';
-	private showErrorsOnSuccess: boolean;
-	private retryCount: number;
-	private retryDelay: number;
-	private batchWindow: number;
-	private dedupEnabled: boolean;
-	private pipeline: TypedPipeline;
-	private _cacheService: CacheStore | null = null;
-	private _apqRegistry: PersistedQueryRegistry | null = null;
+	private readonly errorPolicy: 'none' | 'all' | 'ignore';
+	private readonly showErrorsOnSuccess: boolean;
+	private readonly retryCount: number;
+	private readonly retryDelay: number;
+	private readonly batchWindow: number;
+	private readonly dedupEnabled: boolean;
+	private readonly pipeline: TypedPipeline;
+	private readonly _cacheService: CacheStore | null = null;
+	private readonly _apqRegistry: PersistedQueryRegistry | null = null;
 
 	private batchQueue: BatchEntry[] | null = null;
 	private batchTimer: ReturnType<typeof setTimeout> | null = null;
 
 	constructor(
-		private config: ClientConfig,
+		private readonly config: ClientConfig,
 		cache?: CacheStore,
 	) {
 		this._endpoint = config.endpoint ?? config.url ?? '/graphql';
@@ -279,7 +279,7 @@ export class QuenetiqClient {
 		variables?: Record<string, unknown>,
 		endpoint?: string,
 	): AsyncIterable<Record<string, unknown>> {
-		const url = endpoint || this._endpoint;
+		const url = endpoint ?? this._endpoint;
 		const headers = this.getHeaderMap();
 		const controller = new AbortController();
 
@@ -356,7 +356,7 @@ export class QuenetiqClient {
 		}
 	}
 
-	private async executeQuery<T>(
+	private executeQuery<T>(
 		query: string,
 		variables?: Record<string, unknown>,
 		endpoint?: string,
@@ -369,7 +369,7 @@ export class QuenetiqClient {
 		return this.withRetry(() => this.request<T>(query, variables, 'query', endpoint, fetchPolicy, signal));
 	}
 
-	private async request<T>(
+	private request<T>(
 		query: string,
 		variables?: Record<string, unknown>,
 		type: 'query' | 'mutation' = 'query',
@@ -425,7 +425,7 @@ export class QuenetiqClient {
 
 	private async executeHttp(request: GraphqlRequestContext): Promise<GraphQLResult<unknown>> {
 		try {
-			const url = request.endpoint || this._endpoint;
+			const url = request.endpoint ?? this._endpoint;
 
 			if (request.method === 'GET') {
 				const params = new URLSearchParams();
@@ -546,7 +546,7 @@ export class QuenetiqClient {
 		variables?: Record<string, unknown>,
 		endpoint?: string,
 	): AsyncIterable<GraphQLResult<unknown>> {
-		const url = endpoint || this._endpoint;
+		const url = endpoint ?? this._endpoint;
 		const headers = this.getHeaderMap();
 		const controller = new AbortController();
 
@@ -696,9 +696,7 @@ export class QuenetiqClient {
 		endpoint?: string,
 	): Promise<GraphQLResult<T>> {
 		return new Promise<GraphQLResult<T>>((resolve) => {
-			if (!this.batchQueue) {
-				this.batchQueue = [];
-			}
+			this.batchQueue ??= [];
 
 			const context: GraphqlRequestContext = {
 				query,
@@ -713,9 +711,7 @@ export class QuenetiqClient {
 				resolve,
 			});
 
-			if (!this.batchTimer) {
-				this.batchTimer = setTimeout(() => this.flushBatch(), this.batchWindow);
-			}
+			this.batchTimer ??= setTimeout(() => this.flushBatch(), this.batchWindow);
 		});
 	}
 
@@ -733,7 +729,7 @@ export class QuenetiqClient {
 		}
 
 		try {
-			const url = queue[0].request.endpoint || this._endpoint;
+			const url = queue[0].request.endpoint ?? this._endpoint;
 			const headers = queue[0].request.headers;
 			const body = queue.map((item) => ({
 				query: item.request.query,
@@ -796,7 +792,7 @@ export class QuenetiqClient {
 			formData.append(String(index), entry.file);
 		}
 
-		const url = endpoint || this._endpoint;
+		const url = endpoint ?? this._endpoint;
 		try {
 			const response = await fetch(url, {
 				method: 'POST',
@@ -833,7 +829,7 @@ export class QuenetiqClient {
 		}
 
 		if (hasErrors && this.errorPolicy === 'ignore') {
-			if (response.data != null) {
+			if (response.data !== null && response.data !== undefined) {
 				const result: {
 					status: 'success';
 					data: T;
@@ -855,7 +851,7 @@ export class QuenetiqClient {
 
 		if (hasErrors && this.errorPolicy === 'all') {
 			const msgs = response.errors!.map((e) => e.message);
-			if (response.data != null) {
+			if (response.data !== null && response.data !== undefined) {
 				return { status: 'success', data: response.data, graphQLErrors: response.errors };
 			}
 			return this.withErrorNotification({
@@ -866,7 +862,7 @@ export class QuenetiqClient {
 			});
 		}
 
-		if (response.data == null) {
+		if (response.data === null || response.data === undefined) {
 			return this.withErrorNotification({
 				status: 'error',
 				errorCode: 'NO_DATA',

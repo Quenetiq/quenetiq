@@ -1,11 +1,11 @@
 ---
-title: "Overview"
+title: 'Overview'
 slug: overview
-group: "Getting Started"
+group: 'Getting Started'
 order: 1
-since: "0.0.1"
+since: '0.0.1'
 tags: []
-description: "Introduction to Quenetiq"
+description: 'Introduction to Quenetiq'
 ---
 
 # Overview
@@ -28,28 +28,27 @@ Angular. Each capability in its own
 
 ## Packages
 
-| | Package | Description |
-|---|---|---|
-| ⚡ | [**@quenetiq/client**](/docs/client) | Framework-agnostic GraphQL client — query, mutate, streaming, middleware, cache. |
-| ⚛️ | [**@quenetiq/react**](/docs/react) | React hooks, render-prop components, QuenetiqProvider context. |
-| 💚 | [**@quenetiq/vue**](/docs/vue) | Vue composables, plugin, SSR support via onServerPrefetch. |
-| ⚡ | [**@quenetiq/core**](/docs/core) | GraphqlService, middleware, gql tag, pipes, standalone helpers, reactive variables. |
-| 💾 | [**@quenetiq/cache**](/docs/cache) | Normalized cache, optimistic updates, GC, persistence, type policies. |
-| 🔌 | [**@quenetiq/subscriptions**](/docs/subscriptions) | WebSocket subscriptions via graphql-transport-ws with auto-reconnect. |
-| 📎 | [**@quenetiq/file-upload**](/docs/file-upload) | Multipart upload spec, auto File/Blob detection, progress tracking. |
-| 🔀 | [**@quenetiq/middlewares**](/docs/middlewares) | Auth refresh, retry, focus refetch, offline queue — composable. |
-| 📄 | [**@quenetiq/pagination**](/docs/pagination) | Offset, cursor, and relay-style pagination helpers. |
-| ⚡ | [**@quenetiq/persisted-queries**](/docs/persisted-queries) | APQ middleware with SHA-256 hashing and auto-registration. |
-| 🧩 | [**@quenetiq/fragments**](/docs/fragments) | Fragment composition, spread, useFragment for data masking. |
-| 🖥️ | [**@quenetiq/ssr**](/docs/ssr) | SSR stream service, transfer state cache, chunked transfer. |
-| 🔍 | [**@quenetiq/debugging**](/docs/debugging) | Browser extension, DevTools service, field tree parser, mutation chart. |
-| 📡 | [**@quenetiq/opentelemetry**](/docs/opentelemetry) | W3C Trace Context propagation, middleware, Angular integration. |
-| 📦 | [**@quenetiq/downloader**](/docs/downloader) | Introspection to JSON + SDL, schema download & store. |
-| 🧪 | [**@quenetiq/testing**](/docs/testing) | MockGraphqlService, when/respond, testing utilities. |
-| 🔄 | [**@quenetiq/apollo-adapter**](/docs/apollo-adapter) | Migration helpers — bring your Apollo cache, type policies, and links. |
-| 🏗️ | [**@quenetiq/codegen**](/docs/codegen) | Typed codegen client preset, fragment masking, schema merge. |
-| ⚠️ | [**@quenetiq/errors**](/docs/errors) | Typed error system — QuenetiqError, error codes, error handlers. |
-| 👁️ | [**@quenetiq/observables**](/docs/observables) | RxJS operators for cache — observeEntity, watchQuery, cacheFirst, staleWhileRevalidate. |
+|     | Package                                                    | Description                                                                         |
+| --- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| ⚡  | [**@quenetiq/client**](/docs/client)                       | Framework-agnostic GraphQL client — query, mutate, streaming, middleware, cache.    |
+| ⚛️  | [**@quenetiq/react**](/docs/react)                         | React hooks, render-prop components, QuenetiqProvider context.                      |
+| 💚  | [**@quenetiq/vue**](/docs/vue)                             | Vue composables, plugin, SSR support via onServerPrefetch.                          |
+| ⚡  | [**@quenetiq/core**](/docs/core)                           | GraphqlService, middleware, gql tag, pipes, standalone helpers, reactive variables. |
+| 💾  | [**@quenetiq/cache**](/docs/cache)                         | Normalized cache, optimistic updates, GC, persistence, type policies.               |
+| 🔌  | [**@quenetiq/subscriptions**](/docs/subscriptions)         | WebSocket subscriptions via graphql-transport-ws with auto-reconnect.               |
+| 📎  | [**@quenetiq/file-upload**](/docs/file-upload)             | Multipart upload spec, auto File/Blob detection, progress tracking.                 |
+| 🔀  | [**@quenetiq/middlewares**](/docs/middlewares)             | Auth refresh, retry, focus refetch, offline queue — composable.                     |
+| 📄  | [**@quenetiq/pagination**](/docs/pagination)               | Offset, cursor, and relay-style pagination helpers.                                 |
+| ⚡  | [**@quenetiq/persisted-queries**](/docs/persisted-queries) | APQ middleware with SHA-256 hashing and auto-registration.                          |
+| 🧩  | [**@quenetiq/fragments**](/docs/fragments)                 | Fragment composition, spread, useFragment for data masking.                         |
+| 🖥️  | [**@quenetiq/ssr**](/docs/ssr)                             | SSR stream service, transfer state cache, chunked transfer.                         |
+| 🔍  | [**@quenetiq/debugging**](/docs/debugging)                 | Browser extension, DevTools service, field tree parser, mutation chart.             |
+| 📡  | [**@quenetiq/opentelemetry**](/docs/opentelemetry)         | W3C Trace Context propagation, middleware, Angular integration.                     |
+| 📦  | [**@quenetiq/downloader**](/docs/downloader)               | Introspection to JSON + SDL, schema download & store.                               |
+| 🧪  | [**@quenetiq/testing**](/docs/testing)                     | MockGraphqlService, when/respond, testing utilities.                                |
+| 🔄  | [**@quenetiq/apollo-adapter**](/docs/apollo-adapter)       | Migration helpers — bring your Apollo cache, type policies, and links.              |
+| 🏗️  | [**@quenetiq/codegen**](/docs/codegen)                     | Typed codegen client preset, fragment masking, schema merge.                        |
+| ⚠️  | [**@quenetiq/errors**](/docs/errors)                       | Typed error system — QuenetiqError, error codes, error handlers.                    |
 
 ## Why Quenetiq?
 

@@ -84,7 +84,7 @@ export function useReactiveSubscription<TDocument extends DocumentNode | TypedDo
 		state.isIdle = true;
 	};
 
-	const connect = () => {
+	const connect = (): void => {
 		if (unsubscribed) return;
 
 		state.status = 'connecting';

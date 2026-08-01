@@ -46,7 +46,7 @@ export function useStreamQuery<TDocument extends DocumentNode | TypedDocumentNod
 	let abortController: AbortController | null = null;
 	let latestData: TData | null = null;
 
-	const iterate = async () => {
+	const iterate = async (): Promise<void> => {
 		try {
 			const iterable = client.queryDefer<TDocument>(document, variables);
 
@@ -85,7 +85,7 @@ export function useStreamQuery<TDocument extends DocumentNode | TypedDocumentNod
 		}
 	};
 
-	const start = () => {
+	const start = (): void => {
 		abortController?.abort();
 		abortController = new AbortController();
 		cancelled = false;
@@ -99,7 +99,7 @@ export function useStreamQuery<TDocument extends DocumentNode | TypedDocumentNod
 		iterate();
 	};
 
-	const stop = () => {
+	const stop = (): void => {
 		abortController?.abort();
 		abortController = null;
 		cancelled = true;

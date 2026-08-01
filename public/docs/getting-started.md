@@ -1,11 +1,11 @@
 ---
-title: "Getting Started"
+title: 'Getting Started'
 slug: getting-started
 group: Getting Started
 order: 2
-since: "0.0.1"
+since: '0.0.1'
 tags: [install, setup, quickstart]
-description: "Quick start guide for Quenetiq"
+description: 'Quick start guide for Quenetiq'
 ---
 
 # Getting Started
@@ -50,11 +50,18 @@ import { createClient, gql, isSuccess } from '@quenetiq/client';
 
 const client = createClient({ endpoint: '/graphql' });
 
-const BOOKS_QUERY = gql`query Books { books { id title } }`;
+const BOOKS_QUERY = gql`
+	query Books {
+		books {
+			id
+			title
+		}
+	}
+`;
 
 const result = await client.query<{ books: Book[] }>(BOOKS_QUERY);
 if (isSuccess(result)) {
-  console.log(result.data.books);
+	console.log(result.data.books);
 }
 ```
 
@@ -62,11 +69,13 @@ The `query()` method returns a Promise. Use `isSuccess` / `isError` type guards 
 
 ## Starters
 
-Kickstart a new project with one of our starters:
+Kickstart a new project with one of our starters. Each starter includes `@quenetiq/*` packages and a mock GraphQL endpoint:
 
-- **Angular 22+** — [Open in StackBlitz](https://stackblitz.com/github/Quenetiq/starter-angular) · [Open in Codespaces](https://codespaces.new/Quenetiq/quenetiq?devcontainer_path=.devcontainer%2Fangular%2Fdevcontainer.json) · `git clone` + `cd starters/angular && npm start` — standalone app with `@quenetiq/client`, mock backend, and `provideQuenetiq` + `QuenetiqQuery` directive.
-- **React 18+** — [Open in StackBlitz](https://stackblitz.com/github/Quenetiq/starter-react) · `git clone` + `cd starters/react && npm start` — standalone app with `@quenetiq/client`, `@quenetiq/react`, mock backend, and `useQuery` hook.
-- **Vue 3+** — [Open in StackBlitz](https://stackblitz.com/github/Quenetiq/starter-vue) · `git clone` + `cd starters/vue && npm start` — standalone app with `@quenetiq/client`, `@quenetiq/vue`, mock backend, and `useQuery` composable.
+:::stackblitz starter="angular"
+
+:::stackblitz starter="react"
+
+:::stackblitz starter="vue"
 
 ## Next Steps
 

@@ -206,31 +206,31 @@ describe('CacheStore', () => {
 			expect(() => store.persist()).not.toThrow();
 		});
 
-		it('persists and restores entities when configured', () => {
+		it('persists and restores entities when configured', async () => {
 			const persist = new CachePersistence({ storage: 'memory' });
 			const persistedStore = new CacheStore({ persist });
 			persistedStore.write(user1);
-			persistedStore.persist();
+			await persistedStore.persist();
 
 			const restoredStore = new CacheStore({ persist });
 			expect(restoredStore.query('User', '1')).toEqual(user1);
 		});
 
-		it('persists and restores entities', () => {
+		it('persists and restores entities', async () => {
 			const persist = new CachePersistence({ storage: 'memory' });
 			const persistedStore = new CacheStore({ persist });
 			persistedStore.write(user1);
-			persistedStore.persist();
+			await persistedStore.persist();
 
 			const restoredStore = new CacheStore({ persist });
 			expect(restoredStore.query('User', '1')).toEqual(user1);
 		});
 
-		it('persists config via plain object in createCache', () => {
+		it('persists config via plain object in createCache', async () => {
 			const persist = new CachePersistence({ storage: 'memory' });
 			const cache1 = createCache({ persist });
 			cache1.write(user1);
-			cache1.persist();
+			await cache1.persist();
 
 			const cache2 = createCache({ persist });
 			expect(cache2.query('User', '1')).toEqual(user1);
@@ -276,11 +276,11 @@ describe('createCache', () => {
 		expect(cache).toBeInstanceOf(CacheStore);
 	});
 
-	it('persist round-trip with CachePersistence instance', () => {
+	it('persist round-trip with CachePersistence instance', async () => {
 		const persist = new CachePersistence({ storage: 'memory' });
 		const cache = createCache({ persist });
 		cache.write({ __typename: 'User', id: '1', name: 'Alice' });
-		cache.persist();
+		await cache.persist();
 
 		const cache2 = createCache({ persist });
 		expect(cache2.query('User', '1')).toEqual({ __typename: 'User', id: '1', name: 'Alice' });

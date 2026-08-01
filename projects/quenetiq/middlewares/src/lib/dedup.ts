@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 import { share, finalize } from 'rxjs/operators';
 import { type GraphqlMiddleware, type GraphQLResult } from '@quenetiq/core';
 
@@ -12,7 +12,7 @@ export function dedupMiddleware(): GraphqlMiddleware {
 	const inFlight = new Map<string, Observable<GraphQLResult<unknown>>>();
 
 	return (request, next) => {
-		const key = request.type + '|' + request.query + '|' + JSON.stringify(request.variables ?? {});
+		const key = `${request.type  }|${  request.query  }|${  JSON.stringify(request.variables ?? {})}`;
 
 		const existing = inFlight.get(key);
 		if (existing) return existing;

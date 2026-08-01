@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { defer, Observable, timer, switchMap } from 'rxjs';
+import { defer, type Observable, timer, switchMap } from 'rxjs';
 import { GraphqlService, type GraphQLResult } from './graphql.service';
 import type { DocumentNode, TypedDocumentNode, TypedQueryString } from './gql';
 

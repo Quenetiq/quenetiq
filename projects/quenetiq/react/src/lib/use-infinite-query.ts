@@ -54,10 +54,12 @@ export function useInfiniteQuery<TDocument extends DocumentNode | TypedDocumentN
 	onCompletedRef.current = options.onCompleted;
 	onErrorRef.current = options.onError;
 
-	const executePage = useCallback(async (variables: TVariables): Promise<GraphQLResult<TData>> => {
+	const executePage = useCallback((variables: TVariables): Promise<GraphQLResult<TData>> => {
 		abortRef.current?.abort();
 		abortRef.current = new AbortController();
-		return client.query<TDocument>(document, variables, undefined, { signal: abortRef.current.signal });
+		return Promise.resolve(
+			client.query<TDocument>(document, variables, undefined, { signal: abortRef.current.signal }),
+		);
 	}, [client, document]);
 
 	const fetchMore = useCallback(async () => {

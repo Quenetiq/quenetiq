@@ -205,15 +205,15 @@ describe('CacheService', () => {
 			expect(() => service.persist()).not.toThrow();
 		});
 
-		it('persists entities when persistence is configured', () => {
+		it('persists entities when persistence is configured', async () => {
 			const persist = new CachePersistence({ storage: 'memory' });
 			const service = new CacheService(persist as never);
 			service.write(userEntity);
-			service.persist();
+			await service.persist();
 
-			const restored = persist.restore();
+			const restored = await persist.restore();
 			expect(restored).not.toBeNull();
-			expect(restored!.some(([k]) => k === 'User:1')).toBe(true);
+			expect(restored!.some(([k]: [string, unknown]) => k === 'User:1')).toBe(true);
 		});
 	});
 
@@ -228,12 +228,12 @@ describe('CacheService', () => {
 	});
 
 	describe('constructor with persistence', () => {
-		it('restores persisted entities on construction', () => {
+		it('restores persisted entities on construction', async () => {
 			const persist = new CachePersistence({ storage: 'memory' });
 
 			const persistService = createService(persist);
 			persistService.write(userEntity);
-			persistService.persist();
+			await persistService.persist();
 
 			const restoredService = new CacheService(persist as never);
 			const found = restoredService.query('User', '1') as Record<string, unknown> | undefined;

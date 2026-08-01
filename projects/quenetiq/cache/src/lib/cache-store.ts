@@ -13,9 +13,9 @@ function isNonNullObject(value: unknown): value is Record<string, unknown> {
 }
 
 export interface CacheStorePersist {
-	persist(data: [string, Record<string, unknown>][]): Promise<void>;
-	restore(): Promise<[string, Record<string, unknown>][] | null>;
-	clear(): Promise<void>;
+	persist(data: [string, Record<string, unknown>][]): void | Promise<void>;
+	restore(): [string, Record<string, unknown>][] | null | Promise<[string, Record<string, unknown>][] | null>;
+	clear(): void | Promise<void>;
 }
 
 export interface CacheStoreConfig {
@@ -33,20 +33,20 @@ export class CacheStore {
 	readonly gc: CacheGc;
 	readonly events: CacheEvents;
 	readonly metrics: CacheMetrics;
-	private localState = new Map<string, unknown>();
-	private localStateListeners = new Map<string, Set<() => void>>();
-	private localStateTypes = new Map<string, Set<string>>();
-	private persistSvc: CacheStorePersist | null = null;
-	private autoGcEnabled = false;
-	private autoGcThreshold = 200;
+	private readonly localState = new Map<string, unknown>();
+	private readonly localStateListeners = new Map<string, Set<() => void>>();
+	private readonly localStateTypes = new Map<string, Set<string>>();
+	private readonly persistSvc: CacheStorePersist | null = null;
+	private readonly autoGcEnabled: boolean = false;
+	private readonly autoGcThreshold: number = 200;
 	private transactionDepth = 0;
 	private transactionEvents: Omit<import('./cache-events').CacheEvent, 'timestamp' | 'seq'>[] = [];
-	private crossTabSync: import('./cross-tab-sync').CrossTabSync | null = null;
+	private readonly crossTabSync: import('./cross-tab-sync').CrossTabSync | null = null;
 
 	/** queryHash -> Set<entityKey> — which entities a query result depends on */
-	private queryEntities = new Map<string, Set<string>>();
+	private readonly queryEntities = new Map<string, Set<string>>();
 	/** entityKey -> Set<queryHash> — reverse index: which queries depend on an entity */
-	private entityToQueries = new Map<string, Set<string>>();
+	private readonly entityToQueries = new Map<string, Set<string>>();
 
 	constructor(config?: CacheStoreConfig) {
 		this.cache = new NormalizedCache(config?.typePolicies);
@@ -75,25 +75,37 @@ export class CacheStore {
 
 		if (persistSvc) {
 			this.persistSvc = persistSvc;
-			persistSvc.restore().then((restored) => {
-				if (restored) {
-					for (const [key, value] of restored) {
-						if (key.startsWith(LOCAL_STATE_PREFIX)) {
-							this.writeLocal(key.slice(LOCAL_STATE_PREFIX.length), value);
-						} else if (isCacheEntity(value)) {
-							this.cache.set(value);
-						}
-					}
+			try {
+				const restored = persistSvc.restore();
+				if (restored instanceof Promise) {
+					restored.then((data) => {
+						if (data) this.loadPersistedData(data);
+					}).catch((e) => {
+						this.metrics.recordError();
+						this.emitEvent({ type: 'error', data: { operation: 'restore', error: e } });
+					});
+				} else if (restored) {
+					this.loadPersistedData(restored);
 				}
-			}).catch((e) => {
+			} catch (e) {
 				this.metrics.recordError();
 				this.emitEvent({ type: 'error', data: { operation: 'restore', error: e } });
-			});
+			}
 		}
 
 		if (config?.crossTabSync) {
 			const syncConfig = typeof config.crossTabSync === 'boolean' ? undefined : config.crossTabSync;
 			this.crossTabSync = new CrossTabSync(this.events, this, syncConfig);
+		}
+	}
+
+	private loadPersistedData(restored: [string, Record<string, unknown>][]): void {
+		for (const [key, value] of restored) {
+			if (key.startsWith(LOCAL_STATE_PREFIX)) {
+				this.writeLocal(key.slice(LOCAL_STATE_PREFIX.length), value);
+			} else if (isCacheEntity(value)) {
+				this.cache.set(value);
+			}
 		}
 	}
 

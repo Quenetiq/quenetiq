@@ -16,7 +16,7 @@ export function useEpicFetus(): NullDetectionInfo | null {
 	const handleMessage = useCallback((e: MessageEvent) => {
 		if (e.source !== window) return;
 		const msg = e.data;
-		if (!msg || msg.source !== EXT_SOURCE || msg.type !== 'null-detection') return;
+		if (msg?.source !== EXT_SOURCE || msg.type !== 'null-detection') return;
 		if (timerRef.current) return;
 
 		setEvent(msg.payload);

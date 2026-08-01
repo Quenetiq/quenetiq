@@ -25,7 +25,7 @@ export function parseOperation(document: string): OperationInfo | null {
 	const name = def.name?.value;
 	if (!name) return null;
 
-	const variables = (def.variableDefinitions || []).map((v: VariableDefinitionNode) => {
+	const variables = (def.variableDefinitions ?? []).map((v: VariableDefinitionNode) => {
 		const varType = v.type as { kind: string; name?: { value: string }; type?: unknown };
 		const typeName = varType.name?.value ?? serializeTypeRef(v.type);
 		return { name: v.variable.name.value, type: typeName };

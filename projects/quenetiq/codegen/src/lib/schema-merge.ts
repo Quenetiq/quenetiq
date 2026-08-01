@@ -141,7 +141,7 @@ export function mergeGeneratedTypes(existingFilePath: string, newContent: string
 		}
 	}
 
-	const result = lines.join('\n') + '\n';
+	const result = `${lines.join('\n')  }\n`;
 
 	return result;
 }

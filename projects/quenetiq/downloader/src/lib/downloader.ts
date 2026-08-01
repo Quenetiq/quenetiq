@@ -38,7 +38,7 @@ export async function downloadAndStoreSchema(
 	const sdl = printSchema(schema);
 	const json = JSON.stringify(body.data, null, 2);
 
-	const filename = options.filename || 'schema.json';
+	const filename = options.filename ?? 'schema.json';
 	const baseName = filename.substring(0, filename.lastIndexOf('.')) || filename;
 	const sdlFilename = `${baseName}.graphql`;
 

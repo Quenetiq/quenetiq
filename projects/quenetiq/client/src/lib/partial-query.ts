@@ -85,7 +85,7 @@ export function createPartialQueryEngine<TClient>(
 		opts?: { fetchPolicy?: string; signal?: AbortSignal },
 	) => Promise<GraphQLResult<unknown>>;
 
-	const query = client.query as unknown as ClientQuery;
+	const query = (client as unknown as { query: ClientQuery }).query;
 
 	const state: PartialQueryState = {
 		data: {},

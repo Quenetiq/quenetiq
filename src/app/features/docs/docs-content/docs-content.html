@@ -5,8 +5,9 @@
 		</div>
 	} @else if (error()) {
 		<div class="docs-error">
-			<h2>Page not found</h2>
-			<p>{{ error() }}</p>
+			<h2 class="docs-error-title">{{ error()?.includes('not available') ? 'Version mismatch' : 'Page not found' }}</h2>
+			<p class="docs-error-message">{{ error() }}</p>
+			<a tuiLink routerLink="/docs/overview">Back to overview</a>
 		</div>
 	} @else {
 		@if (meta(); as m) {
@@ -23,9 +24,7 @@
 						<span tuiBadge appearance="primary" size="s">{{ m.package }}</span>
 					}
 					@if (m.github) {
-						<a tuiLink [href]="m.github" target="_blank" rel="noopener" iconStart="@tui.github">
-							View source
-						</a>
+						<a tuiLink [href]="m.github" target="_blank" rel="noopener" iconStart="@tui.github"> View source </a>
 					}
 				</div>
 			</header>
