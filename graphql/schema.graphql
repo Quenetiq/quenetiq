@@ -44,6 +44,11 @@ type Query {
   getNoteDetails(id: String!): Note!
 }
 
+type Subscription {
+  noteAdded: Note!
+  noteUpdated: Note!
+}
+
 scalar UUID
 
 input UpdateNoteInput {

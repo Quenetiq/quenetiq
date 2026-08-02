@@ -69,7 +69,12 @@ export class App {
 
 	@HostListener('document:keydown', ['$event'])
 	protected onKeydown(e: KeyboardEvent): void {
-		if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'f')) {
+		// e.code — физическая клавиша: работает при любой раскладке (например, RU даёт e.key = 'а')
+		const searchShortcut =
+			e.code === 'KeyK' ||
+			e.code === 'KeyF' ||
+			(!e.code && ['f', 'k', 'а', 'л'].includes(e.key.toLowerCase()));
+		if ((e.metaKey || e.ctrlKey) && searchShortcut) {
 			if (!this.showDocsMenu()) return;
 			e.preventDefault();
 			if (this.searchState.open()) {
