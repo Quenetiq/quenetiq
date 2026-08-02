@@ -365,17 +365,24 @@ h3:hover .anchor-btn {
 	margin: 2rem 0;
 }
 
-@media (width <= 450px) {
-.md-code-block, .md-code, .md-pre{
-		max-width: 380px;
+/* ── md-code responsive: точная подгонка под контент на малых экранах ──
+   1rem = 16px. docs-content: <=1024px → padding 1rem по бокам, max-width 42rem;
+                 <=480px → padding 0.75rem по бокам.
+   max-width = ширина контента → длинные строки скроллятся внутри блока. */
+@media (width <= 64rem) {
+	.md-code-block,
+	.md-code,
+	.md-pre {
+		max-width: calc(min(42rem, 100vw) - 2rem);
 		overflow-x: auto;
 	}
-
 }
 
-@media (width <= 550px) {
-	.md-code-block, .md-code, .md-pre{
-		max-width: auto;
+@media (width <= 30rem) {
+	.md-code-block,
+	.md-code,
+	.md-pre {
+		max-width: calc(min(42rem, 100vw) - 1.5rem);
 		overflow-x: auto;
 	}
 }
