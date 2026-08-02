@@ -1,5 +1,10 @@
 import type { QuenetiqConfig } from '@quenetiq/core';
 
+const wsEndpoint =
+	typeof window !== 'undefined'
+		? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/graphql`
+		: 'ws://localhost:4000/graphql';
+
 const config: QuenetiqConfig = {
 	// ── Core ────────────────────────────────────────────────────────────────────
 	endpoint: '/graphql',
@@ -16,7 +21,7 @@ const config: QuenetiqConfig = {
 
 	// ── Subscriptions ───────────────────────────────────────────────────────────
 	subscriptions: {
-		wsEndpoint: 'ws://localhost:4000/graphql',
+		wsEndpoint,
 		reconnect: true,
 		reconnectInterval: 2000,
 		lazy: true,
