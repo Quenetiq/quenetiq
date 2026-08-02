@@ -365,15 +365,17 @@ h3:hover .anchor-btn {
 	margin: 2rem 0;
 }
 
-@media (width <= 550px) {
-	.md-code-block {
-		max-width: 460px;
+@media (width <= 450px) {
+.md-code-block, .md-code, .md-pre{
+		max-width: 380px;
 		overflow-x: auto;
 	}
+
 }
 
-@media (width <= 400px) {
-	.md-code-block {
-		max-width: 330px;
+@media (width <= 550px) {
+	.md-code-block, .md-code, .md-pre{
+		max-width: auto;
+		overflow-x: auto;
 	}
 }
